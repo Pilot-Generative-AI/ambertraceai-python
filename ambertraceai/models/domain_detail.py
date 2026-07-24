@@ -57,9 +57,7 @@ class DomainDetail:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.domain_detail_eval_config_type_0 import (
-            DomainDetailEvalConfigType0,
-        )
+        from ..models.domain_detail_eval_config_type_0 import DomainDetailEvalConfigType0
         from ..models.domain_detail_ontology_type_0 import DomainDetailOntologyType0
 
         id = self.id
@@ -171,9 +169,7 @@ class DomainDetail:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.domain_detail_eval_config_type_0 import (
-            DomainDetailEvalConfigType0,
-        )
+        from ..models.domain_detail_eval_config_type_0 import DomainDetailEvalConfigType0
         from ..models.domain_detail_ontology_type_0 import DomainDetailOntologyType0
         from ..models.entity_out import EntityOut
         from ..models.relationship_out import RelationshipOut
@@ -214,9 +210,7 @@ class DomainDetail:
 
                 entities.append(entities_item)
 
-        def _parse_eval_config(
-            data: object,
-        ) -> DomainDetailEvalConfigType0 | None | Unset:
+        def _parse_eval_config(data: object) -> DomainDetailEvalConfigType0 | None | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):

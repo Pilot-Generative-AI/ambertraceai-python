@@ -19,9 +19,9 @@ T = TypeVar("T", bound="QueryRequestRelationsType0")
 class QueryRequestRelationsType0:
     """ """
 
-    additional_properties: dict[
-        str, list[QueryRequestRelationsType0AdditionalPropertyItem]
-    ] = _attrs_field(init=False, factory=dict)
+    additional_properties: dict[str, list[QueryRequestRelationsType0AdditionalPropertyItem]] = _attrs_field(
+        init=False, factory=dict
+    )
 
     def to_dict(self) -> dict[str, Any]:
 
@@ -48,10 +48,8 @@ class QueryRequestRelationsType0:
             additional_property = []
             _additional_property = prop_dict
             for additional_property_item_data in _additional_property:
-                additional_property_item = (
-                    QueryRequestRelationsType0AdditionalPropertyItem.from_dict(
-                        additional_property_item_data
-                    )
+                additional_property_item = QueryRequestRelationsType0AdditionalPropertyItem.from_dict(
+                    additional_property_item_data
                 )
 
                 additional_property.append(additional_property_item)
@@ -65,14 +63,10 @@ class QueryRequestRelationsType0:
     def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
-    def __getitem__(
-        self, key: str
-    ) -> list[QueryRequestRelationsType0AdditionalPropertyItem]:
+    def __getitem__(self, key: str) -> list[QueryRequestRelationsType0AdditionalPropertyItem]:
         return self.additional_properties[key]
 
-    def __setitem__(
-        self, key: str, value: list[QueryRequestRelationsType0AdditionalPropertyItem]
-    ) -> None:
+    def __setitem__(self, key: str, value: list[QueryRequestRelationsType0AdditionalPropertyItem]) -> None:
         self.additional_properties[key] = value
 
     def __delitem__(self, key: str) -> None:

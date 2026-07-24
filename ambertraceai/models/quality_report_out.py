@@ -75,9 +75,7 @@ class QualityReportOut:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.quality_report_out_completeness import (
-            QualityReportOutCompleteness,
-        )
+        from ..models.quality_report_out_completeness import QualityReportOutCompleteness
         from ..models.quality_report_out_consistency import QualityReportOutConsistency
         from ..models.quality_report_out_uniqueness import QualityReportOutUniqueness
 

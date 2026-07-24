@@ -1,20 +1,32 @@
 """Contains all the data models used in inputs/outputs"""
 
 from .approve_request import ApproveRequest
+from .authorize_action_request import AuthorizeActionRequest
+from .authorize_action_request_context_type_0 import AuthorizeActionRequestContextType0
+from .authorize_action_request_predictions_type_0 import AuthorizeActionRequestPredictionsType0
+from .authorize_action_request_predictions_type_0_additional_property import (
+    AuthorizeActionRequestPredictionsType0AdditionalProperty,
+)
+from .authorize_action_request_relations_type_0 import AuthorizeActionRequestRelationsType0
+from .authorize_action_request_relations_type_0_additional_property_item import (
+    AuthorizeActionRequestRelationsType0AdditionalPropertyItem,
+)
 from .build_request import BuildRequest
 from .build_request_config import BuildRequestConfig
-from .build_request_scored_determinations_type_0 import (
-    BuildRequestScoredDeterminationsType0,
-)
+from .build_request_scored_determinations_type_0 import BuildRequestScoredDeterminationsType0
+from .compile_policy_request import CompilePolicyRequest
+from .config_field_out import ConfigFieldOut
 from .connector_out import ConnectorOut
 from .connector_test_request import ConnectorTestRequest
 from .connector_test_request_config import ConnectorTestRequestConfig
 from .create_key_request import CreateKeyRequest
+from .create_session_request import CreateSessionRequest
 from .credential_body import CredentialBody
 from .data_context_out import DataContextOut
 from .data_context_out_datasets_item import DataContextOutDatasetsItem
 from .data_context_out_domain_type_0 import DataContextOutDomainType0
 from .data_context_out_eval_config_type_0 import DataContextOutEvalConfigType0
+from .data_search_result_out import DataSearchResultOut
 from .dataset_clean_request import DatasetCleanRequest
 from .dataset_fetch_multi_request import DatasetFetchMultiRequest
 from .dataset_fetch_request import DatasetFetchRequest
@@ -24,6 +36,12 @@ from .dataset_out_schema_info_type_0 import DatasetOutSchemaInfoType0
 from .dataset_preview import DatasetPreview
 from .dataset_preview_columns_item import DatasetPreviewColumnsItem
 from .dataset_preview_rows_item import DatasetPreviewRowsItem
+from .decision_logic_edge import DecisionLogicEdge
+from .decision_logic_map_out import DecisionLogicMapOut
+from .decision_logic_node import DecisionLogicNode
+from .decision_logic_summary import DecisionLogicSummary
+from .decision_provenance_response import DecisionProvenanceResponse
+from .decision_provenance_response_decision import DecisionProvenanceResponseDecision
 from .discover_prediction_rules_request import DiscoverPredictionRulesRequest
 from .domain_create import DomainCreate
 from .domain_detail import DomainDetail
@@ -37,17 +55,19 @@ from .drift_baseline_out_per_rule_fire_rate import DriftBaselineOutPerRuleFireRa
 from .drift_check_out import DriftCheckOut
 from .edge_out import EdgeOut
 from .edge_out_properties_type_0 import EdgeOutPropertiesType0
+from .entity_link_out import EntityLinkOut
+from .entity_links_response import EntityLinksResponse
 from .entity_out import EntityOut
 from .entity_out_properties_type_0 import EntityOutPropertiesType0
+from .entity_relations_response import EntityRelationsResponse
+from .entity_relations_response_relations_item import EntityRelationsResponseRelationsItem
 from .eval_config_suggest_request import EvalConfigSuggestRequest
 from .eval_config_update import EvalConfigUpdate
 from .eval_config_update_calculation_type_0 import EvalConfigUpdateCalculationType0
 from .export_report_request import ExportReportRequest
 from .feedback_log_entry import FeedbackLogEntry
 from .feedback_log_entry_rule_snapshot_type_0 import FeedbackLogEntryRuleSnapshotType0
-from .feedback_log_entry_scorecard_snapshot_type_0 import (
-    FeedbackLogEntryScorecardSnapshotType0,
-)
+from .feedback_log_entry_scorecard_snapshot_type_0 import FeedbackLogEntryScorecardSnapshotType0
 from .feedback_stats_out import FeedbackStatsOut
 from .feedback_stats_out_by_backend import FeedbackStatsOutByBackend
 from .feedback_stats_out_by_category import FeedbackStatsOutByCategory
@@ -68,6 +88,8 @@ from .health_response import HealthResponse
 from .invariant import Invariant
 from .job_out import JobOut
 from .job_out_result_type_0 import JobOutResultType0
+from .linked_dataset_out import LinkedDatasetOut
+from .linked_series_out import LinkedSeriesOut
 from .node_out import NodeOut
 from .node_out_properties_type_0 import NodeOutPropertiesType0
 from .obligation_suggestion import ObligationSuggestion
@@ -78,36 +100,23 @@ from .platform_out_config_type_0 import PlatformOutConfigType0
 from .platform_out_neural_config_type_0 import PlatformOutNeuralConfigType0
 from .platform_status_out import PlatformStatusOut
 from .platform_update_request import PlatformUpdateRequest
-from .platform_update_request_scored_determinations_type_0 import (
-    PlatformUpdateRequestScoredDeterminationsType0,
-)
+from .platform_update_request_scored_determinations_type_0 import PlatformUpdateRequestScoredDeterminationsType0
 from .predict_request import PredictRequest
-from .predict_request_feature_overrides_type_0 import (
-    PredictRequestFeatureOverridesType0,
-)
+from .predict_request_feature_overrides_type_0 import PredictRequestFeatureOverridesType0
 from .prediction_config_create import PredictionConfigCreate
-from .prediction_config_create_backtest_config_type_0 import (
-    PredictionConfigCreateBacktestConfigType0,
-)
-from .prediction_config_create_eval_metric_config_type_0 import (
-    PredictionConfigCreateEvalMetricConfigType0,
-)
-from .prediction_config_create_feature_config_type_0 import (
-    PredictionConfigCreateFeatureConfigType0,
-)
+from .prediction_config_create_backtest_config_type_0 import PredictionConfigCreateBacktestConfigType0
+from .prediction_config_create_eval_metric_config_type_0 import PredictionConfigCreateEvalMetricConfigType0
+from .prediction_config_create_feature_config_type_0 import PredictionConfigCreateFeatureConfigType0
 from .prediction_config_out import PredictionConfigOut
-from .prediction_config_out_backtest_config_type_0 import (
-    PredictionConfigOutBacktestConfigType0,
-)
-from .prediction_config_out_eval_metric_config_type_0 import (
-    PredictionConfigOutEvalMetricConfigType0,
-)
-from .prediction_config_out_feature_config_type_0 import (
-    PredictionConfigOutFeatureConfigType0,
-)
+from .prediction_config_out_backtest_config_type_0 import PredictionConfigOutBacktestConfigType0
+from .prediction_config_out_eval_metric_config_type_0 import PredictionConfigOutEvalMetricConfigType0
+from .prediction_config_out_feature_config_type_0 import PredictionConfigOutFeatureConfigType0
 from .prediction_out import PredictionOut
 from .prediction_out_explanation_type_0 import PredictionOutExplanationType0
 from .prediction_out_prediction import PredictionOutPrediction
+from .provenance_item import ProvenanceItem
+from .provenance_item_edge import ProvenanceItemEdge
+from .provenance_item_node import ProvenanceItemNode
 from .quality_report_out import QualityReportOut
 from .quality_report_out_completeness import QualityReportOutCompleteness
 from .quality_report_out_consistency import QualityReportOutConsistency
@@ -115,13 +124,9 @@ from .quality_report_out_uniqueness import QualityReportOutUniqueness
 from .query_request import QueryRequest
 from .query_request_facts_type_0 import QueryRequestFactsType0
 from .query_request_predictions_type_0 import QueryRequestPredictionsType0
-from .query_request_predictions_type_0_additional_property import (
-    QueryRequestPredictionsType0AdditionalProperty,
-)
+from .query_request_predictions_type_0_additional_property import QueryRequestPredictionsType0AdditionalProperty
 from .query_request_relations_type_0 import QueryRequestRelationsType0
-from .query_request_relations_type_0_additional_property_item import (
-    QueryRequestRelationsType0AdditionalPropertyItem,
-)
+from .query_request_relations_type_0_additional_property_item import QueryRequestRelationsType0AdditionalPropertyItem
 from .query_response import QueryResponse
 from .query_response_explanation_type_0 import QueryResponseExplanationType0
 from .reject_request import RejectRequest
@@ -131,10 +136,14 @@ from .replay_metric import ReplayMetric
 from .replay_request import ReplayRequest
 from .replay_result import ReplayResult
 from .replay_result_row_details_item import ReplayResultRowDetailsItem
+from .residual_diagnosis_request import ResidualDiagnosisRequest
+from .rotate_key_request import RotateKeyRequest
 from .rule_create_request import RuleCreateRequest
 from .rule_create_request_action import RuleCreateRequestAction
 from .rule_create_request_condition import RuleCreateRequestCondition
 from .rule_delete_out import RuleDeleteOut
+from .rule_impact_response import RuleImpactResponse
+from .rule_impact_response_decisions_item import RuleImpactResponseDecisionsItem
 from .rule_out import RuleOut
 from .rule_out_action_type_0 import RuleOutActionType0
 from .rule_out_condition_type_0 import RuleOutConditionType0
@@ -145,11 +154,15 @@ from .rule_update_request_condition_type_0 import RuleUpdateRequestConditionType
 from .schema_reconciliation import SchemaReconciliation
 from .schema_reconciliation_augment import SchemaReconciliationAugment
 from .schema_reconciliation_conflict import SchemaReconciliationConflict
+from .step_request import StepRequest
+from .step_request_context_type_0 import StepRequestContextType0
 from .suggestion_out import SuggestionOut
 from .suggestion_out_action_type_0 import SuggestionOutActionType0
 from .suggestion_out_condition_type_0 import SuggestionOutConditionType0
 from .suggestion_out_scorecard_type_0 import SuggestionOutScorecardType0
 from .suggestor_settings_update import SuggestorSettingsUpdate
+from .symbolic_forecast_request import SymbolicForecastRequest
+from .symbolic_forecast_request_feature_overrides_type_0 import SymbolicForecastRequestFeatureOverridesType0
 from .template_create import TemplateCreate
 from .template_create_params_type_0 import TemplateCreateParamsType0
 from .template_out import TemplateOut
@@ -157,6 +170,9 @@ from .template_out_params_type_0 import TemplateOutParamsType0
 from .template_update import TemplateUpdate
 from .template_update_params_type_0 import TemplateUpdateParamsType0
 from .token_budget_out import TokenBudgetOut
+from .tool_call import ToolCall
+from .tool_call_args import ToolCallArgs
+from .unreachable_outcome import UnreachableOutcome
 from .usage_stats_out import UsageStatsOut
 from .validation_error_model import ValidationErrorModel
 from .validation_error_model_ctx_type_0 import ValidationErrorModelCtxType0
@@ -165,18 +181,28 @@ from .version_response import VersionResponse
 
 __all__ = (
     "ApproveRequest",
+    "AuthorizeActionRequest",
+    "AuthorizeActionRequestContextType0",
+    "AuthorizeActionRequestPredictionsType0",
+    "AuthorizeActionRequestPredictionsType0AdditionalProperty",
+    "AuthorizeActionRequestRelationsType0",
+    "AuthorizeActionRequestRelationsType0AdditionalPropertyItem",
     "BuildRequest",
     "BuildRequestConfig",
     "BuildRequestScoredDeterminationsType0",
+    "CompilePolicyRequest",
+    "ConfigFieldOut",
     "ConnectorOut",
     "ConnectorTestRequest",
     "ConnectorTestRequestConfig",
     "CreateKeyRequest",
+    "CreateSessionRequest",
     "CredentialBody",
     "DataContextOut",
     "DataContextOutDatasetsItem",
     "DataContextOutDomainType0",
     "DataContextOutEvalConfigType0",
+    "DataSearchResultOut",
     "DatasetCleanRequest",
     "DatasetFetchMultiRequest",
     "DatasetFetchRequest",
@@ -186,6 +212,12 @@ __all__ = (
     "DatasetPreview",
     "DatasetPreviewColumnsItem",
     "DatasetPreviewRowsItem",
+    "DecisionLogicEdge",
+    "DecisionLogicMapOut",
+    "DecisionLogicNode",
+    "DecisionLogicSummary",
+    "DecisionProvenanceResponse",
+    "DecisionProvenanceResponseDecision",
     "DiscoverPredictionRulesRequest",
     "DomainCreate",
     "DomainDetail",
@@ -199,8 +231,12 @@ __all__ = (
     "DriftCheckOut",
     "EdgeOut",
     "EdgeOutPropertiesType0",
+    "EntityLinkOut",
+    "EntityLinksResponse",
     "EntityOut",
     "EntityOutPropertiesType0",
+    "EntityRelationsResponse",
+    "EntityRelationsResponseRelationsItem",
     "EvalConfigSuggestRequest",
     "EvalConfigUpdate",
     "EvalConfigUpdateCalculationType0",
@@ -228,6 +264,8 @@ __all__ = (
     "Invariant",
     "JobOut",
     "JobOutResultType0",
+    "LinkedDatasetOut",
+    "LinkedSeriesOut",
     "NodeOut",
     "NodeOutPropertiesType0",
     "ObligationSuggestion",
@@ -252,6 +290,9 @@ __all__ = (
     "PredictionOutPrediction",
     "PredictRequest",
     "PredictRequestFeatureOverridesType0",
+    "ProvenanceItem",
+    "ProvenanceItemEdge",
+    "ProvenanceItemNode",
     "QualityReportOut",
     "QualityReportOutCompleteness",
     "QualityReportOutConsistency",
@@ -271,10 +312,14 @@ __all__ = (
     "ReplayRequest",
     "ReplayResult",
     "ReplayResultRowDetailsItem",
+    "ResidualDiagnosisRequest",
+    "RotateKeyRequest",
     "RuleCreateRequest",
     "RuleCreateRequestAction",
     "RuleCreateRequestCondition",
     "RuleDeleteOut",
+    "RuleImpactResponse",
+    "RuleImpactResponseDecisionsItem",
     "RuleOut",
     "RuleOutActionType0",
     "RuleOutConditionType0",
@@ -285,11 +330,15 @@ __all__ = (
     "SchemaReconciliation",
     "SchemaReconciliationAugment",
     "SchemaReconciliationConflict",
+    "StepRequest",
+    "StepRequestContextType0",
     "SuggestionOut",
     "SuggestionOutActionType0",
     "SuggestionOutConditionType0",
     "SuggestionOutScorecardType0",
     "SuggestorSettingsUpdate",
+    "SymbolicForecastRequest",
+    "SymbolicForecastRequestFeatureOverridesType0",
     "TemplateCreate",
     "TemplateCreateParamsType0",
     "TemplateOut",
@@ -297,6 +346,9 @@ __all__ = (
     "TemplateUpdate",
     "TemplateUpdateParamsType0",
     "TokenBudgetOut",
+    "ToolCall",
+    "ToolCallArgs",
+    "UnreachableOutcome",
     "UsageStatsOut",
     "ValidationErrorModel",
     "ValidationErrorModelCtxType0",

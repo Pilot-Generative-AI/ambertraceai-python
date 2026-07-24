@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
+
+if TYPE_CHECKING:
+    from ..models.config_field_out import ConfigFieldOut
+
 
 T = TypeVar("T", bound="ConnectorOut")
 
@@ -17,11 +21,24 @@ class ConnectorOut:
     Attributes:
         description (str):
         type_ (str):
+        asset_classes (list[str] | Unset):
+        config_schema (list[ConfigFieldOut] | Unset): Machine-readable config schema: one entry per accepted config key.
+            Empty for connectors that have not declared a schema yet.
+        countries (list[str] | Unset):
+        currencies (list[str] | Unset):
+        entitlement (str | Unset):  Default: 'restricted'.
+        redistributable (bool | Unset):  Default: False.
         requires (list[str] | Unset):
     """
 
     description: str
     type_: str
+    asset_classes: list[str] | Unset = UNSET
+    config_schema: list[ConfigFieldOut] | Unset = UNSET
+    countries: list[str] | Unset = UNSET
+    currencies: list[str] | Unset = UNSET
+    entitlement: str | Unset = "restricted"
+    redistributable: bool | Unset = False
     requires: list[str] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -29,6 +46,29 @@ class ConnectorOut:
         description = self.description
 
         type_ = self.type_
+
+        asset_classes: list[str] | Unset = UNSET
+        if not isinstance(self.asset_classes, Unset):
+            asset_classes = self.asset_classes
+
+        config_schema: list[dict[str, Any]] | Unset = UNSET
+        if not isinstance(self.config_schema, Unset):
+            config_schema = []
+            for config_schema_item_data in self.config_schema:
+                config_schema_item = config_schema_item_data.to_dict()
+                config_schema.append(config_schema_item)
+
+        countries: list[str] | Unset = UNSET
+        if not isinstance(self.countries, Unset):
+            countries = self.countries
+
+        currencies: list[str] | Unset = UNSET
+        if not isinstance(self.currencies, Unset):
+            currencies = self.currencies
+
+        entitlement = self.entitlement
+
+        redistributable = self.redistributable
 
         requires: list[str] | Unset = UNSET
         if not isinstance(self.requires, Unset):
@@ -42,6 +82,18 @@ class ConnectorOut:
                 "type": type_,
             }
         )
+        if asset_classes is not UNSET:
+            field_dict["asset_classes"] = asset_classes
+        if config_schema is not UNSET:
+            field_dict["config_schema"] = config_schema
+        if countries is not UNSET:
+            field_dict["countries"] = countries
+        if currencies is not UNSET:
+            field_dict["currencies"] = currencies
+        if entitlement is not UNSET:
+            field_dict["entitlement"] = entitlement
+        if redistributable is not UNSET:
+            field_dict["redistributable"] = redistributable
         if requires is not UNSET:
             field_dict["requires"] = requires
 
@@ -49,16 +101,43 @@ class ConnectorOut:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.config_field_out import ConfigFieldOut
+
         d = dict(src_dict)
         description = d.pop("description")
 
         type_ = d.pop("type")
+
+        asset_classes = cast(list[str], d.pop("asset_classes", UNSET))
+
+        _config_schema = d.pop("config_schema", UNSET)
+        config_schema: list[ConfigFieldOut] | Unset = UNSET
+        if _config_schema is not UNSET:
+            config_schema = []
+            for config_schema_item_data in _config_schema:
+                config_schema_item = ConfigFieldOut.from_dict(config_schema_item_data)
+
+                config_schema.append(config_schema_item)
+
+        countries = cast(list[str], d.pop("countries", UNSET))
+
+        currencies = cast(list[str], d.pop("currencies", UNSET))
+
+        entitlement = d.pop("entitlement", UNSET)
+
+        redistributable = d.pop("redistributable", UNSET)
 
         requires = cast(list[str], d.pop("requires", UNSET))
 
         connector_out = cls(
             description=description,
             type_=type_,
+            asset_classes=asset_classes,
+            config_schema=config_schema,
+            countries=countries,
+            currencies=currencies,
+            entitlement=entitlement,
+            redistributable=redistributable,
             requires=requires,
         )
 

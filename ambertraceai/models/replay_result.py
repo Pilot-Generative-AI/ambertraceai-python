@@ -115,9 +115,7 @@ class ReplayResult:
         if _row_details is not UNSET:
             row_details = []
             for row_details_item_data in _row_details:
-                row_details_item = ReplayResultRowDetailsItem.from_dict(
-                    row_details_item_data
-                )
+                row_details_item = ReplayResultRowDetailsItem.from_dict(row_details_item_data)
 
                 row_details.append(row_details_item)
 

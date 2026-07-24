@@ -10,9 +10,7 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.graph_node_detail_neighbours_item import GraphNodeDetailNeighboursItem
-    from ..models.graph_node_detail_properties_type_0 import (
-        GraphNodeDetailPropertiesType0,
-    )
+    from ..models.graph_node_detail_properties_type_0 import GraphNodeDetailPropertiesType0
 
 
 T = TypeVar("T", bound="GraphNodeDetail")
@@ -37,9 +35,7 @@ class GraphNodeDetail:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.graph_node_detail_properties_type_0 import (
-            GraphNodeDetailPropertiesType0,
-        )
+        from ..models.graph_node_detail_properties_type_0 import GraphNodeDetailPropertiesType0
 
         node_uuid = self.node_uuid
 
@@ -90,12 +86,8 @@ class GraphNodeDetail:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.graph_node_detail_neighbours_item import (
-            GraphNodeDetailNeighboursItem,
-        )
-        from ..models.graph_node_detail_properties_type_0 import (
-            GraphNodeDetailPropertiesType0,
-        )
+        from ..models.graph_node_detail_neighbours_item import GraphNodeDetailNeighboursItem
+        from ..models.graph_node_detail_properties_type_0 import GraphNodeDetailPropertiesType0
 
         d = dict(src_dict)
         node_uuid = d.pop("node_uuid")
@@ -114,9 +106,7 @@ class GraphNodeDetail:
         if _neighbours is not UNSET:
             neighbours = []
             for neighbours_item_data in _neighbours:
-                neighbours_item = GraphNodeDetailNeighboursItem.from_dict(
-                    neighbours_item_data
-                )
+                neighbours_item = GraphNodeDetailNeighboursItem.from_dict(neighbours_item_data)
 
                 neighbours.append(neighbours_item)
 
@@ -129,9 +119,7 @@ class GraphNodeDetail:
 
         node_type = _parse_node_type(d.pop("node_type", UNSET))
 
-        def _parse_properties(
-            data: object,
-        ) -> GraphNodeDetailPropertiesType0 | None | Unset:
+        def _parse_properties(data: object) -> GraphNodeDetailPropertiesType0 | None | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):

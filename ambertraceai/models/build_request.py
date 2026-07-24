@@ -10,9 +10,7 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.build_request_config import BuildRequestConfig
-    from ..models.build_request_scored_determinations_type_0 import (
-        BuildRequestScoredDeterminationsType0,
-    )
+    from ..models.build_request_scored_determinations_type_0 import BuildRequestScoredDeterminationsType0
     from ..models.invariant import Invariant
 
 
@@ -65,9 +63,7 @@ class BuildRequest:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.build_request_scored_determinations_type_0 import (
-            BuildRequestScoredDeterminationsType0,
-        )
+        from ..models.build_request_scored_determinations_type_0 import BuildRequestScoredDeterminationsType0
 
         domain_id = self.domain_id
 
@@ -81,9 +77,7 @@ class BuildRequest:
         elif isinstance(self.invariant_manifest, list):
             invariant_manifest = []
             for invariant_manifest_type_0_item_data in self.invariant_manifest:
-                invariant_manifest_type_0_item = (
-                    invariant_manifest_type_0_item_data.to_dict()
-                )
+                invariant_manifest_type_0_item = invariant_manifest_type_0_item_data.to_dict()
                 invariant_manifest.append(invariant_manifest_type_0_item)
 
         else:
@@ -94,9 +88,7 @@ class BuildRequest:
         scored_determinations: dict[str, Any] | None | Unset
         if isinstance(self.scored_determinations, Unset):
             scored_determinations = UNSET
-        elif isinstance(
-            self.scored_determinations, BuildRequestScoredDeterminationsType0
-        ):
+        elif isinstance(self.scored_determinations, BuildRequestScoredDeterminationsType0):
             scored_determinations = self.scored_determinations.to_dict()
         else:
             scored_determinations = self.scored_determinations
@@ -150,9 +142,7 @@ class BuildRequest:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.build_request_config import BuildRequestConfig
-        from ..models.build_request_scored_determinations_type_0 import (
-            BuildRequestScoredDeterminationsType0,
-        )
+        from ..models.build_request_scored_determinations_type_0 import BuildRequestScoredDeterminationsType0
         from ..models.invariant import Invariant
 
         d = dict(src_dict)
@@ -176,9 +166,7 @@ class BuildRequest:
                 invariant_manifest_type_0 = []
                 _invariant_manifest_type_0 = data
                 for invariant_manifest_type_0_item_data in _invariant_manifest_type_0:
-                    invariant_manifest_type_0_item = Invariant.from_dict(
-                        invariant_manifest_type_0_item_data
-                    )
+                    invariant_manifest_type_0_item = Invariant.from_dict(invariant_manifest_type_0_item_data)
 
                     invariant_manifest_type_0.append(invariant_manifest_type_0_item)
 
@@ -187,15 +175,11 @@ class BuildRequest:
                 pass
             return cast(list[Invariant] | None | Unset, data)
 
-        invariant_manifest = _parse_invariant_manifest(
-            d.pop("invariant_manifest", UNSET)
-        )
+        invariant_manifest = _parse_invariant_manifest(d.pop("invariant_manifest", UNSET))
 
         override_verification_gate = d.pop("override_verification_gate", UNSET)
 
-        def _parse_scored_determinations(
-            data: object,
-        ) -> BuildRequestScoredDeterminationsType0 | None | Unset:
+        def _parse_scored_determinations(data: object) -> BuildRequestScoredDeterminationsType0 | None | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -203,18 +187,14 @@ class BuildRequest:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                scored_determinations_type_0 = (
-                    BuildRequestScoredDeterminationsType0.from_dict(data)
-                )
+                scored_determinations_type_0 = BuildRequestScoredDeterminationsType0.from_dict(data)
 
                 return scored_determinations_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(BuildRequestScoredDeterminationsType0 | None | Unset, data)
 
-        scored_determinations = _parse_scored_determinations(
-            d.pop("scored_determinations", UNSET)
-        )
+        scored_determinations = _parse_scored_determinations(d.pop("scored_determinations", UNSET))
 
         def _parse_team_id(data: object) -> int | None | Unset:
             if data is None:
@@ -232,9 +212,7 @@ class BuildRequest:
                 return data
             return cast(float | None | Unset, data)
 
-        verified_min_confidence = _parse_verified_min_confidence(
-            d.pop("verified_min_confidence", UNSET)
-        )
+        verified_min_confidence = _parse_verified_min_confidence(d.pop("verified_min_confidence", UNSET))
 
         verified_profile = d.pop("verified_profile", UNSET)
 

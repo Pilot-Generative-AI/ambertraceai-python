@@ -7,14 +7,45 @@ from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.connector_out import ConnectorOut
 from ...models.validation_error_model import ValidationErrorModel
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
-def _get_kwargs() -> dict[str, Any]:
+def _get_kwargs(
+    *,
+    asset_class: None | str | Unset = UNSET,
+    country: None | str | Unset = UNSET,
+    currency: None | str | Unset = UNSET,
+) -> dict[str, Any]:
+
+    params: dict[str, Any] = {}
+
+    json_asset_class: None | str | Unset
+    if isinstance(asset_class, Unset):
+        json_asset_class = UNSET
+    else:
+        json_asset_class = asset_class
+    params["asset_class"] = json_asset_class
+
+    json_country: None | str | Unset
+    if isinstance(country, Unset):
+        json_country = UNSET
+    else:
+        json_country = country
+    params["country"] = json_country
+
+    json_currency: None | str | Unset
+    if isinstance(currency, Unset):
+        json_currency = UNSET
+    else:
+        json_currency = currency
+    params["currency"] = json_currency
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/api/v1/connectors",
+        "params": params,
     }
 
     return _kwargs
@@ -58,10 +89,22 @@ def _build_response(
 def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
+    asset_class: None | str | Unset = UNSET,
+    country: None | str | Unset = UNSET,
+    currency: None | str | Unset = UNSET,
 ) -> Response[ConnectorOut | list[ValidationErrorModel]]:
     """List connectors
 
-     Returns all available data connectors with their requirements (e.g. FRED, Yahoo Finance).
+     Returns all available data connectors with their requirements and taxonomy metadata (asset classes,
+    countries, currencies). Optional query-string filters narrow the list: asset_class, country,
+    currency (AND-ed).
+
+    Args:
+        asset_class (None | str | Unset): Filter by asset class (e.g. 'rates', 'crypto',
+            'economics/macro').
+        country (None | str | Unset): Filter by country tag (ISO-3166 alpha-2, aggregate code, or
+            'global').
+        currency (None | str | Unset): Filter by currency tag (ISO-4217 alpha-3 or 'multi').
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -71,7 +114,11 @@ def sync_detailed(
         Response[ConnectorOut | list[ValidationErrorModel]]
     """
 
-    kwargs = _get_kwargs()
+    kwargs = _get_kwargs(
+        asset_class=asset_class,
+        country=country,
+        currency=currency,
+    )
 
     response = client.get_httpx_client().request(
         **kwargs,
@@ -83,10 +130,22 @@ def sync_detailed(
 def sync(
     *,
     client: AuthenticatedClient | Client,
+    asset_class: None | str | Unset = UNSET,
+    country: None | str | Unset = UNSET,
+    currency: None | str | Unset = UNSET,
 ) -> ConnectorOut | list[ValidationErrorModel] | None:
     """List connectors
 
-     Returns all available data connectors with their requirements (e.g. FRED, Yahoo Finance).
+     Returns all available data connectors with their requirements and taxonomy metadata (asset classes,
+    countries, currencies). Optional query-string filters narrow the list: asset_class, country,
+    currency (AND-ed).
+
+    Args:
+        asset_class (None | str | Unset): Filter by asset class (e.g. 'rates', 'crypto',
+            'economics/macro').
+        country (None | str | Unset): Filter by country tag (ISO-3166 alpha-2, aggregate code, or
+            'global').
+        currency (None | str | Unset): Filter by currency tag (ISO-4217 alpha-3 or 'multi').
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -98,16 +157,31 @@ def sync(
 
     return sync_detailed(
         client=client,
+        asset_class=asset_class,
+        country=country,
+        currency=currency,
     ).parsed
 
 
 async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
+    asset_class: None | str | Unset = UNSET,
+    country: None | str | Unset = UNSET,
+    currency: None | str | Unset = UNSET,
 ) -> Response[ConnectorOut | list[ValidationErrorModel]]:
     """List connectors
 
-     Returns all available data connectors with their requirements (e.g. FRED, Yahoo Finance).
+     Returns all available data connectors with their requirements and taxonomy metadata (asset classes,
+    countries, currencies). Optional query-string filters narrow the list: asset_class, country,
+    currency (AND-ed).
+
+    Args:
+        asset_class (None | str | Unset): Filter by asset class (e.g. 'rates', 'crypto',
+            'economics/macro').
+        country (None | str | Unset): Filter by country tag (ISO-3166 alpha-2, aggregate code, or
+            'global').
+        currency (None | str | Unset): Filter by currency tag (ISO-4217 alpha-3 or 'multi').
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -117,7 +191,11 @@ async def asyncio_detailed(
         Response[ConnectorOut | list[ValidationErrorModel]]
     """
 
-    kwargs = _get_kwargs()
+    kwargs = _get_kwargs(
+        asset_class=asset_class,
+        country=country,
+        currency=currency,
+    )
 
     response = await client.get_async_httpx_client().request(**kwargs)
 
@@ -127,10 +205,22 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: AuthenticatedClient | Client,
+    asset_class: None | str | Unset = UNSET,
+    country: None | str | Unset = UNSET,
+    currency: None | str | Unset = UNSET,
 ) -> ConnectorOut | list[ValidationErrorModel] | None:
     """List connectors
 
-     Returns all available data connectors with their requirements (e.g. FRED, Yahoo Finance).
+     Returns all available data connectors with their requirements and taxonomy metadata (asset classes,
+    countries, currencies). Optional query-string filters narrow the list: asset_class, country,
+    currency (AND-ed).
+
+    Args:
+        asset_class (None | str | Unset): Filter by asset class (e.g. 'rates', 'crypto',
+            'economics/macro').
+        country (None | str | Unset): Filter by country tag (ISO-3166 alpha-2, aggregate code, or
+            'global').
+        currency (None | str | Unset): Filter by currency tag (ISO-4217 alpha-3 or 'multi').
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -143,5 +233,8 @@ async def asyncio(
     return (
         await asyncio_detailed(
             client=client,
+            asset_class=asset_class,
+            country=country,
+            currency=currency,
         )
     ).parsed

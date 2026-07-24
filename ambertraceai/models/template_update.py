@@ -193,9 +193,7 @@ class TemplateUpdate:
                 return data
             return cast(None | str | Unset, data)
 
-        condition_operator = _parse_condition_operator(
-            d.pop("condition_operator", UNSET)
-        )
+        condition_operator = _parse_condition_operator(d.pop("condition_operator", UNSET))
 
         def _parse_is_active(data: object) -> bool | None | Unset:
             if data is None:
@@ -231,9 +229,7 @@ class TemplateUpdate:
                 return data
             return cast(None | str | Unset, data)
 
-        param_to_action_value = _parse_param_to_action_value(
-            d.pop("param_to_action_value", UNSET)
-        )
+        param_to_action_value = _parse_param_to_action_value(d.pop("param_to_action_value", UNSET))
 
         def _parse_param_to_condition_value(data: object) -> None | str | Unset:
             if data is None:
@@ -242,9 +238,7 @@ class TemplateUpdate:
                 return data
             return cast(None | str | Unset, data)
 
-        param_to_condition_value = _parse_param_to_condition_value(
-            d.pop("param_to_condition_value", UNSET)
-        )
+        param_to_condition_value = _parse_param_to_condition_value(d.pop("param_to_condition_value", UNSET))
 
         def _parse_params(data: object) -> None | TemplateUpdateParamsType0 | Unset:
             if data is None:

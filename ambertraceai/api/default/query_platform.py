@@ -75,7 +75,7 @@ def sync_detailed(
     client: AuthenticatedClient | Client,
     body: QueryRequest,
 ) -> Response[QueryResponse | list[ValidationErrorModel]]:
-    """Run neurosymbolic query
+    r"""Run neurosymbolic query
 
      Executes the full neurosymbolic pipeline: neural retrieval from the knowledge graph, symbolic rule
     evaluation (ontology constraints auto-fire), graph context enrichment, LLM answer generation, and
@@ -99,6 +99,11 @@ def sync_detailed(
     require leaf or a deny-family verdict). Verified platforms also carry certified_facts,
     certified_fact_summary, confidence, proof and decision — all documented in the explanation field
     schema. These are additive; they change no decision.
+
+    Capability gating: this endpoint requires the \"query\" capability to be enabled for the caller's
+    organisation. If the capability is disabled, the endpoint returns HTTP 403 with error code
+    \"capability_disabled\" and a top-level \"capability\" field naming the gated capability. Check GET
+    /api/v1/capabilities to discover your org's effective capability set.
 
     Args:
         id (int): Resource ID
@@ -130,7 +135,7 @@ def sync(
     client: AuthenticatedClient | Client,
     body: QueryRequest,
 ) -> QueryResponse | list[ValidationErrorModel] | None:
-    """Run neurosymbolic query
+    r"""Run neurosymbolic query
 
      Executes the full neurosymbolic pipeline: neural retrieval from the knowledge graph, symbolic rule
     evaluation (ontology constraints auto-fire), graph context enrichment, LLM answer generation, and
@@ -154,6 +159,11 @@ def sync(
     require leaf or a deny-family verdict). Verified platforms also carry certified_facts,
     certified_fact_summary, confidence, proof and decision — all documented in the explanation field
     schema. These are additive; they change no decision.
+
+    Capability gating: this endpoint requires the \"query\" capability to be enabled for the caller's
+    organisation. If the capability is disabled, the endpoint returns HTTP 403 with error code
+    \"capability_disabled\" and a top-level \"capability\" field naming the gated capability. Check GET
+    /api/v1/capabilities to discover your org's effective capability set.
 
     Args:
         id (int): Resource ID
@@ -180,7 +190,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient | Client,
     body: QueryRequest,
 ) -> Response[QueryResponse | list[ValidationErrorModel]]:
-    """Run neurosymbolic query
+    r"""Run neurosymbolic query
 
      Executes the full neurosymbolic pipeline: neural retrieval from the knowledge graph, symbolic rule
     evaluation (ontology constraints auto-fire), graph context enrichment, LLM answer generation, and
@@ -204,6 +214,11 @@ async def asyncio_detailed(
     require leaf or a deny-family verdict). Verified platforms also carry certified_facts,
     certified_fact_summary, confidence, proof and decision — all documented in the explanation field
     schema. These are additive; they change no decision.
+
+    Capability gating: this endpoint requires the \"query\" capability to be enabled for the caller's
+    organisation. If the capability is disabled, the endpoint returns HTTP 403 with error code
+    \"capability_disabled\" and a top-level \"capability\" field naming the gated capability. Check GET
+    /api/v1/capabilities to discover your org's effective capability set.
 
     Args:
         id (int): Resource ID
@@ -233,7 +248,7 @@ async def asyncio(
     client: AuthenticatedClient | Client,
     body: QueryRequest,
 ) -> QueryResponse | list[ValidationErrorModel] | None:
-    """Run neurosymbolic query
+    r"""Run neurosymbolic query
 
      Executes the full neurosymbolic pipeline: neural retrieval from the knowledge graph, symbolic rule
     evaluation (ontology constraints auto-fire), graph context enrichment, LLM answer generation, and
@@ -257,6 +272,11 @@ async def asyncio(
     require leaf or a deny-family verdict). Verified platforms also carry certified_facts,
     certified_fact_summary, confidence, proof and decision — all documented in the explanation field
     schema. These are additive; they change no decision.
+
+    Capability gating: this endpoint requires the \"query\" capability to be enabled for the caller's
+    organisation. If the capability is disabled, the endpoint returns HTTP 403 with error code
+    \"capability_disabled\" and a top-level \"capability\" field naming the gated capability. Check GET
+    /api/v1/capabilities to discover your org's effective capability set.
 
     Args:
         id (int): Resource ID

@@ -9,9 +9,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.predict_request_feature_overrides_type_0 import (
-        PredictRequestFeatureOverridesType0,
-    )
+    from ..models.predict_request_feature_overrides_type_0 import PredictRequestFeatureOverridesType0
 
 
 T = TypeVar("T", bound="PredictRequest")
@@ -50,9 +48,7 @@ class PredictRequest:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.predict_request_feature_overrides_type_0 import (
-            PredictRequestFeatureOverridesType0,
-        )
+        from ..models.predict_request_feature_overrides_type_0 import PredictRequestFeatureOverridesType0
 
         prediction_config_id = self.prediction_config_id
 
@@ -82,18 +78,14 @@ class PredictRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.predict_request_feature_overrides_type_0 import (
-            PredictRequestFeatureOverridesType0,
-        )
+        from ..models.predict_request_feature_overrides_type_0 import PredictRequestFeatureOverridesType0
 
         d = dict(src_dict)
         prediction_config_id = d.pop("prediction_config_id")
 
         explain = d.pop("explain", UNSET)
 
-        def _parse_feature_overrides(
-            data: object,
-        ) -> None | PredictRequestFeatureOverridesType0 | Unset:
+        def _parse_feature_overrides(data: object) -> None | PredictRequestFeatureOverridesType0 | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -101,9 +93,7 @@ class PredictRequest:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                feature_overrides_type_0 = (
-                    PredictRequestFeatureOverridesType0.from_dict(data)
-                )
+                feature_overrides_type_0 = PredictRequestFeatureOverridesType0.from_dict(data)
 
                 return feature_overrides_type_0
             except (TypeError, ValueError, AttributeError, KeyError):

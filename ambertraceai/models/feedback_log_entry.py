@@ -9,12 +9,8 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.feedback_log_entry_rule_snapshot_type_0 import (
-        FeedbackLogEntryRuleSnapshotType0,
-    )
-    from ..models.feedback_log_entry_scorecard_snapshot_type_0 import (
-        FeedbackLogEntryScorecardSnapshotType0,
-    )
+    from ..models.feedback_log_entry_rule_snapshot_type_0 import FeedbackLogEntryRuleSnapshotType0
+    from ..models.feedback_log_entry_scorecard_snapshot_type_0 import FeedbackLogEntryScorecardSnapshotType0
 
 
 T = TypeVar("T", bound="FeedbackLogEntry")
@@ -49,12 +45,8 @@ class FeedbackLogEntry:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.feedback_log_entry_rule_snapshot_type_0 import (
-            FeedbackLogEntryRuleSnapshotType0,
-        )
-        from ..models.feedback_log_entry_scorecard_snapshot_type_0 import (
-            FeedbackLogEntryScorecardSnapshotType0,
-        )
+        from ..models.feedback_log_entry_rule_snapshot_type_0 import FeedbackLogEntryRuleSnapshotType0
+        from ..models.feedback_log_entry_scorecard_snapshot_type_0 import FeedbackLogEntryScorecardSnapshotType0
 
         decision = self.decision
 
@@ -91,9 +83,7 @@ class FeedbackLogEntry:
         scorecard_snapshot: dict[str, Any] | None | Unset
         if isinstance(self.scorecard_snapshot, Unset):
             scorecard_snapshot = UNSET
-        elif isinstance(
-            self.scorecard_snapshot, FeedbackLogEntryScorecardSnapshotType0
-        ):
+        elif isinstance(self.scorecard_snapshot, FeedbackLogEntryScorecardSnapshotType0):
             scorecard_snapshot = self.scorecard_snapshot.to_dict()
         else:
             scorecard_snapshot = self.scorecard_snapshot
@@ -138,12 +128,8 @@ class FeedbackLogEntry:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.feedback_log_entry_rule_snapshot_type_0 import (
-            FeedbackLogEntryRuleSnapshotType0,
-        )
-        from ..models.feedback_log_entry_scorecard_snapshot_type_0 import (
-            FeedbackLogEntryScorecardSnapshotType0,
-        )
+        from ..models.feedback_log_entry_rule_snapshot_type_0 import FeedbackLogEntryRuleSnapshotType0
+        from ..models.feedback_log_entry_scorecard_snapshot_type_0 import FeedbackLogEntryScorecardSnapshotType0
 
         d = dict(src_dict)
         decision = d.pop("decision")
@@ -179,9 +165,7 @@ class FeedbackLogEntry:
 
         rule_id = _parse_rule_id(d.pop("rule_id", UNSET))
 
-        def _parse_rule_snapshot(
-            data: object,
-        ) -> FeedbackLogEntryRuleSnapshotType0 | None | Unset:
+        def _parse_rule_snapshot(data: object) -> FeedbackLogEntryRuleSnapshotType0 | None | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -198,9 +182,7 @@ class FeedbackLogEntry:
 
         rule_snapshot = _parse_rule_snapshot(d.pop("rule_snapshot", UNSET))
 
-        def _parse_scorecard_snapshot(
-            data: object,
-        ) -> FeedbackLogEntryScorecardSnapshotType0 | None | Unset:
+        def _parse_scorecard_snapshot(data: object) -> FeedbackLogEntryScorecardSnapshotType0 | None | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -208,18 +190,14 @@ class FeedbackLogEntry:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                scorecard_snapshot_type_0 = (
-                    FeedbackLogEntryScorecardSnapshotType0.from_dict(data)
-                )
+                scorecard_snapshot_type_0 = FeedbackLogEntryScorecardSnapshotType0.from_dict(data)
 
                 return scorecard_snapshot_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(FeedbackLogEntryScorecardSnapshotType0 | None | Unset, data)
 
-        scorecard_snapshot = _parse_scorecard_snapshot(
-            d.pop("scorecard_snapshot", UNSET)
-        )
+        scorecard_snapshot = _parse_scorecard_snapshot(d.pop("scorecard_snapshot", UNSET))
 
         def _parse_suggestor_backend(data: object) -> None | str | Unset:
             if data is None:

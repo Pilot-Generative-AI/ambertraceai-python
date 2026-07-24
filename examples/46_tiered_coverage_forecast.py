@@ -97,6 +97,44 @@ def main() -> None:
         if basis.get("uncertified_reason"):
             print(f"  reason          : {basis.get('uncertified_reason')}")
 
+    # S3 (#1186): request the symbolic-forecast with fitted_series to get the
+    # coverage certificate + per-tier skill reporting. The certificate tells a
+    # consumer what fraction of holdout points were served by each tier, and
+    # per-tier skill shows how each tier performed independently.
+    step("Requesting symbolic-forecast with coverage certificate")
+    try:
+        sf = api.platforms.symbolic_forecast(
+            platform_id,
+            prediction_config_id=config_id,
+            include_fitted_series=True,
+        )
+    except Exception as e:
+        print(f"  Symbolic forecast failed: {e}")
+        return
+
+    cert = sf.get("coverage_certificate")
+    if cert:
+        step("Coverage certificate:")
+        print(f"  n_points        : {cert.get('n_points')}")
+        print(f"  n_uncovered     : {cert.get('n_uncovered')}")
+        print(f"  coverage_total  : {cert.get('coverage_total')}")
+        print(f"  tiers_present   : {cert.get('tiers_present')}")
+        for tier_name, tier_info in (cert.get("tiers") or {}).items():
+            print(f"    {tier_name:25s}: n={tier_info['n']}, "
+                  f"fraction={tier_info['fraction']}")
+
+    pts = sf.get("per_tier_skill")
+    if pts:
+        step("Per-tier skill:")
+        for tier_name, metrics in pts.items():
+            if metrics is None:
+                continue
+            print(f"  {tier_name}:")
+            print(f"    n                     : {metrics.get('n')}")
+            print(f"    skill_vs_persistence  : {metrics.get('skill_vs_persistence')}")
+            print(f"    mae                   : {metrics.get('mae')}")
+            print(f"    rmse                  : {metrics.get('rmse')}")
+
     step("Done.")
 
 

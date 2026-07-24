@@ -21,7 +21,7 @@ class DatasetFetchMultiRequest:
     Attributes:
         domain_id (int):
         sources (list[FetchSource]): Two or more connector sources to fetch and merge into one dataset. Each value
-            column is namespaced by connector_type (e.g. boe.IUDSOIA).
+            column is namespaced by connector_type (e.g. boe__IUDSOIA).
         aggregation (str | Unset): Resample aggregation when frequency is set: 'last' or 'mean'. Default: 'last'.
         frequency (None | str | Unset): Optional common grid to resample every source onto before joining: daily,
             weekly, monthly, quarterly, or annual. Without it, mixed-frequency sources outer-join to a mostly-null table.

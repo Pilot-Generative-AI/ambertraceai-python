@@ -13,9 +13,7 @@ T = TypeVar("T", bound="QueryRequestFactsType0")
 class QueryRequestFactsType0:
     """ """
 
-    additional_properties: dict[str, bool | float | int | str] = _attrs_field(
-        init=False, factory=dict
-    )
+    additional_properties: dict[str, bool | float | int | str] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
 

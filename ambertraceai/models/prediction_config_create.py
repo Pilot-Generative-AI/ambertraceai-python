@@ -9,15 +9,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.prediction_config_create_backtest_config_type_0 import (
-        PredictionConfigCreateBacktestConfigType0,
-    )
-    from ..models.prediction_config_create_eval_metric_config_type_0 import (
-        PredictionConfigCreateEvalMetricConfigType0,
-    )
-    from ..models.prediction_config_create_feature_config_type_0 import (
-        PredictionConfigCreateFeatureConfigType0,
-    )
+    from ..models.prediction_config_create_backtest_config_type_0 import PredictionConfigCreateBacktestConfigType0
+    from ..models.prediction_config_create_eval_metric_config_type_0 import PredictionConfigCreateEvalMetricConfigType0
+    from ..models.prediction_config_create_feature_config_type_0 import PredictionConfigCreateFeatureConfigType0
 
 
 T = TypeVar("T", bound="PredictionConfigCreate")
@@ -54,6 +48,13 @@ class PredictionConfigCreate:
             backtest_config (None | PredictionConfigCreateBacktestConfigType0 | Unset): Backtesting configuration. Keys:
                 'test_ratio' (float, default 0.2), 'n_splits' (int, default 1). In timeseries mode, uses expanding-window splits
                 to prevent future leakage. In cross_sectional mode, uses stratified random splits.
+            baseline_mode (str | Unset): Forecast anchor for the symbolic forecaster (timeseries mode only). Controls the
+                reference model the forecast composes onto: 'neural' (default — GBT prediction through the S2 confidence gate
+                for no-driver points; falls to climatology floor when the platform has no trained model or the gate is not
+                certified); 'climatology' (fit-window mean); 'persistence' (last observed level); 'drift' (last level + h * OLS
+                slope — a linear-trend anchor). The holdout acceptance gate recomposes driver effects onto the chosen anchor so
+                they are not mis-scaled. skill_vs_persistence is ALWAYS reported as the external benchmark regardless of anchor.
+                Ignored in cross_sectional mode. Default: 'neural'.
             eval_metric (str | Unset): Primary evaluation metric. Options: 'rmse' (root mean squared error), 'mae' (mean
                 absolute error), 'r2' (R-squared), 'dir_accuracy' (directional accuracy — timeseries only). Default: 'rmse'.
             eval_metric_config (None | PredictionConfigCreateEvalMetricConfigType0 | Unset): Additional metric
@@ -87,6 +88,11 @@ class PredictionConfigCreate:
             model_type (str | Unset): Algorithm to use. Options: 'gbt' (Gradient Boosted Trees — best general-purpose
                 choice), 'ridge' (L2-regularised linear), 'lasso' (L1-regularised linear, good for sparse features). Default:
                 'gbt'.
+            neural_confidence_tau (float | Unset): Per-point neural-tier confidence threshold (timeseries mode only). The
+                GBT prediction is admitted as 'neural_scored@tau' when its two-axis confidence (Axis A: in-training-range OOD
+                gate + Axis B: interval sharpness) >= tau. Below tau the point falls to the climatology floor (the fit-window
+                target level mean). Default 0.0 (gate labels every prediction with its tier and confidence but does not replace
+                below-tau predictions; set > 0 to activate replacement). Default: 0.0.
             time_index_field (None | str | Unset): Column containing date/time values used to order observations. Required
                 for timeseries mode (e.g. 'date', 'observation_month'). Must be omitted or null for cross_sectional mode — rows
                 have no temporal ordering.
@@ -95,10 +101,9 @@ class PredictionConfigCreate:
     target_field: str
     autoregressive: str | Unset = "full"
     backtest_config: None | PredictionConfigCreateBacktestConfigType0 | Unset = UNSET
+    baseline_mode: str | Unset = "neural"
     eval_metric: str | Unset = "rmse"
-    eval_metric_config: None | PredictionConfigCreateEvalMetricConfigType0 | Unset = (
-        UNSET
-    )
+    eval_metric_config: None | PredictionConfigCreateEvalMetricConfigType0 | Unset = UNSET
     feature_config: None | PredictionConfigCreateFeatureConfigType0 | Unset = UNSET
     feature_fields: list[str] | None | Unset = UNSET
     frequency: None | str | Unset = UNSET
@@ -107,19 +112,16 @@ class PredictionConfigCreate:
     mode: str | Unset = "timeseries"
     model_tier: str | Unset = "tier1"
     model_type: str | Unset = "gbt"
+    neural_confidence_tau: float | Unset = 0.0
     time_index_field: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.prediction_config_create_backtest_config_type_0 import (
-            PredictionConfigCreateBacktestConfigType0,
-        )
+        from ..models.prediction_config_create_backtest_config_type_0 import PredictionConfigCreateBacktestConfigType0
         from ..models.prediction_config_create_eval_metric_config_type_0 import (
             PredictionConfigCreateEvalMetricConfigType0,
         )
-        from ..models.prediction_config_create_feature_config_type_0 import (
-            PredictionConfigCreateFeatureConfigType0,
-        )
+        from ..models.prediction_config_create_feature_config_type_0 import PredictionConfigCreateFeatureConfigType0
 
         target_field = self.target_field
 
@@ -128,21 +130,19 @@ class PredictionConfigCreate:
         backtest_config: dict[str, Any] | None | Unset
         if isinstance(self.backtest_config, Unset):
             backtest_config = UNSET
-        elif isinstance(
-            self.backtest_config, PredictionConfigCreateBacktestConfigType0
-        ):
+        elif isinstance(self.backtest_config, PredictionConfigCreateBacktestConfigType0):
             backtest_config = self.backtest_config.to_dict()
         else:
             backtest_config = self.backtest_config
+
+        baseline_mode = self.baseline_mode
 
         eval_metric = self.eval_metric
 
         eval_metric_config: dict[str, Any] | None | Unset
         if isinstance(self.eval_metric_config, Unset):
             eval_metric_config = UNSET
-        elif isinstance(
-            self.eval_metric_config, PredictionConfigCreateEvalMetricConfigType0
-        ):
+        elif isinstance(self.eval_metric_config, PredictionConfigCreateEvalMetricConfigType0):
             eval_metric_config = self.eval_metric_config.to_dict()
         else:
             eval_metric_config = self.eval_metric_config
@@ -188,6 +188,8 @@ class PredictionConfigCreate:
 
         model_type = self.model_type
 
+        neural_confidence_tau = self.neural_confidence_tau
+
         time_index_field: None | str | Unset
         if isinstance(self.time_index_field, Unset):
             time_index_field = UNSET
@@ -205,6 +207,8 @@ class PredictionConfigCreate:
             field_dict["autoregressive"] = autoregressive
         if backtest_config is not UNSET:
             field_dict["backtest_config"] = backtest_config
+        if baseline_mode is not UNSET:
+            field_dict["baseline_mode"] = baseline_mode
         if eval_metric is not UNSET:
             field_dict["eval_metric"] = eval_metric
         if eval_metric_config is not UNSET:
@@ -225,6 +229,8 @@ class PredictionConfigCreate:
             field_dict["model_tier"] = model_tier
         if model_type is not UNSET:
             field_dict["model_type"] = model_type
+        if neural_confidence_tau is not UNSET:
+            field_dict["neural_confidence_tau"] = neural_confidence_tau
         if time_index_field is not UNSET:
             field_dict["time_index_field"] = time_index_field
 
@@ -232,24 +238,18 @@ class PredictionConfigCreate:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.prediction_config_create_backtest_config_type_0 import (
-            PredictionConfigCreateBacktestConfigType0,
-        )
+        from ..models.prediction_config_create_backtest_config_type_0 import PredictionConfigCreateBacktestConfigType0
         from ..models.prediction_config_create_eval_metric_config_type_0 import (
             PredictionConfigCreateEvalMetricConfigType0,
         )
-        from ..models.prediction_config_create_feature_config_type_0 import (
-            PredictionConfigCreateFeatureConfigType0,
-        )
+        from ..models.prediction_config_create_feature_config_type_0 import PredictionConfigCreateFeatureConfigType0
 
         d = dict(src_dict)
         target_field = d.pop("target_field")
 
         autoregressive = d.pop("autoregressive", UNSET)
 
-        def _parse_backtest_config(
-            data: object,
-        ) -> None | PredictionConfigCreateBacktestConfigType0 | Unset:
+        def _parse_backtest_config(data: object) -> None | PredictionConfigCreateBacktestConfigType0 | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -257,9 +257,7 @@ class PredictionConfigCreate:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                backtest_config_type_0 = (
-                    PredictionConfigCreateBacktestConfigType0.from_dict(data)
-                )
+                backtest_config_type_0 = PredictionConfigCreateBacktestConfigType0.from_dict(data)
 
                 return backtest_config_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -268,11 +266,11 @@ class PredictionConfigCreate:
 
         backtest_config = _parse_backtest_config(d.pop("backtest_config", UNSET))
 
+        baseline_mode = d.pop("baseline_mode", UNSET)
+
         eval_metric = d.pop("eval_metric", UNSET)
 
-        def _parse_eval_metric_config(
-            data: object,
-        ) -> None | PredictionConfigCreateEvalMetricConfigType0 | Unset:
+        def _parse_eval_metric_config(data: object) -> None | PredictionConfigCreateEvalMetricConfigType0 | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -280,24 +278,16 @@ class PredictionConfigCreate:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                eval_metric_config_type_0 = (
-                    PredictionConfigCreateEvalMetricConfigType0.from_dict(data)
-                )
+                eval_metric_config_type_0 = PredictionConfigCreateEvalMetricConfigType0.from_dict(data)
 
                 return eval_metric_config_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
-            return cast(
-                None | PredictionConfigCreateEvalMetricConfigType0 | Unset, data
-            )
+            return cast(None | PredictionConfigCreateEvalMetricConfigType0 | Unset, data)
 
-        eval_metric_config = _parse_eval_metric_config(
-            d.pop("eval_metric_config", UNSET)
-        )
+        eval_metric_config = _parse_eval_metric_config(d.pop("eval_metric_config", UNSET))
 
-        def _parse_feature_config(
-            data: object,
-        ) -> None | PredictionConfigCreateFeatureConfigType0 | Unset:
+        def _parse_feature_config(data: object) -> None | PredictionConfigCreateFeatureConfigType0 | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -305,9 +295,7 @@ class PredictionConfigCreate:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                feature_config_type_0 = (
-                    PredictionConfigCreateFeatureConfigType0.from_dict(data)
-                )
+                feature_config_type_0 = PredictionConfigCreateFeatureConfigType0.from_dict(data)
 
                 return feature_config_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -366,6 +354,8 @@ class PredictionConfigCreate:
 
         model_type = d.pop("model_type", UNSET)
 
+        neural_confidence_tau = d.pop("neural_confidence_tau", UNSET)
+
         def _parse_time_index_field(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -379,6 +369,7 @@ class PredictionConfigCreate:
             target_field=target_field,
             autoregressive=autoregressive,
             backtest_config=backtest_config,
+            baseline_mode=baseline_mode,
             eval_metric=eval_metric,
             eval_metric_config=eval_metric_config,
             feature_config=feature_config,
@@ -389,6 +380,7 @@ class PredictionConfigCreate:
             mode=mode,
             model_tier=model_tier,
             model_type=model_type,
+            neural_confidence_tau=neural_confidence_tau,
             time_index_field=time_index_field,
         )
 

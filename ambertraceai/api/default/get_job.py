@@ -75,7 +75,8 @@ def sync_detailed(
     graded checks summarising whether the build produced a usable decision layer — alongside the
     underlying generation_diagnostics detail). Use this to track async operations started by POST
     /datasets/{id}/clean, POST /platforms, POST /domains/{id}/build-ontology, POST
-    /platforms/{id}/prediction-configs/{cid}/train, or POST /platforms/{id}/suggest-rules.
+    /platforms/{id}/prediction-configs/{cid}/train, or POST /platforms/{id}/suggest-rules, or POST
+    /domains/{id}/eval-config/suggest.
 
     Args:
         id (int): Resource ID
@@ -114,7 +115,8 @@ def sync(
     graded checks summarising whether the build produced a usable decision layer — alongside the
     underlying generation_diagnostics detail). Use this to track async operations started by POST
     /datasets/{id}/clean, POST /platforms, POST /domains/{id}/build-ontology, POST
-    /platforms/{id}/prediction-configs/{cid}/train, or POST /platforms/{id}/suggest-rules.
+    /platforms/{id}/prediction-configs/{cid}/train, or POST /platforms/{id}/suggest-rules, or POST
+    /domains/{id}/eval-config/suggest.
 
     Args:
         id (int): Resource ID
@@ -148,7 +150,8 @@ async def asyncio_detailed(
     graded checks summarising whether the build produced a usable decision layer — alongside the
     underlying generation_diagnostics detail). Use this to track async operations started by POST
     /datasets/{id}/clean, POST /platforms, POST /domains/{id}/build-ontology, POST
-    /platforms/{id}/prediction-configs/{cid}/train, or POST /platforms/{id}/suggest-rules.
+    /platforms/{id}/prediction-configs/{cid}/train, or POST /platforms/{id}/suggest-rules, or POST
+    /domains/{id}/eval-config/suggest.
 
     Args:
         id (int): Resource ID
@@ -185,7 +188,8 @@ async def asyncio(
     graded checks summarising whether the build produced a usable decision layer — alongside the
     underlying generation_diagnostics detail). Use this to track async operations started by POST
     /datasets/{id}/clean, POST /platforms, POST /domains/{id}/build-ontology, POST
-    /platforms/{id}/prediction-configs/{cid}/train, or POST /platforms/{id}/suggest-rules.
+    /platforms/{id}/prediction-configs/{cid}/train, or POST /platforms/{id}/suggest-rules, or POST
+    /domains/{id}/eval-config/suggest.
 
     Args:
         id (int): Resource ID

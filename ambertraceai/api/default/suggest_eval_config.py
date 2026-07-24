@@ -69,10 +69,13 @@ def sync_detailed(
     client: AuthenticatedClient | Client,
     body: EvalConfigSuggestRequest,
 ) -> Response[list[ValidationErrorModel]]:
-    """Suggest eval configs
+    r"""Suggest eval configs
 
-     Uses LLM to suggest evaluation configurations based on the domain's ontology. Returns 202 and runs
-    asynchronously. Specify n_options (1-5) to control how many alternatives are generated.
+     Uses LLM to suggest evaluation configurations based on the domain's ontology. Returns 202 with a
+    job_id — poll GET /jobs/{job_id} until status is 'completed'; the completed job's result payload
+    carries {\"options\": [{target_metric, direction, unit, description, ...}, ...]}. Commit a chosen
+    option via PUT /domains/{id}/eval-config. Specify n_options (1-5) to control how many alternatives
+    are generated. A missing or empty request body defaults to n_options=3.
 
     Args:
         id (int): Resource ID
@@ -104,10 +107,13 @@ def sync(
     client: AuthenticatedClient | Client,
     body: EvalConfigSuggestRequest,
 ) -> list[ValidationErrorModel] | None:
-    """Suggest eval configs
+    r"""Suggest eval configs
 
-     Uses LLM to suggest evaluation configurations based on the domain's ontology. Returns 202 and runs
-    asynchronously. Specify n_options (1-5) to control how many alternatives are generated.
+     Uses LLM to suggest evaluation configurations based on the domain's ontology. Returns 202 with a
+    job_id — poll GET /jobs/{job_id} until status is 'completed'; the completed job's result payload
+    carries {\"options\": [{target_metric, direction, unit, description, ...}, ...]}. Commit a chosen
+    option via PUT /domains/{id}/eval-config. Specify n_options (1-5) to control how many alternatives
+    are generated. A missing or empty request body defaults to n_options=3.
 
     Args:
         id (int): Resource ID
@@ -134,10 +140,13 @@ async def asyncio_detailed(
     client: AuthenticatedClient | Client,
     body: EvalConfigSuggestRequest,
 ) -> Response[list[ValidationErrorModel]]:
-    """Suggest eval configs
+    r"""Suggest eval configs
 
-     Uses LLM to suggest evaluation configurations based on the domain's ontology. Returns 202 and runs
-    asynchronously. Specify n_options (1-5) to control how many alternatives are generated.
+     Uses LLM to suggest evaluation configurations based on the domain's ontology. Returns 202 with a
+    job_id — poll GET /jobs/{job_id} until status is 'completed'; the completed job's result payload
+    carries {\"options\": [{target_metric, direction, unit, description, ...}, ...]}. Commit a chosen
+    option via PUT /domains/{id}/eval-config. Specify n_options (1-5) to control how many alternatives
+    are generated. A missing or empty request body defaults to n_options=3.
 
     Args:
         id (int): Resource ID
@@ -167,10 +176,13 @@ async def asyncio(
     client: AuthenticatedClient | Client,
     body: EvalConfigSuggestRequest,
 ) -> list[ValidationErrorModel] | None:
-    """Suggest eval configs
+    r"""Suggest eval configs
 
-     Uses LLM to suggest evaluation configurations based on the domain's ontology. Returns 202 and runs
-    asynchronously. Specify n_options (1-5) to control how many alternatives are generated.
+     Uses LLM to suggest evaluation configurations based on the domain's ontology. Returns 202 with a
+    job_id — poll GET /jobs/{job_id} until status is 'completed'; the completed job's result payload
+    carries {\"options\": [{target_metric, direction, unit, description, ...}, ...]}. Commit a chosen
+    option via PUT /domains/{id}/eval-config. Specify n_options (1-5) to control how many alternatives
+    are generated. A missing or empty request body defaults to n_options=3.
 
     Args:
         id (int): Resource ID

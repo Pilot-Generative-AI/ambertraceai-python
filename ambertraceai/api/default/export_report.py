@@ -69,11 +69,14 @@ def sync_detailed(
     client: AuthenticatedClient | Client,
     body: ExportReportRequest,
 ) -> Response[list[ValidationErrorModel]]:
-    """Export query report
+    r"""Export query report
 
      Runs a neurosymbolic query and exports the result as a PDF or JSON report. The report includes the
     answer, explainability trace, and a unique report ID. Default format is PDF; set format='json' for
     structured data.
+
+    Capability gating: requires the \"query\" capability (see GET /api/v1/capabilities). Returns 403
+    capability_disabled when the capability is not enabled for the org.
 
     Args:
         id (int): Resource ID
@@ -105,11 +108,14 @@ def sync(
     client: AuthenticatedClient | Client,
     body: ExportReportRequest,
 ) -> list[ValidationErrorModel] | None:
-    """Export query report
+    r"""Export query report
 
      Runs a neurosymbolic query and exports the result as a PDF or JSON report. The report includes the
     answer, explainability trace, and a unique report ID. Default format is PDF; set format='json' for
     structured data.
+
+    Capability gating: requires the \"query\" capability (see GET /api/v1/capabilities). Returns 403
+    capability_disabled when the capability is not enabled for the org.
 
     Args:
         id (int): Resource ID
@@ -136,11 +142,14 @@ async def asyncio_detailed(
     client: AuthenticatedClient | Client,
     body: ExportReportRequest,
 ) -> Response[list[ValidationErrorModel]]:
-    """Export query report
+    r"""Export query report
 
      Runs a neurosymbolic query and exports the result as a PDF or JSON report. The report includes the
     answer, explainability trace, and a unique report ID. Default format is PDF; set format='json' for
     structured data.
+
+    Capability gating: requires the \"query\" capability (see GET /api/v1/capabilities). Returns 403
+    capability_disabled when the capability is not enabled for the org.
 
     Args:
         id (int): Resource ID
@@ -170,11 +179,14 @@ async def asyncio(
     client: AuthenticatedClient | Client,
     body: ExportReportRequest,
 ) -> list[ValidationErrorModel] | None:
-    """Export query report
+    r"""Export query report
 
      Runs a neurosymbolic query and exports the result as a PDF or JSON report. The report includes the
     answer, explainability trace, and a unique report ID. Default format is PDF; set format='json' for
     structured data.
+
+    Capability gating: requires the \"query\" capability (see GET /api/v1/capabilities). Returns 403
+    capability_disabled when the capability is not enabled for the org.
 
     Args:
         id (int): Resource ID

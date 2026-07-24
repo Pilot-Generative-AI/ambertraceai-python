@@ -9,9 +9,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.drift_baseline_out_per_rule_fire_rate import (
-        DriftBaselineOutPerRuleFireRate,
-    )
+    from ..models.drift_baseline_out_per_rule_fire_rate import DriftBaselineOutPerRuleFireRate
 
 
 T = TypeVar("T", bound="DriftBaselineOut")
@@ -68,18 +66,14 @@ class DriftBaselineOut:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.drift_baseline_out_per_rule_fire_rate import (
-            DriftBaselineOutPerRuleFireRate,
-        )
+        from ..models.drift_baseline_out_per_rule_fire_rate import DriftBaselineOutPerRuleFireRate
 
         d = dict(src_dict)
         certified_rejection_rate = d.pop("certified_rejection_rate")
 
         n = d.pop("n")
 
-        per_rule_fire_rate = DriftBaselineOutPerRuleFireRate.from_dict(
-            d.pop("per_rule_fire_rate")
-        )
+        per_rule_fire_rate = DriftBaselineOutPerRuleFireRate.from_dict(d.pop("per_rule_fire_rate"))
 
         platform_id = d.pop("platform_id")
 

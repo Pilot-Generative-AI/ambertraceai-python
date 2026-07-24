@@ -82,9 +82,7 @@ class SchemaReconciliation:
         if _augmented is not UNSET:
             augmented = []
             for augmented_item_data in _augmented:
-                augmented_item = SchemaReconciliationAugment.from_dict(
-                    augmented_item_data
-                )
+                augmented_item = SchemaReconciliationAugment.from_dict(augmented_item_data)
 
                 augmented.append(augmented_item)
 
@@ -93,9 +91,7 @@ class SchemaReconciliation:
         if _conflicts is not UNSET:
             conflicts = []
             for conflicts_item_data in _conflicts:
-                conflicts_item = SchemaReconciliationConflict.from_dict(
-                    conflicts_item_data
-                )
+                conflicts_item = SchemaReconciliationConflict.from_dict(conflicts_item_data)
 
                 conflicts.append(conflicts_item)
 

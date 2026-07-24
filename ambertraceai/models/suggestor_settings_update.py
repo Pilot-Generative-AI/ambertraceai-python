@@ -125,9 +125,7 @@ class SuggestorSettingsUpdate:
                 return data
             return cast(int | None | Unset, data)
 
-        suggestor_max_new_tokens = _parse_suggestor_max_new_tokens(
-            d.pop("suggestor_max_new_tokens", UNSET)
-        )
+        suggestor_max_new_tokens = _parse_suggestor_max_new_tokens(d.pop("suggestor_max_new_tokens", UNSET))
 
         def _parse_suggestor_temperature(data: object) -> float | None | Unset:
             if data is None:
@@ -136,9 +134,7 @@ class SuggestorSettingsUpdate:
                 return data
             return cast(float | None | Unset, data)
 
-        suggestor_temperature = _parse_suggestor_temperature(
-            d.pop("suggestor_temperature", UNSET)
-        )
+        suggestor_temperature = _parse_suggestor_temperature(d.pop("suggestor_temperature", UNSET))
 
         def _parse_suggestor_timeout_s(data: object) -> int | None | Unset:
             if data is None:
@@ -147,9 +143,7 @@ class SuggestorSettingsUpdate:
                 return data
             return cast(int | None | Unset, data)
 
-        suggestor_timeout_s = _parse_suggestor_timeout_s(
-            d.pop("suggestor_timeout_s", UNSET)
-        )
+        suggestor_timeout_s = _parse_suggestor_timeout_s(d.pop("suggestor_timeout_s", UNSET))
 
         def _parse_suggestor_top_p(data: object) -> float | None | Unset:
             if data is None:

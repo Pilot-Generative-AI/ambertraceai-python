@@ -11,9 +11,7 @@ from ..types import UNSET, Unset
 if TYPE_CHECKING:
     from ..models.data_context_out_datasets_item import DataContextOutDatasetsItem
     from ..models.data_context_out_domain_type_0 import DataContextOutDomainType0
-    from ..models.data_context_out_eval_config_type_0 import (
-        DataContextOutEvalConfigType0,
-    )
+    from ..models.data_context_out_eval_config_type_0 import DataContextOutEvalConfigType0
 
 
 T = TypeVar("T", bound="DataContextOut")
@@ -35,9 +33,7 @@ class DataContextOut:
 
     def to_dict(self) -> dict[str, Any]:
         from ..models.data_context_out_domain_type_0 import DataContextOutDomainType0
-        from ..models.data_context_out_eval_config_type_0 import (
-            DataContextOutEvalConfigType0,
-        )
+        from ..models.data_context_out_eval_config_type_0 import DataContextOutEvalConfigType0
 
         datasets: list[dict[str, Any]] | Unset = UNSET
         if not isinstance(self.datasets, Unset):
@@ -78,9 +74,7 @@ class DataContextOut:
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.data_context_out_datasets_item import DataContextOutDatasetsItem
         from ..models.data_context_out_domain_type_0 import DataContextOutDomainType0
-        from ..models.data_context_out_eval_config_type_0 import (
-            DataContextOutEvalConfigType0,
-        )
+        from ..models.data_context_out_eval_config_type_0 import DataContextOutEvalConfigType0
 
         d = dict(src_dict)
         _datasets = d.pop("datasets", UNSET)
@@ -109,9 +103,7 @@ class DataContextOut:
 
         domain = _parse_domain(d.pop("domain", UNSET))
 
-        def _parse_eval_config(
-            data: object,
-        ) -> DataContextOutEvalConfigType0 | None | Unset:
+        def _parse_eval_config(data: object) -> DataContextOutEvalConfigType0 | None | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):

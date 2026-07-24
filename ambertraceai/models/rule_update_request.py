@@ -10,9 +10,7 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.rule_update_request_action_type_0 import RuleUpdateRequestActionType0
-    from ..models.rule_update_request_condition_type_0 import (
-        RuleUpdateRequestConditionType0,
-    )
+    from ..models.rule_update_request_condition_type_0 import RuleUpdateRequestConditionType0
 
 
 T = TypeVar("T", bound="RuleUpdateRequest")
@@ -42,12 +40,8 @@ class RuleUpdateRequest:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.rule_update_request_action_type_0 import (
-            RuleUpdateRequestActionType0,
-        )
-        from ..models.rule_update_request_condition_type_0 import (
-            RuleUpdateRequestConditionType0,
-        )
+        from ..models.rule_update_request_action_type_0 import RuleUpdateRequestActionType0
+        from ..models.rule_update_request_condition_type_0 import RuleUpdateRequestConditionType0
 
         action: dict[str, Any] | None | Unset
         if isinstance(self.action, Unset):
@@ -109,12 +103,8 @@ class RuleUpdateRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.rule_update_request_action_type_0 import (
-            RuleUpdateRequestActionType0,
-        )
-        from ..models.rule_update_request_condition_type_0 import (
-            RuleUpdateRequestConditionType0,
-        )
+        from ..models.rule_update_request_action_type_0 import RuleUpdateRequestActionType0
+        from ..models.rule_update_request_condition_type_0 import RuleUpdateRequestConditionType0
 
         d = dict(src_dict)
 
@@ -135,9 +125,7 @@ class RuleUpdateRequest:
 
         action = _parse_action(d.pop("action", UNSET))
 
-        def _parse_condition(
-            data: object,
-        ) -> None | RuleUpdateRequestConditionType0 | Unset:
+        def _parse_condition(data: object) -> None | RuleUpdateRequestConditionType0 | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):

@@ -30,20 +30,20 @@ class QueryRequest:
             attributes (the request IS the facts); the natural-language `query` then drives only the answer narrative.
             Undeclared or out-of-domain fields are rejected, surfaced in the 503 details.
         predictions (None | QueryRequestPredictionsType0 | Unset): Optional VERIFIED-PREDICTION REFERENCES as a {role:
-            {model_id, as_of}} map (the Prediction -> Decision Bridge fan-in). Each role names a persisted PredictionRecord
-            the PLATFORM produced+stored — the caller references it by id + alignment period, NEVER supplying the forecast
-            value (which the platform does not trust: the forecast's certificate certifies its INPUT ROW, not the emitted
-            value). The platform fetches the SCOPED (org+owner) stored record and admits its certified fields to the
-            decision's certified EDB keyed `<role>.<field>`: `<role>.value`, `<role>.probability` (only if the record's
-            probability certified), and `<role>.fired.<signal>` per fired signal. A rule reading `<role>.<field>` then
-            decides over trusted facts. FAIL-CLOSED: a reference that is missing / not proof_checked / whose as_of != the
-            requested as_of / (for probability) not probability_certified admits NO fact, so a rule reading it cannot fire a
-            certified permit and the decision abstains. `proof_checked=True` iff the decision certifies AND every referenced
-            prediction was found+aligned+certified. Each reference may carry an optional `mode`: `"fatal"` (default) fails
-            the WHOLE query closed (503) on that reference's failure; `"non_fatal"` instead PROCEEDS (admitting no fact) so
-            a lower-precedence escalate/deny rule can fire on the absence and certify a 200 — but a permit can NEVER rest on
-            the absence of an uncertified reference (the permit-guard drops any permit resting on a negation-as-failure over
-            an uncertified key; surfaced in explanation.rejected_facts + explanation.graceful_escalate). Verified platforms
+            {model_id, as_of}} map. Each role names a persisted PredictionRecord the PLATFORM produced+stored — the caller
+            references it by id + alignment period, NEVER supplying the forecast value (which the platform does not trust:
+            the forecast's certificate certifies its INPUT ROW, not the emitted value). The platform fetches the SCOPED
+            (org+owner) stored record and admits its certified fields to the decision's certified EDB keyed
+            `<role>.<field>`: `<role>.value`, `<role>.probability` (only if the record's probability certified), and
+            `<role>.fired.<signal>` per fired signal. A rule reading `<role>.<field>` then decides over trusted facts. FAIL-
+            CLOSED: a reference that is missing / not proof_checked / whose as_of != the requested as_of / (for probability)
+            not probability_certified admits NO fact, so a rule reading it cannot fire a certified permit and the decision
+            abstains. `proof_checked=True` iff the decision certifies AND every referenced prediction was
+            found+aligned+certified. Each reference may carry an optional `mode`: `"fatal"` (default) fails the WHOLE query
+            closed (503) on that reference's failure; `"non_fatal"` instead PROCEEDS (admitting no fact) so a lower-
+            precedence escalate/deny rule can fire on the absence and certify a 200 — but a permit can NEVER rest on the
+            absence of an uncertified reference (the permit-guard drops any permit resting on a negation-as-failure over an
+            uncertified key; surfaced in explanation.rejected_facts + explanation.graceful_escalate). Verified platforms
             only. Example: {"ust_10y": {"model_id": "ust_10y", "as_of": "2026-06-30"}}.
         relations (None | QueryRequestRelationsType0 | Unset): Optional ATTACHED RELATED FACTS as a {relation_name:
             [row, ...]} map, where each row is a {column: scalar} dict. These ride alongside the focal `facts` (the scalar
@@ -65,9 +65,7 @@ class QueryRequest:
 
     def to_dict(self) -> dict[str, Any]:
         from ..models.query_request_facts_type_0 import QueryRequestFactsType0
-        from ..models.query_request_predictions_type_0 import (
-            QueryRequestPredictionsType0,
-        )
+        from ..models.query_request_predictions_type_0 import QueryRequestPredictionsType0
         from ..models.query_request_relations_type_0 import QueryRequestRelationsType0
 
         query = self.query
@@ -123,9 +121,7 @@ class QueryRequest:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.query_request_facts_type_0 import QueryRequestFactsType0
-        from ..models.query_request_predictions_type_0 import (
-            QueryRequestPredictionsType0,
-        )
+        from ..models.query_request_predictions_type_0 import QueryRequestPredictionsType0
         from ..models.query_request_relations_type_0 import QueryRequestRelationsType0
 
         d = dict(src_dict)
@@ -150,9 +146,7 @@ class QueryRequest:
 
         facts = _parse_facts(d.pop("facts", UNSET))
 
-        def _parse_predictions(
-            data: object,
-        ) -> None | QueryRequestPredictionsType0 | Unset:
+        def _parse_predictions(data: object) -> None | QueryRequestPredictionsType0 | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):

@@ -3,12 +3,16 @@
 Demonstrates the ``baseline_mode`` config parameter that controls the forecast
 anchor the symbolic forecaster composes driver effects onto:
 
-- **persistence** (default) -- last observed level. Today's behaviour.
+- **neural** (default) -- GBT prediction through the S2 confidence gate for
+  no-driver points. When no induced rule fires on the forecast point, the
+  platform's trained neural model (GBT) provides the prediction, tau-gated:
+  below-tau predictions fall to the climatology floor (fail-closed). When the
+  platform has no trained model, the fallback is also climatology floor.
 - **climatology** -- fit-window mean. The forecast anchors on the historical
-  average; useful when the latest level is an outlier or you want a
-  mean-reversion framing. Caveat: on a strongly trending series the anchor can
-  sit far from the latest level -- check ``skill_vs_persistence`` to confirm the
-  drivers still beat the persistence yardstick.
+  average rather than the latest level; useful when the latest level is an
+  outlier or you want a mean-reversion framing.
+- **persistence** -- last observed level. The original default before #1208,
+  still selectable for backward compatibility.
 - **drift** -- last level + h * OLS slope. A linear-trend anchor.
 
 The holdout A/B acceptance gate recomposes driver effects onto the chosen anchor

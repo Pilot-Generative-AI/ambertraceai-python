@@ -237,9 +237,7 @@ class DatasetOut:
 
         row_count = _parse_row_count(d.pop("row_count", UNSET))
 
-        def _parse_schema_info(
-            data: object,
-        ) -> DatasetOutSchemaInfoType0 | None | Unset:
+        def _parse_schema_info(data: object) -> DatasetOutSchemaInfoType0 | None | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):

@@ -65,11 +65,14 @@ def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
 ) -> Response[PredictionConfigOut | list[ValidationErrorModel]]:
-    """List prediction configs
+    r"""List prediction configs
 
      Returns every prediction config (both timeseries and cross_sectional) belonging to this platform,
     including their current training status. Use this to discover available configs before calling
     predict.
+
+    Capability gating: requires the \"predictions\" capability (see GET /api/v1/capabilities). Returns
+    403 capability_disabled when the capability is not enabled for the org.
 
     Args:
         id (int): Resource ID
@@ -98,11 +101,14 @@ def sync(
     *,
     client: AuthenticatedClient | Client,
 ) -> PredictionConfigOut | list[ValidationErrorModel] | None:
-    """List prediction configs
+    r"""List prediction configs
 
      Returns every prediction config (both timeseries and cross_sectional) belonging to this platform,
     including their current training status. Use this to discover available configs before calling
     predict.
+
+    Capability gating: requires the \"predictions\" capability (see GET /api/v1/capabilities). Returns
+    403 capability_disabled when the capability is not enabled for the org.
 
     Args:
         id (int): Resource ID
@@ -126,11 +132,14 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
 ) -> Response[PredictionConfigOut | list[ValidationErrorModel]]:
-    """List prediction configs
+    r"""List prediction configs
 
      Returns every prediction config (both timeseries and cross_sectional) belonging to this platform,
     including their current training status. Use this to discover available configs before calling
     predict.
+
+    Capability gating: requires the \"predictions\" capability (see GET /api/v1/capabilities). Returns
+    403 capability_disabled when the capability is not enabled for the org.
 
     Args:
         id (int): Resource ID
@@ -157,11 +166,14 @@ async def asyncio(
     *,
     client: AuthenticatedClient | Client,
 ) -> PredictionConfigOut | list[ValidationErrorModel] | None:
-    """List prediction configs
+    r"""List prediction configs
 
      Returns every prediction config (both timeseries and cross_sectional) belonging to this platform,
     including their current training status. Use this to discover available configs before calling
     predict.
+
+    Capability gating: requires the \"predictions\" capability (see GET /api/v1/capabilities). Returns
+    403 capability_disabled when the capability is not enabled for the org.
 
     Args:
         id (int): Resource ID

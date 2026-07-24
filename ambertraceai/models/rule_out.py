@@ -207,9 +207,7 @@ class RuleOut:
 
         priority = d.pop("priority", UNSET)
 
-        def _parse_schema_reconciliation(
-            data: object,
-        ) -> None | SchemaReconciliation | Unset:
+        def _parse_schema_reconciliation(data: object) -> None | SchemaReconciliation | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -224,9 +222,7 @@ class RuleOut:
                 pass
             return cast(None | SchemaReconciliation | Unset, data)
 
-        schema_reconciliation = _parse_schema_reconciliation(
-            d.pop("schema_reconciliation", UNSET)
-        )
+        schema_reconciliation = _parse_schema_reconciliation(d.pop("schema_reconciliation", UNSET))
 
         def _parse_scorecard(data: object) -> None | RuleOutScorecardType0 | Unset:
             if data is None:

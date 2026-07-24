@@ -67,13 +67,9 @@ class PlatformOut:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.platform_out_build_quality_type_0 import (
-            PlatformOutBuildQualityType0,
-        )
+        from ..models.platform_out_build_quality_type_0 import PlatformOutBuildQualityType0
         from ..models.platform_out_config_type_0 import PlatformOutConfigType0
-        from ..models.platform_out_neural_config_type_0 import (
-            PlatformOutNeuralConfigType0,
-        )
+        from ..models.platform_out_neural_config_type_0 import PlatformOutNeuralConfigType0
 
         domain_id = self.domain_id
 
@@ -191,13 +187,9 @@ class PlatformOut:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.platform_out_build_quality_type_0 import (
-            PlatformOutBuildQualityType0,
-        )
+        from ..models.platform_out_build_quality_type_0 import PlatformOutBuildQualityType0
         from ..models.platform_out_config_type_0 import PlatformOutConfigType0
-        from ..models.platform_out_neural_config_type_0 import (
-            PlatformOutNeuralConfigType0,
-        )
+        from ..models.platform_out_neural_config_type_0 import PlatformOutNeuralConfigType0
 
         d = dict(src_dict)
         domain_id = d.pop("domain_id")
@@ -210,9 +202,7 @@ class PlatformOut:
 
         status = d.pop("status")
 
-        def _parse_build_quality(
-            data: object,
-        ) -> None | PlatformOutBuildQualityType0 | Unset:
+        def _parse_build_quality(data: object) -> None | PlatformOutBuildQualityType0 | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -264,9 +254,7 @@ class PlatformOut:
 
         description = _parse_description(d.pop("description", UNSET))
 
-        def _parse_neural_config(
-            data: object,
-        ) -> None | PlatformOutNeuralConfigType0 | Unset:
+        def _parse_neural_config(data: object) -> None | PlatformOutNeuralConfigType0 | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -317,9 +305,7 @@ class PlatformOut:
                 return data
             return cast(float | None | Unset, data)
 
-        verified_min_confidence = _parse_verified_min_confidence(
-            d.pop("verified_min_confidence", UNSET)
-        )
+        verified_min_confidence = _parse_verified_min_confidence(d.pop("verified_min_confidence", UNSET))
 
         verified_profile = d.pop("verified_profile", UNSET)
 

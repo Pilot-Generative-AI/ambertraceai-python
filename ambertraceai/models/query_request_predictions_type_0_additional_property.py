@@ -13,9 +13,7 @@ T = TypeVar("T", bound="QueryRequestPredictionsType0AdditionalProperty")
 class QueryRequestPredictionsType0AdditionalProperty:
     """ """
 
-    additional_properties: dict[str, None | str] = _attrs_field(
-        init=False, factory=dict
-    )
+    additional_properties: dict[str, None | str] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
 
@@ -42,9 +40,7 @@ class QueryRequestPredictionsType0AdditionalProperty:
 
             additional_properties[prop_name] = additional_property
 
-        query_request_predictions_type_0_additional_property.additional_properties = (
-            additional_properties
-        )
+        query_request_predictions_type_0_additional_property.additional_properties = additional_properties
         return query_request_predictions_type_0_additional_property
 
     @property

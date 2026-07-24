@@ -75,7 +75,7 @@ def sync_detailed(
     client: AuthenticatedClient | Client,
     body: PredictRequest,
 ) -> Response[PredictionOut | list[ValidationErrorModel]]:
-    """Run prediction
+    r"""Run prediction
 
      Runs the full neurosymbolic prediction pipeline: loads the active trained model, builds features
     from the latest data plus any feature_overrides, generates a point prediction with confidence
@@ -84,6 +84,9 @@ def sync_detailed(
     (e.g. {'FEDFUNDS': 3.0}). For time-series models, overrides are injected into the raw data and
     propagated through engineered features (lags, rolling means). For cross-sectional models, overrides
     directly set input features. The config must have status 'trained'. Returns 409 otherwise.
+
+    Capability gating: requires the \"predictions\" capability (see GET /api/v1/capabilities). Returns
+    403 capability_disabled when the capability is not enabled for the org.
 
     Args:
         id (int): Resource ID
@@ -128,7 +131,7 @@ def sync(
     client: AuthenticatedClient | Client,
     body: PredictRequest,
 ) -> PredictionOut | list[ValidationErrorModel] | None:
-    """Run prediction
+    r"""Run prediction
 
      Runs the full neurosymbolic prediction pipeline: loads the active trained model, builds features
     from the latest data plus any feature_overrides, generates a point prediction with confidence
@@ -137,6 +140,9 @@ def sync(
     (e.g. {'FEDFUNDS': 3.0}). For time-series models, overrides are injected into the raw data and
     propagated through engineered features (lags, rolling means). For cross-sectional models, overrides
     directly set input features. The config must have status 'trained'. Returns 409 otherwise.
+
+    Capability gating: requires the \"predictions\" capability (see GET /api/v1/capabilities). Returns
+    403 capability_disabled when the capability is not enabled for the org.
 
     Args:
         id (int): Resource ID
@@ -176,7 +182,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient | Client,
     body: PredictRequest,
 ) -> Response[PredictionOut | list[ValidationErrorModel]]:
-    """Run prediction
+    r"""Run prediction
 
      Runs the full neurosymbolic prediction pipeline: loads the active trained model, builds features
     from the latest data plus any feature_overrides, generates a point prediction with confidence
@@ -185,6 +191,9 @@ async def asyncio_detailed(
     (e.g. {'FEDFUNDS': 3.0}). For time-series models, overrides are injected into the raw data and
     propagated through engineered features (lags, rolling means). For cross-sectional models, overrides
     directly set input features. The config must have status 'trained'. Returns 409 otherwise.
+
+    Capability gating: requires the \"predictions\" capability (see GET /api/v1/capabilities). Returns
+    403 capability_disabled when the capability is not enabled for the org.
 
     Args:
         id (int): Resource ID
@@ -227,7 +236,7 @@ async def asyncio(
     client: AuthenticatedClient | Client,
     body: PredictRequest,
 ) -> PredictionOut | list[ValidationErrorModel] | None:
-    """Run prediction
+    r"""Run prediction
 
      Runs the full neurosymbolic prediction pipeline: loads the active trained model, builds features
     from the latest data plus any feature_overrides, generates a point prediction with confidence
@@ -236,6 +245,9 @@ async def asyncio(
     (e.g. {'FEDFUNDS': 3.0}). For time-series models, overrides are injected into the raw data and
     propagated through engineered features (lags, rolling means). For cross-sectional models, overrides
     directly set input features. The config must have status 'trained'. Returns 409 otherwise.
+
+    Capability gating: requires the \"predictions\" capability (see GET /api/v1/capabilities). Returns
+    403 capability_disabled when the capability is not enabled for the org.
 
     Args:
         id (int): Resource ID

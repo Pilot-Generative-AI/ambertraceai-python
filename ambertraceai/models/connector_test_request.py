@@ -21,10 +21,13 @@ class ConnectorTestRequest:
     Attributes:
         connector_type (str):
         config (ConnectorTestRequestConfig | Unset):
+        validate_only (bool | Unset): When true, only validate the connector configuration without fetching data.
+            Bypasses the async-connector restriction, returning validation results instead of a 422. Default: False.
     """
 
     connector_type: str
     config: ConnectorTestRequestConfig | Unset = UNSET
+    validate_only: bool | Unset = False
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -33,6 +36,8 @@ class ConnectorTestRequest:
         config: dict[str, Any] | Unset = UNSET
         if not isinstance(self.config, Unset):
             config = self.config.to_dict()
+
+        validate_only = self.validate_only
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -43,6 +48,8 @@ class ConnectorTestRequest:
         )
         if config is not UNSET:
             field_dict["config"] = config
+        if validate_only is not UNSET:
+            field_dict["validate_only"] = validate_only
 
         return field_dict
 
@@ -60,9 +67,12 @@ class ConnectorTestRequest:
         else:
             config = ConnectorTestRequestConfig.from_dict(_config)
 
+        validate_only = d.pop("validate_only", UNSET)
+
         connector_test_request = cls(
             connector_type=connector_type,
             config=config,
+            validate_only=validate_only,
         )
 
         connector_test_request.additional_properties = d

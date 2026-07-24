@@ -1,0 +1,241 @@
+from http import HTTPStatus
+from typing import Any
+from urllib.parse import quote
+
+import httpx
+
+from ... import errors
+from ...client import AuthenticatedClient, Client
+from ...models.residual_diagnosis_request import ResidualDiagnosisRequest
+from ...models.validation_error_model import ValidationErrorModel
+from ...types import Response
+
+
+def _get_kwargs(
+    id: int,
+    *,
+    body: ResidualDiagnosisRequest,
+) -> dict[str, Any]:
+    headers: dict[str, Any] = {}
+
+    _kwargs: dict[str, Any] = {
+        "method": "post",
+        "url": "/api/v1/platforms/{id}/residual-diagnosis".format(
+            id=quote(str(id), safe=""),
+        ),
+    }
+
+    _kwargs["json"] = body.to_dict()
+
+    headers["Content-Type"] = "application/json"
+
+    _kwargs["headers"] = headers
+    return _kwargs
+
+
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> list[ValidationErrorModel] | None:
+    if response.status_code == 422:
+        response_422 = []
+        _response_422 = response.json()
+        for response_422_item_data in _response_422:
+            response_422_item = ValidationErrorModel.from_dict(response_422_item_data)
+
+            response_422.append(response_422_item)
+
+        return response_422
+
+    if client.raise_on_unexpected_status:
+        raise errors.UnexpectedStatus(response.status_code, response.content)
+    else:
+        return None
+
+
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[list[ValidationErrorModel]]:
+    return Response(
+        status_code=HTTPStatus(response.status_code),
+        content=response.content,
+        headers=response.headers,
+        parsed=_parse_response(client=client, response=response),
+    )
+
+
+def sync_detailed(
+    id: int,
+    *,
+    client: AuthenticatedClient | Client,
+    body: ResidualDiagnosisRequest,
+) -> Response[list[ValidationErrorModel]]:
+    """Residual breach diagnosis — drift vs correction
+
+     Diagnoses a significant residual on a symbolic forecast and calls drift vs correction. Computes
+    residual = actual - value, standardises it (z = residual / model error), and when |z| > k attributes
+    the miss: a DECAYED driver that pointed away from where the target went => drift (stale driver
+    dragged the forecast the wrong way; residual likely to keep widening); the still-reliable drivers
+    point counter to the realised move => correction (target dislocated; residual likely to tighten).
+    Supply a stored forecast_id OR an explicit value+actual pair. The decayed/stable drivers and their
+    sensitivity history are returned as evidence — a hypothesis, not a guarantee. Feature-flagged
+    (AMBERTRACE_SYMBOLIC_FORECAST); 404 when disabled.
+
+    Args:
+        id (int): Resource ID
+        body (ResidualDiagnosisRequest): Request body for the residual-diagnosis "why" endpoint.
+
+            Diagnoses a *significant* residual on a symbolic forecast and calls **drift
+            vs correction** — attributing the miss to the driver-rules that lost
+            sensitivity. Supply EITHER a stored ``forecast_id`` (the value + backfilled
+            actual are read off the record) OR an explicit ``value`` + ``actual`` pair
+            (for an ad-hoc what-if breach).
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        Response[list[ValidationErrorModel]]
+    """
+
+    kwargs = _get_kwargs(
+        id=id,
+        body=body,
+    )
+
+    response = client.get_httpx_client().request(
+        **kwargs,
+    )
+
+    return _build_response(client=client, response=response)
+
+
+def sync(
+    id: int,
+    *,
+    client: AuthenticatedClient | Client,
+    body: ResidualDiagnosisRequest,
+) -> list[ValidationErrorModel] | None:
+    """Residual breach diagnosis — drift vs correction
+
+     Diagnoses a significant residual on a symbolic forecast and calls drift vs correction. Computes
+    residual = actual - value, standardises it (z = residual / model error), and when |z| > k attributes
+    the miss: a DECAYED driver that pointed away from where the target went => drift (stale driver
+    dragged the forecast the wrong way; residual likely to keep widening); the still-reliable drivers
+    point counter to the realised move => correction (target dislocated; residual likely to tighten).
+    Supply a stored forecast_id OR an explicit value+actual pair. The decayed/stable drivers and their
+    sensitivity history are returned as evidence — a hypothesis, not a guarantee. Feature-flagged
+    (AMBERTRACE_SYMBOLIC_FORECAST); 404 when disabled.
+
+    Args:
+        id (int): Resource ID
+        body (ResidualDiagnosisRequest): Request body for the residual-diagnosis "why" endpoint.
+
+            Diagnoses a *significant* residual on a symbolic forecast and calls **drift
+            vs correction** — attributing the miss to the driver-rules that lost
+            sensitivity. Supply EITHER a stored ``forecast_id`` (the value + backfilled
+            actual are read off the record) OR an explicit ``value`` + ``actual`` pair
+            (for an ad-hoc what-if breach).
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        list[ValidationErrorModel]
+    """
+
+    return sync_detailed(
+        id=id,
+        client=client,
+        body=body,
+    ).parsed
+
+
+async def asyncio_detailed(
+    id: int,
+    *,
+    client: AuthenticatedClient | Client,
+    body: ResidualDiagnosisRequest,
+) -> Response[list[ValidationErrorModel]]:
+    """Residual breach diagnosis — drift vs correction
+
+     Diagnoses a significant residual on a symbolic forecast and calls drift vs correction. Computes
+    residual = actual - value, standardises it (z = residual / model error), and when |z| > k attributes
+    the miss: a DECAYED driver that pointed away from where the target went => drift (stale driver
+    dragged the forecast the wrong way; residual likely to keep widening); the still-reliable drivers
+    point counter to the realised move => correction (target dislocated; residual likely to tighten).
+    Supply a stored forecast_id OR an explicit value+actual pair. The decayed/stable drivers and their
+    sensitivity history are returned as evidence — a hypothesis, not a guarantee. Feature-flagged
+    (AMBERTRACE_SYMBOLIC_FORECAST); 404 when disabled.
+
+    Args:
+        id (int): Resource ID
+        body (ResidualDiagnosisRequest): Request body for the residual-diagnosis "why" endpoint.
+
+            Diagnoses a *significant* residual on a symbolic forecast and calls **drift
+            vs correction** — attributing the miss to the driver-rules that lost
+            sensitivity. Supply EITHER a stored ``forecast_id`` (the value + backfilled
+            actual are read off the record) OR an explicit ``value`` + ``actual`` pair
+            (for an ad-hoc what-if breach).
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        Response[list[ValidationErrorModel]]
+    """
+
+    kwargs = _get_kwargs(
+        id=id,
+        body=body,
+    )
+
+    response = await client.get_async_httpx_client().request(**kwargs)
+
+    return _build_response(client=client, response=response)
+
+
+async def asyncio(
+    id: int,
+    *,
+    client: AuthenticatedClient | Client,
+    body: ResidualDiagnosisRequest,
+) -> list[ValidationErrorModel] | None:
+    """Residual breach diagnosis — drift vs correction
+
+     Diagnoses a significant residual on a symbolic forecast and calls drift vs correction. Computes
+    residual = actual - value, standardises it (z = residual / model error), and when |z| > k attributes
+    the miss: a DECAYED driver that pointed away from where the target went => drift (stale driver
+    dragged the forecast the wrong way; residual likely to keep widening); the still-reliable drivers
+    point counter to the realised move => correction (target dislocated; residual likely to tighten).
+    Supply a stored forecast_id OR an explicit value+actual pair. The decayed/stable drivers and their
+    sensitivity history are returned as evidence — a hypothesis, not a guarantee. Feature-flagged
+    (AMBERTRACE_SYMBOLIC_FORECAST); 404 when disabled.
+
+    Args:
+        id (int): Resource ID
+        body (ResidualDiagnosisRequest): Request body for the residual-diagnosis "why" endpoint.
+
+            Diagnoses a *significant* residual on a symbolic forecast and calls **drift
+            vs correction** — attributing the miss to the driver-rules that lost
+            sensitivity. Supply EITHER a stored ``forecast_id`` (the value + backfilled
+            actual are read off the record) OR an explicit ``value`` + ``actual`` pair
+            (for an ad-hoc what-if breach).
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        list[ValidationErrorModel]
+    """
+
+    return (
+        await asyncio_detailed(
+            id=id,
+            client=client,
+            body=body,
+        )
+    ).parsed

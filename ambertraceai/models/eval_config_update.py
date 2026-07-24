@@ -9,9 +9,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.eval_config_update_calculation_type_0 import (
-        EvalConfigUpdateCalculationType0,
-    )
+    from ..models.eval_config_update_calculation_type_0 import EvalConfigUpdateCalculationType0
 
 
 T = TypeVar("T", bound="EvalConfigUpdate")
@@ -40,9 +38,7 @@ class EvalConfigUpdate:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.eval_config_update_calculation_type_0 import (
-            EvalConfigUpdateCalculationType0,
-        )
+        from ..models.eval_config_update_calculation_type_0 import EvalConfigUpdateCalculationType0
 
         direction = self.direction
 
@@ -95,18 +91,14 @@ class EvalConfigUpdate:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.eval_config_update_calculation_type_0 import (
-            EvalConfigUpdateCalculationType0,
-        )
+        from ..models.eval_config_update_calculation_type_0 import EvalConfigUpdateCalculationType0
 
         d = dict(src_dict)
         direction = d.pop("direction")
 
         target_metric = d.pop("target_metric")
 
-        def _parse_calculation(
-            data: object,
-        ) -> EvalConfigUpdateCalculationType0 | None | Unset:
+        def _parse_calculation(data: object) -> EvalConfigUpdateCalculationType0 | None | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -132,9 +124,7 @@ class EvalConfigUpdate:
                 return data
             return cast(float | None | Unset, data)
 
-        min_positive_fraction = _parse_min_positive_fraction(
-            d.pop("min_positive_fraction", UNSET)
-        )
+        min_positive_fraction = _parse_min_positive_fraction(d.pop("min_positive_fraction", UNSET))
 
         def _parse_significance_threshold_pp(data: object) -> float | None | Unset:
             if data is None:
@@ -143,9 +133,7 @@ class EvalConfigUpdate:
                 return data
             return cast(float | None | Unset, data)
 
-        significance_threshold_pp = _parse_significance_threshold_pp(
-            d.pop("significance_threshold_pp", UNSET)
-        )
+        significance_threshold_pp = _parse_significance_threshold_pp(d.pop("significance_threshold_pp", UNSET))
 
         unit = d.pop("unit", UNSET)
 

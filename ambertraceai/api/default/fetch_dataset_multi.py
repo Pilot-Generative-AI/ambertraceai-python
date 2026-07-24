@@ -76,7 +76,7 @@ def sync_detailed(
     so a forecaster can train across sources (e.g. FRED + BoE + ECB + OECD + GDELT) in one panel.
     Sources are outer-joined on the join_on index column (default 'date'); set frequency
     (monthly/weekly/...) with aggregation (last/mean) to resample mixed-cadence sources onto a common
-    grid. Each value column is namespaced by connector type to avoid collisions (e.g. boe.IUDSOIA).
+    grid. Each value column is namespaced by connector type to avoid collisions (e.g. boe__IUDSOIA).
     Always runs asynchronously: returns 202 — poll GET /datasets/{id} until status is 'ready'.
 
     Args:
@@ -112,7 +112,7 @@ def sync(
     so a forecaster can train across sources (e.g. FRED + BoE + ECB + OECD + GDELT) in one panel.
     Sources are outer-joined on the join_on index column (default 'date'); set frequency
     (monthly/weekly/...) with aggregation (last/mean) to resample mixed-cadence sources onto a common
-    grid. Each value column is namespaced by connector type to avoid collisions (e.g. boe.IUDSOIA).
+    grid. Each value column is namespaced by connector type to avoid collisions (e.g. boe__IUDSOIA).
     Always runs asynchronously: returns 202 — poll GET /datasets/{id} until status is 'ready'.
 
     Args:
@@ -143,7 +143,7 @@ async def asyncio_detailed(
     so a forecaster can train across sources (e.g. FRED + BoE + ECB + OECD + GDELT) in one panel.
     Sources are outer-joined on the join_on index column (default 'date'); set frequency
     (monthly/weekly/...) with aggregation (last/mean) to resample mixed-cadence sources onto a common
-    grid. Each value column is namespaced by connector type to avoid collisions (e.g. boe.IUDSOIA).
+    grid. Each value column is namespaced by connector type to avoid collisions (e.g. boe__IUDSOIA).
     Always runs asynchronously: returns 202 — poll GET /datasets/{id} until status is 'ready'.
 
     Args:
@@ -177,7 +177,7 @@ async def asyncio(
     so a forecaster can train across sources (e.g. FRED + BoE + ECB + OECD + GDELT) in one panel.
     Sources are outer-joined on the join_on index column (default 'date'); set frequency
     (monthly/weekly/...) with aggregation (last/mean) to resample mixed-cadence sources onto a common
-    grid. Each value column is namespaced by connector type to avoid collisions (e.g. boe.IUDSOIA).
+    grid. Each value column is namespaced by connector type to avoid collisions (e.g. boe__IUDSOIA).
     Always runs asynchronously: returns 202 — poll GET /datasets/{id} until status is 'ready'.
 
     Args:

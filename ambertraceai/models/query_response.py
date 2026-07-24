@@ -72,9 +72,7 @@ class QueryResponse:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.query_response_explanation_type_0 import (
-            QueryResponseExplanationType0,
-        )
+        from ..models.query_response_explanation_type_0 import QueryResponseExplanationType0
 
         answer = self.answer
 
@@ -138,9 +136,7 @@ class QueryResponse:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.query_response_explanation_type_0 import (
-            QueryResponseExplanationType0,
-        )
+        from ..models.query_response_explanation_type_0 import QueryResponseExplanationType0
 
         d = dict(src_dict)
         answer = d.pop("answer")
@@ -158,9 +154,7 @@ class QueryResponse:
 
         decision = _parse_decision(d.pop("decision", UNSET))
 
-        def _parse_explanation(
-            data: object,
-        ) -> None | QueryResponseExplanationType0 | Unset:
+        def _parse_explanation(data: object) -> None | QueryResponseExplanationType0 | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -202,9 +196,7 @@ class QueryResponse:
                 return data
             return cast(bool | None | Unset, data)
 
-        vocabulary_declared = _parse_vocabulary_declared(
-            d.pop("vocabulary_declared", UNSET)
-        )
+        vocabulary_declared = _parse_vocabulary_declared(d.pop("vocabulary_declared", UNSET))
 
         query_response = cls(
             answer=answer,

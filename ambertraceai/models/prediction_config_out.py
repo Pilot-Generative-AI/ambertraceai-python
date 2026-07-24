@@ -9,15 +9,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.prediction_config_out_backtest_config_type_0 import (
-        PredictionConfigOutBacktestConfigType0,
-    )
-    from ..models.prediction_config_out_eval_metric_config_type_0 import (
-        PredictionConfigOutEvalMetricConfigType0,
-    )
-    from ..models.prediction_config_out_feature_config_type_0 import (
-        PredictionConfigOutFeatureConfigType0,
-    )
+    from ..models.prediction_config_out_backtest_config_type_0 import PredictionConfigOutBacktestConfigType0
+    from ..models.prediction_config_out_eval_metric_config_type_0 import PredictionConfigOutEvalMetricConfigType0
+    from ..models.prediction_config_out_feature_config_type_0 import PredictionConfigOutFeatureConfigType0
 
 
 T = TypeVar("T", bound="PredictionConfigOut")
@@ -40,6 +34,8 @@ class PredictionConfigOut:
         autoregressive (str | Unset): Autoregression control: 'full' (history allowed, default), 'limited' (drivers + a
             little history), or 'none' (drivers only). Default: 'full'.
         backtest_config (None | PredictionConfigOutBacktestConfigType0 | Unset):
+        baseline_mode (str | Unset): Forecast anchor mode: 'neural' (default), 'climatology', 'persistence', or 'drift'.
+            Default: 'neural'.
         created_at (None | str | Unset):
         error_message (None | str | Unset): Human-readable error details when status is 'failed'.
         eval_metric_config (None | PredictionConfigOutEvalMetricConfigType0 | Unset):
@@ -50,6 +46,8 @@ class PredictionConfigOut:
         max_ar_lag (int | None | Unset): Advanced numeric autoregression cap (overrides the enum when set): 0 = drivers
             only, k = target-history features with lag/window <= k.
         mode (str | Unset): Prediction mode: 'timeseries' or 'cross_sectional'. Default: 'timeseries'.
+        neural_confidence_tau (float | Unset): Per-point neural-tier confidence threshold: GBT prediction admitted when
+            confidence >= tau, else climatology floor. 0.0 = gate labels only (no replacement). Default: 0.0.
         output_space (None | str | Unset): Item 6 — the space predict() 'value' will be in given the resolved transform:
             'level' (transform 'none' — value is a level) or 'change' (a differencing transform — predict() reconstructs to
             a level when history is available; see the predict response's 'value_space'). 'unknown (auto — resolved at train
@@ -75,6 +73,7 @@ class PredictionConfigOut:
     target_field: str
     autoregressive: str | Unset = "full"
     backtest_config: None | PredictionConfigOutBacktestConfigType0 | Unset = UNSET
+    baseline_mode: str | Unset = "neural"
     created_at: None | str | Unset = UNSET
     error_message: None | str | Unset = UNSET
     eval_metric_config: None | PredictionConfigOutEvalMetricConfigType0 | Unset = UNSET
@@ -84,6 +83,7 @@ class PredictionConfigOut:
     horizon: int | None | Unset = UNSET
     max_ar_lag: int | None | Unset = UNSET
     mode: str | Unset = "timeseries"
+    neural_confidence_tau: float | Unset = 0.0
     output_space: None | str | Unset = UNSET
     resolved_target_transform: None | str | Unset = UNSET
     target_transform_reason: None | str | Unset = UNSET
@@ -92,15 +92,9 @@ class PredictionConfigOut:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.prediction_config_out_backtest_config_type_0 import (
-            PredictionConfigOutBacktestConfigType0,
-        )
-        from ..models.prediction_config_out_eval_metric_config_type_0 import (
-            PredictionConfigOutEvalMetricConfigType0,
-        )
-        from ..models.prediction_config_out_feature_config_type_0 import (
-            PredictionConfigOutFeatureConfigType0,
-        )
+        from ..models.prediction_config_out_backtest_config_type_0 import PredictionConfigOutBacktestConfigType0
+        from ..models.prediction_config_out_eval_metric_config_type_0 import PredictionConfigOutEvalMetricConfigType0
+        from ..models.prediction_config_out_feature_config_type_0 import PredictionConfigOutFeatureConfigType0
 
         eval_metric = self.eval_metric
 
@@ -128,6 +122,8 @@ class PredictionConfigOut:
         else:
             backtest_config = self.backtest_config
 
+        baseline_mode = self.baseline_mode
+
         created_at: None | str | Unset
         if isinstance(self.created_at, Unset):
             created_at = UNSET
@@ -143,9 +139,7 @@ class PredictionConfigOut:
         eval_metric_config: dict[str, Any] | None | Unset
         if isinstance(self.eval_metric_config, Unset):
             eval_metric_config = UNSET
-        elif isinstance(
-            self.eval_metric_config, PredictionConfigOutEvalMetricConfigType0
-        ):
+        elif isinstance(self.eval_metric_config, PredictionConfigOutEvalMetricConfigType0):
             eval_metric_config = self.eval_metric_config.to_dict()
         else:
             eval_metric_config = self.eval_metric_config
@@ -186,6 +180,8 @@ class PredictionConfigOut:
             max_ar_lag = self.max_ar_lag
 
         mode = self.mode
+
+        neural_confidence_tau = self.neural_confidence_tau
 
         output_space: None | str | Unset
         if isinstance(self.output_space, Unset):
@@ -235,6 +231,8 @@ class PredictionConfigOut:
             field_dict["autoregressive"] = autoregressive
         if backtest_config is not UNSET:
             field_dict["backtest_config"] = backtest_config
+        if baseline_mode is not UNSET:
+            field_dict["baseline_mode"] = baseline_mode
         if created_at is not UNSET:
             field_dict["created_at"] = created_at
         if error_message is not UNSET:
@@ -253,6 +251,8 @@ class PredictionConfigOut:
             field_dict["max_ar_lag"] = max_ar_lag
         if mode is not UNSET:
             field_dict["mode"] = mode
+        if neural_confidence_tau is not UNSET:
+            field_dict["neural_confidence_tau"] = neural_confidence_tau
         if output_space is not UNSET:
             field_dict["output_space"] = output_space
         if resolved_target_transform is not UNSET:
@@ -268,15 +268,9 @@ class PredictionConfigOut:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.prediction_config_out_backtest_config_type_0 import (
-            PredictionConfigOutBacktestConfigType0,
-        )
-        from ..models.prediction_config_out_eval_metric_config_type_0 import (
-            PredictionConfigOutEvalMetricConfigType0,
-        )
-        from ..models.prediction_config_out_feature_config_type_0 import (
-            PredictionConfigOutFeatureConfigType0,
-        )
+        from ..models.prediction_config_out_backtest_config_type_0 import PredictionConfigOutBacktestConfigType0
+        from ..models.prediction_config_out_eval_metric_config_type_0 import PredictionConfigOutEvalMetricConfigType0
+        from ..models.prediction_config_out_feature_config_type_0 import PredictionConfigOutFeatureConfigType0
 
         d = dict(src_dict)
         eval_metric = d.pop("eval_metric")
@@ -297,9 +291,7 @@ class PredictionConfigOut:
 
         autoregressive = d.pop("autoregressive", UNSET)
 
-        def _parse_backtest_config(
-            data: object,
-        ) -> None | PredictionConfigOutBacktestConfigType0 | Unset:
+        def _parse_backtest_config(data: object) -> None | PredictionConfigOutBacktestConfigType0 | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -307,9 +299,7 @@ class PredictionConfigOut:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                backtest_config_type_0 = (
-                    PredictionConfigOutBacktestConfigType0.from_dict(data)
-                )
+                backtest_config_type_0 = PredictionConfigOutBacktestConfigType0.from_dict(data)
 
                 return backtest_config_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -317,6 +307,8 @@ class PredictionConfigOut:
             return cast(None | PredictionConfigOutBacktestConfigType0 | Unset, data)
 
         backtest_config = _parse_backtest_config(d.pop("backtest_config", UNSET))
+
+        baseline_mode = d.pop("baseline_mode", UNSET)
 
         def _parse_created_at(data: object) -> None | str | Unset:
             if data is None:
@@ -336,9 +328,7 @@ class PredictionConfigOut:
 
         error_message = _parse_error_message(d.pop("error_message", UNSET))
 
-        def _parse_eval_metric_config(
-            data: object,
-        ) -> None | PredictionConfigOutEvalMetricConfigType0 | Unset:
+        def _parse_eval_metric_config(data: object) -> None | PredictionConfigOutEvalMetricConfigType0 | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -346,22 +336,16 @@ class PredictionConfigOut:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                eval_metric_config_type_0 = (
-                    PredictionConfigOutEvalMetricConfigType0.from_dict(data)
-                )
+                eval_metric_config_type_0 = PredictionConfigOutEvalMetricConfigType0.from_dict(data)
 
                 return eval_metric_config_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
             return cast(None | PredictionConfigOutEvalMetricConfigType0 | Unset, data)
 
-        eval_metric_config = _parse_eval_metric_config(
-            d.pop("eval_metric_config", UNSET)
-        )
+        eval_metric_config = _parse_eval_metric_config(d.pop("eval_metric_config", UNSET))
 
-        def _parse_feature_config(
-            data: object,
-        ) -> None | PredictionConfigOutFeatureConfigType0 | Unset:
+        def _parse_feature_config(data: object) -> None | PredictionConfigOutFeatureConfigType0 | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -369,9 +353,7 @@ class PredictionConfigOut:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                feature_config_type_0 = PredictionConfigOutFeatureConfigType0.from_dict(
-                    data
-                )
+                feature_config_type_0 = PredictionConfigOutFeatureConfigType0.from_dict(data)
 
                 return feature_config_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
@@ -426,6 +408,8 @@ class PredictionConfigOut:
 
         mode = d.pop("mode", UNSET)
 
+        neural_confidence_tau = d.pop("neural_confidence_tau", UNSET)
+
         def _parse_output_space(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -442,9 +426,7 @@ class PredictionConfigOut:
                 return data
             return cast(None | str | Unset, data)
 
-        resolved_target_transform = _parse_resolved_target_transform(
-            d.pop("resolved_target_transform", UNSET)
-        )
+        resolved_target_transform = _parse_resolved_target_transform(d.pop("resolved_target_transform", UNSET))
 
         def _parse_target_transform_reason(data: object) -> None | str | Unset:
             if data is None:
@@ -453,9 +435,7 @@ class PredictionConfigOut:
                 return data
             return cast(None | str | Unset, data)
 
-        target_transform_reason = _parse_target_transform_reason(
-            d.pop("target_transform_reason", UNSET)
-        )
+        target_transform_reason = _parse_target_transform_reason(d.pop("target_transform_reason", UNSET))
 
         def _parse_time_index_field(data: object) -> None | str | Unset:
             if data is None:
@@ -486,6 +466,7 @@ class PredictionConfigOut:
             target_field=target_field,
             autoregressive=autoregressive,
             backtest_config=backtest_config,
+            baseline_mode=baseline_mode,
             created_at=created_at,
             error_message=error_message,
             eval_metric_config=eval_metric_config,
@@ -495,6 +476,7 @@ class PredictionConfigOut:
             horizon=horizon,
             max_ar_lag=max_ar_lag,
             mode=mode,
+            neural_confidence_tau=neural_confidence_tau,
             output_space=output_space,
             resolved_target_transform=resolved_target_transform,
             target_transform_reason=target_transform_reason,

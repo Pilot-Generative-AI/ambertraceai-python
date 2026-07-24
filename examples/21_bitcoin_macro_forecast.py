@@ -146,8 +146,9 @@ def run_bitcoin_forecast(api, args: argparse.Namespace) -> None:
         print_section(1, total, "Fetching BTC + ETH (coinbase) and the macro panel (fred) live")
         domain = api.domains.create(name=DOMAIN_NAME, description=DOMAIN_DESCRIPTION)
         # fetch_multi merges the two connectors into ONE date-aligned monthly panel.
-        # Each connector namespaces its columns (e.g. coinbase.BTC-USD, fred.GS10), so the
-        # target is the namespaced BTC column on this path.
+        # Each connector namespaces its columns with __ (e.g. coinbase__BTC-USD,
+        # fred__GS10) — NOT dots, which collide with the ontology Entity.field grammar.
+        # The target is the namespaced BTC column on this path.
         ds = api.datasets.fetch_multi(
             domain_id=domain["id"],
             sources=[
@@ -156,7 +157,7 @@ def run_bitcoin_forecast(api, args: argparse.Namespace) -> None:
             ],
             join_on="date", frequency="monthly", aggregation="last")
         dataset = _wait_dataset_ready(api, ds["id"])
-        target = "coinbase.BTC-USD"
+        target = "coinbase__BTC-USD"
     else:
         if not args.dataset.exists():
             print(f"ERROR: {args.dataset} not found. Run with --refresh to fetch live.",

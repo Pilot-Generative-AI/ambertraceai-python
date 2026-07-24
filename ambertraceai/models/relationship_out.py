@@ -9,9 +9,7 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.relationship_out_properties_type_0 import (
-        RelationshipOutPropertiesType0,
-    )
+    from ..models.relationship_out_properties_type_0 import RelationshipOutPropertiesType0
 
 
 T = TypeVar("T", bound="RelationshipOut")
@@ -40,9 +38,7 @@ class RelationshipOut:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.relationship_out_properties_type_0 import (
-            RelationshipOutPropertiesType0,
-        )
+        from ..models.relationship_out_properties_type_0 import RelationshipOutPropertiesType0
 
         domain_id = self.domain_id
 
@@ -88,9 +84,7 @@ class RelationshipOut:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.relationship_out_properties_type_0 import (
-            RelationshipOutPropertiesType0,
-        )
+        from ..models.relationship_out_properties_type_0 import RelationshipOutPropertiesType0
 
         d = dict(src_dict)
         domain_id = d.pop("domain_id")
@@ -112,9 +106,7 @@ class RelationshipOut:
 
         description = _parse_description(d.pop("description", UNSET))
 
-        def _parse_properties(
-            data: object,
-        ) -> None | RelationshipOutPropertiesType0 | Unset:
+        def _parse_properties(data: object) -> None | RelationshipOutPropertiesType0 | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):

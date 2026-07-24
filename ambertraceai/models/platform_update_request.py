@@ -44,9 +44,7 @@ class PlatformUpdateRequest:
     """
 
     invariant_manifest: list[Invariant] | None | Unset = UNSET
-    scored_determinations: (
-        None | PlatformUpdateRequestScoredDeterminationsType0 | Unset
-    ) = UNSET
+    scored_determinations: None | PlatformUpdateRequestScoredDeterminationsType0 | Unset = UNSET
     team_id: int | None | Unset = UNSET
     verified_min_confidence: float | None | Unset = UNSET
     verified_profile: bool | None | Unset = UNSET
@@ -64,9 +62,7 @@ class PlatformUpdateRequest:
         elif isinstance(self.invariant_manifest, list):
             invariant_manifest = []
             for invariant_manifest_type_0_item_data in self.invariant_manifest:
-                invariant_manifest_type_0_item = (
-                    invariant_manifest_type_0_item_data.to_dict()
-                )
+                invariant_manifest_type_0_item = invariant_manifest_type_0_item_data.to_dict()
                 invariant_manifest.append(invariant_manifest_type_0_item)
 
         else:
@@ -75,9 +71,7 @@ class PlatformUpdateRequest:
         scored_determinations: dict[str, Any] | None | Unset
         if isinstance(self.scored_determinations, Unset):
             scored_determinations = UNSET
-        elif isinstance(
-            self.scored_determinations, PlatformUpdateRequestScoredDeterminationsType0
-        ):
+        elif isinstance(self.scored_determinations, PlatformUpdateRequestScoredDeterminationsType0):
             scored_determinations = self.scored_determinations.to_dict()
         else:
             scored_determinations = self.scored_determinations
@@ -144,9 +138,7 @@ class PlatformUpdateRequest:
                 invariant_manifest_type_0 = []
                 _invariant_manifest_type_0 = data
                 for invariant_manifest_type_0_item_data in _invariant_manifest_type_0:
-                    invariant_manifest_type_0_item = Invariant.from_dict(
-                        invariant_manifest_type_0_item_data
-                    )
+                    invariant_manifest_type_0_item = Invariant.from_dict(invariant_manifest_type_0_item_data)
 
                     invariant_manifest_type_0.append(invariant_manifest_type_0_item)
 
@@ -155,13 +147,9 @@ class PlatformUpdateRequest:
                 pass
             return cast(list[Invariant] | None | Unset, data)
 
-        invariant_manifest = _parse_invariant_manifest(
-            d.pop("invariant_manifest", UNSET)
-        )
+        invariant_manifest = _parse_invariant_manifest(d.pop("invariant_manifest", UNSET))
 
-        def _parse_scored_determinations(
-            data: object,
-        ) -> None | PlatformUpdateRequestScoredDeterminationsType0 | Unset:
+        def _parse_scored_determinations(data: object) -> None | PlatformUpdateRequestScoredDeterminationsType0 | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -169,20 +157,14 @@ class PlatformUpdateRequest:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                scored_determinations_type_0 = (
-                    PlatformUpdateRequestScoredDeterminationsType0.from_dict(data)
-                )
+                scored_determinations_type_0 = PlatformUpdateRequestScoredDeterminationsType0.from_dict(data)
 
                 return scored_determinations_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
-            return cast(
-                None | PlatformUpdateRequestScoredDeterminationsType0 | Unset, data
-            )
+            return cast(None | PlatformUpdateRequestScoredDeterminationsType0 | Unset, data)
 
-        scored_determinations = _parse_scored_determinations(
-            d.pop("scored_determinations", UNSET)
-        )
+        scored_determinations = _parse_scored_determinations(d.pop("scored_determinations", UNSET))
 
         def _parse_team_id(data: object) -> int | None | Unset:
             if data is None:
@@ -200,9 +182,7 @@ class PlatformUpdateRequest:
                 return data
             return cast(float | None | Unset, data)
 
-        verified_min_confidence = _parse_verified_min_confidence(
-            d.pop("verified_min_confidence", UNSET)
-        )
+        verified_min_confidence = _parse_verified_min_confidence(d.pop("verified_min_confidence", UNSET))
 
         def _parse_verified_profile(data: object) -> bool | None | Unset:
             if data is None:

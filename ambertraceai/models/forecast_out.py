@@ -10,9 +10,7 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.forecast_out_features_used_type_0 import ForecastOutFeaturesUsedType0
-    from ..models.forecast_out_rule_adjustments_type_0 import (
-        ForecastOutRuleAdjustmentsType0,
-    )
+    from ..models.forecast_out_rule_adjustments_type_0 import ForecastOutRuleAdjustmentsType0
 
 
 T = TypeVar("T", bound="ForecastOut")
@@ -52,12 +50,8 @@ class ForecastOut:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.forecast_out_features_used_type_0 import (
-            ForecastOutFeaturesUsedType0,
-        )
-        from ..models.forecast_out_rule_adjustments_type_0 import (
-            ForecastOutRuleAdjustmentsType0,
-        )
+        from ..models.forecast_out_features_used_type_0 import ForecastOutFeaturesUsedType0
+        from ..models.forecast_out_rule_adjustments_type_0 import ForecastOutRuleAdjustmentsType0
 
         id = self.id
 
@@ -147,12 +141,8 @@ class ForecastOut:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.forecast_out_features_used_type_0 import (
-            ForecastOutFeaturesUsedType0,
-        )
-        from ..models.forecast_out_rule_adjustments_type_0 import (
-            ForecastOutRuleAdjustmentsType0,
-        )
+        from ..models.forecast_out_features_used_type_0 import ForecastOutFeaturesUsedType0
+        from ..models.forecast_out_rule_adjustments_type_0 import ForecastOutRuleAdjustmentsType0
 
         d = dict(src_dict)
         id = d.pop("id")
@@ -179,9 +169,7 @@ class ForecastOut:
 
         created_at = _parse_created_at(d.pop("created_at", UNSET))
 
-        def _parse_features_used(
-            data: object,
-        ) -> ForecastOutFeaturesUsedType0 | None | Unset:
+        def _parse_features_used(data: object) -> ForecastOutFeaturesUsedType0 | None | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -225,9 +213,7 @@ class ForecastOut:
 
         lower_bound = _parse_lower_bound(d.pop("lower_bound", UNSET))
 
-        def _parse_rule_adjustments(
-            data: object,
-        ) -> ForecastOutRuleAdjustmentsType0 | None | Unset:
+        def _parse_rule_adjustments(data: object) -> ForecastOutRuleAdjustmentsType0 | None | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -235,9 +221,7 @@ class ForecastOut:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                rule_adjustments_type_0 = ForecastOutRuleAdjustmentsType0.from_dict(
-                    data
-                )
+                rule_adjustments_type_0 = ForecastOutRuleAdjustmentsType0.from_dict(data)
 
                 return rule_adjustments_type_0
             except (TypeError, ValueError, AttributeError, KeyError):

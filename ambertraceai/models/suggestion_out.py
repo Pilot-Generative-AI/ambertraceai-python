@@ -159,9 +159,7 @@ class SuggestionOut:
 
         action = _parse_action(d.pop("action", UNSET))
 
-        def _parse_condition(
-            data: object,
-        ) -> None | SuggestionOutConditionType0 | Unset:
+        def _parse_condition(data: object) -> None | SuggestionOutConditionType0 | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -191,9 +189,7 @@ class SuggestionOut:
 
         priority = d.pop("priority", UNSET)
 
-        def _parse_scorecard(
-            data: object,
-        ) -> None | SuggestionOutScorecardType0 | Unset:
+        def _parse_scorecard(data: object) -> None | SuggestionOutScorecardType0 | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):

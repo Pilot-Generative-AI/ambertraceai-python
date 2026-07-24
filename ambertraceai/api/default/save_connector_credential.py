@@ -73,7 +73,8 @@ def sync_detailed(
 
      Stores (or replaces) the current user's API key for a connector provider (e.g. 'fred'), encrypted at
     rest. The key is then auto-injected when a connector config for that provider omits api_key. Returns
-    masked metadata.
+    masked metadata. The provider must be a recognised credential namespace (see GET /connector-
+    credentials/providers for the valid set).
 
     Args:
         provider (str): Connector credential provider, e.g. 'fred'.
@@ -109,7 +110,8 @@ def sync(
 
      Stores (or replaces) the current user's API key for a connector provider (e.g. 'fred'), encrypted at
     rest. The key is then auto-injected when a connector config for that provider omits api_key. Returns
-    masked metadata.
+    masked metadata. The provider must be a recognised credential namespace (see GET /connector-
+    credentials/providers for the valid set).
 
     Args:
         provider (str): Connector credential provider, e.g. 'fred'.
@@ -140,7 +142,8 @@ async def asyncio_detailed(
 
      Stores (or replaces) the current user's API key for a connector provider (e.g. 'fred'), encrypted at
     rest. The key is then auto-injected when a connector config for that provider omits api_key. Returns
-    masked metadata.
+    masked metadata. The provider must be a recognised credential namespace (see GET /connector-
+    credentials/providers for the valid set).
 
     Args:
         provider (str): Connector credential provider, e.g. 'fred'.
@@ -174,7 +177,8 @@ async def asyncio(
 
      Stores (or replaces) the current user's API key for a connector provider (e.g. 'fred'), encrypted at
     rest. The key is then auto-injected when a connector config for that provider omits api_key. Returns
-    masked metadata.
+    masked metadata. The provider must be a recognised credential namespace (see GET /connector-
+    credentials/providers for the valid set).
 
     Args:
         provider (str): Connector credential provider, e.g. 'fred'.

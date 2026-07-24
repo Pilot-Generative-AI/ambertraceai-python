@@ -1,14 +1,3 @@
-# Copyright (c) 2026 Ambertrace Labs Ltd.
-# All rights reserved.
-#
-# This source code is the proprietary and confidential property of
-# Ambertrace Labs Ltd. No part of this file may be reproduced, stored,
-# transmitted, or used in any form or by any means without the prior
-# written permission of Ambertrace Labs Ltd. No license, express or
-# implied, is granted herein.
-#
-# Contact: legal@ambertrace.ai
-
 """AmbertraceAI Python SDK — convenience layer over the generated client."""
 
 from __future__ import annotations
@@ -565,13 +554,24 @@ class DomainResource(_Resource):
         """Remove the domain's evaluation config."""
         return self._request("DELETE", f"/api/v1/domains/{domain_id}/eval-config")
 
-    def suggest_eval_config(self, domain_id: int) -> dict:
-        """Ask the platform to SUGGEST candidate eval configs from the domain's data
-        + description. Returns ``{"options": [{target_metric, direction, unit,
-        description, ...}, ...]}`` — review one and pass it to
-        :meth:`set_eval_config`. A convenience for bootstrapping the metric rather
-        than hand-naming it."""
-        return self._request("POST", f"/api/v1/domains/{domain_id}/eval-config/suggest")
+    def suggest_eval_config(self, domain_id: int, *, n_options: int = 3) -> dict:
+        """Kick off an async job that SUGGESTS candidate eval configs from the
+        domain's data + description.
+
+        **Async contract (same pattern as build_ontology):**
+
+        1. Returns 202 with ``{"job_id": N, "poll": "/api/v1/jobs/N", ...}``.
+        2. Poll ``GET /api/v1/jobs/{job_id}`` until ``status == "completed"``.
+        3. The completed job's ``result`` carries
+           ``{"options": [{target_metric, direction, unit, description, ...}, ...]}``.
+        4. Pick one option and commit it via :meth:`set_eval_config`.
+
+        Args:
+            domain_id: Domain to suggest for.
+            n_options: How many candidate configs to generate (1-5, default 3).
+        """
+        return self._request("POST", f"/api/v1/domains/{domain_id}/eval-config/suggest",
+                             json={"n_options": n_options})
 
     # -- Rule templates --
 
@@ -694,7 +694,7 @@ class DatasetResource(_Resource):
         {"series_ids": [...], "api_key": ...}}, {"connector_type": "boe",
         "config": {...}}]``. The sources are outer-joined on the ``join_on`` index
         column (default ``"date"``); each value column is namespaced by connector
-        type to avoid collisions (e.g. ``boe.IUDSOIA``). Set ``frequency``
+        type to avoid collisions (e.g. ``boe__IUDSOIA``). Set ``frequency``
         (``daily``/``weekly``/``monthly``/``quarterly``/``annual``) with
         ``aggregation`` (``last`` or ``mean``) to resample mixed-cadence sources
         onto a common grid before joining; without it, mixed-frequency sources
@@ -1067,11 +1067,21 @@ class PlatformResource(_Resource):
     def list_suggestions(self, platform_id: int) -> list[dict]:
         return self._request("GET", f"/api/v1/platforms/{platform_id}/suggestions")
 
-    def approve_suggestion(self, platform_id: int, suggestion_id: int) -> dict:
-        return self._request("POST", f"/api/v1/platforms/{platform_id}/suggestions/{suggestion_id}/approve")
+    def approve_suggestion(self, platform_id: int, suggestion_id: int, *,
+                           reason: str | None = None) -> dict:
+        body: dict[str, Any] = {}
+        if reason is not None:
+            body["reason"] = reason
+        return self._request("POST", f"/api/v1/platforms/{platform_id}/suggestions/{suggestion_id}/approve",
+                             json=body)
 
-    def reject_suggestion(self, platform_id: int, suggestion_id: int) -> dict:
-        return self._request("POST", f"/api/v1/platforms/{platform_id}/suggestions/{suggestion_id}/reject")
+    def reject_suggestion(self, platform_id: int, suggestion_id: int, *,
+                          reason: str | None = None) -> dict:
+        body: dict[str, Any] = {}
+        if reason is not None:
+            body["reason"] = reason
+        return self._request("POST", f"/api/v1/platforms/{platform_id}/suggestions/{suggestion_id}/reject",
+                             json=body)
 
     def update(self, platform_id: int, **kwargs) -> dict:
         """Update a platform's verified-profile settings.
@@ -1655,6 +1665,11 @@ class PredictionResource(_Resource):
               "proof_ref": {"proof_checked": bool, "proof_summary": "...",
                             "model_id": ..., "as_of": ...},
               "why_certification": { ... the embedded certificate (verified=True) ... },
+              "forecast_tier": "verified_symbolic"|"neural_scored@<tau>"|
+                               "climatology_floor"|"baseline_anchor"|null,
+              "point_is_persistence": <bool or null>,
+              "per_point_forecast_tiers": [{"index": 0,
+                  "forecast_tier": "verified_symbolic"}, ...] or null,
               "sector": ..., "period": ..., "entity": ...
             }
 
@@ -1662,6 +1677,24 @@ class PredictionResource(_Resource):
         ``fired_signals``; ``top_drivers`` is the provenance/why narrative.
         ``proof_ref`` / ``why_certification`` are the proof chain (``why_certification``
         is only populated with ``verified=True``).
+
+        Per-point provenance (``forecast_tier`` / ``point_is_persistence``)
+        ------------------------------------------------------------------
+        ``forecast_tier`` is the honest per-point tier label: ``"verified_symbolic"``
+        when driver-rules fired AND were proof-checked; ``"neural_scored@<tau>"`` when
+        the neural confidence gate served the GBT prediction (``baseline_mode='neural'``
+        with no fired drivers, above the tau threshold); ``"climatology_floor"`` when
+        below tau or model unavailable; ``"baseline_anchor"`` for non-neural anchors
+        (persistence / climatology) with no fired drivers. Record-first consumers
+        (the decision-bridge ``predictions={role: record}`` fan-in) should key on
+        ``forecast_tier`` to distinguish genuine driver-based forecasts from anchor
+        filler -- not ``point_is_persistence``, which is True ONLY under a persistence
+        anchor (narrow post-#1226 semantics).
+
+        ``per_point_forecast_tiers`` is present when ``include_fitted_series=True``
+        was requested: a per-holdout-point array of ``{index, forecast_tier}`` dicts,
+        one per point in the fitted series. Points whose tier is None (legacy
+        forecasters predating the tier label) are omitted.
 
         Certified probability (``probability`` / ``probability_basis``)
         --------------------------------------------------------------
@@ -1682,7 +1715,12 @@ class PredictionResource(_Resource):
              "direction": "up"|"down",             # which side of threshold
              "sigma": <recovered out-of-sample sigma>,
              "threshold": <the threshold, default the persistence baseline>,
-             "reason": "certified: in_domain and calibration in-regime"}
+             "threshold_source": "baseline"|absent,  # present when threshold was defaulted
+             "reason": "certified: in_domain and calibration in-regime"
+             # OR for anchor/no-driver points:
+             # "certified: anchor forecast (no fired drivers) — threshold defaulted
+             #  to baseline==value; probability trivially 0.5; anchor_mode=<tier>"
+            }
 
         ``probability_certified`` — and the FAIL-CLOSED / OOD contract. The
         probability is only valid (``probability_certified=True``, ``probability``

@@ -67,7 +67,9 @@ def sync_detailed(
     """Test connector
 
      Tests a connector configuration by fetching a small sample of data. Returns the row count, column
-    names, and first 5 rows. Async connectors cannot be tested inline and return 422.
+    names, and first 5 rows. Async connectors cannot be tested inline and return 422. Set
+    validate_only=true to validate the configuration without fetching — works for all connectors
+    including async ones.
 
     Args:
         body (ConnectorTestRequest):
@@ -99,7 +101,9 @@ def sync(
     """Test connector
 
      Tests a connector configuration by fetching a small sample of data. Returns the row count, column
-    names, and first 5 rows. Async connectors cannot be tested inline and return 422.
+    names, and first 5 rows. Async connectors cannot be tested inline and return 422. Set
+    validate_only=true to validate the configuration without fetching — works for all connectors
+    including async ones.
 
     Args:
         body (ConnectorTestRequest):
@@ -126,7 +130,9 @@ async def asyncio_detailed(
     """Test connector
 
      Tests a connector configuration by fetching a small sample of data. Returns the row count, column
-    names, and first 5 rows. Async connectors cannot be tested inline and return 422.
+    names, and first 5 rows. Async connectors cannot be tested inline and return 422. Set
+    validate_only=true to validate the configuration without fetching — works for all connectors
+    including async ones.
 
     Args:
         body (ConnectorTestRequest):
@@ -156,7 +162,9 @@ async def asyncio(
     """Test connector
 
      Tests a connector configuration by fetching a small sample of data. Returns the row count, column
-    names, and first 5 rows. Async connectors cannot be tested inline and return 422.
+    names, and first 5 rows. Async connectors cannot be tested inline and return 422. Set
+    validate_only=true to validate the configuration without fetching — works for all connectors
+    including async ones.
 
     Args:
         body (ConnectorTestRequest):

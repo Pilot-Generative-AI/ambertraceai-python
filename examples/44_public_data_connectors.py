@@ -247,6 +247,19 @@ def main() -> None:
     # e.g. 0.0418 = 4.18%) for that currency-tenor pair, one row per date.
     # Use these column names as ``target_field`` in the prediction pipeline
     # (e.g. ``target_field="USD_10Y"`` to forecast the 10-year USD SOFR rate).
+    #
+    # Tenors: the config below requests four common points, but the FULL
+    # supported set is 21 buckets across the whole curve:
+    #   1M, 3M, 6M, 9M, 1Y, 2Y, 3Y, 4Y, 5Y, 6Y, 7Y, 8Y, 9Y, 10Y,
+    #   12Y, 15Y, 20Y, 25Y, 30Y, 40Y, 50Y
+    # (also discoverable programmatically: the connector's config schema from
+    # ``api.connectors.list()`` carries the ``tenors`` enum). Rates are the
+    # median of actual DTCC trade prints snapped to each bucket, so
+    # off-the-run tenors (9M, 6Y-9Y, 12Y, 25Y, 40Y, 50Y) can be sparse on
+    # some days -- gaps are carried forward from the last traded value, and
+    # every row carries ``n_capped`` (block-cap-masked trade count) as a
+    # data-quality signal. Currencies: USD (SOFR), EUR (EuroSTR), GBP
+    # (SONIA), JPY (TONA), CHF (SARON), CAD (CORRA).
     print("\n--- DTCC swap curves (OIS rates, no API key) ---")
     step(
         "Fetching OIS swap-rate curves (SOFR/SONIA) from DTCC PPD -- "
