@@ -147,6 +147,9 @@ what-if scenarios.
 | `33_credit_spread_macro_forecast.py` | US investment-grade credit spread (IG_SPREAD) — system picks the drivers | `data/credit_macro_panel.csv` (bundled, FRED public domain) |
 | `34_real_gdp_growth_macro_forecast.py` | US real GDP growth (REAL_GDP_GROWTH) — system picks the drivers | `data/gdp_macro_panel.csv` (bundled, FRED public domain) |
 | `35_geopolitical_risk_macro_forecast.py` | Geopolitical risk (GPR, Caldara-Iacoviello index) — system picks the drivers; an honest read on how little macro explains an EXOGENOUS target | `data/geopol_macro_panel.csv` (bundled; GPR index public — cite matteoiacoviello.com on reuse; macro panel FRED public domain) |
+| `45_symbolic_forecast_baseline_mode.py` | Selectable `baseline_mode` forecast anchor (`neural` / `climatology` / `persistence` / `drift`) — driver effects are recomposed onto the chosen anchor | An existing forecasting platform (`python 45_... [platform_id]`) |
+| `46_tiered_coverage_forecast.py` | The `neural_confidence_tau` per-point confidence gate — below-tau GBT predictions are replaced by the climatology floor; read `forecast_tier` / `confidence` | An existing forecasting platform (`python 46_... [platform_id]`) |
+| `47_forecast_regime_eval_config.py` | **Eval config for a forecast/regime domain** — `direction="separate"` scores a rule on whether its FIRING predictively separates a forward-looking column; shows the auto-defaulted `calculation` and what each 422 rejection tells you | A generated monthly curve-regime panel (or `--dataset your.csv`) |
 
 These are **classical / symbolic** forecasters — a gradient-boosted model over a broad
 macro panel plus an induced set of readable WHEN→THEN driver rules and a persistence
