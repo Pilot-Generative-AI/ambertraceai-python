@@ -109,7 +109,7 @@ string.
 ## Runnable examples
 
 The SDK ships numbered examples (`examples/00_quickstart.py` through
-`examples/46_tiered_coverage_forecast.py`) covering every major capability.
+`examples/47_forecast_regime_eval_config.py`) covering every major capability.
 Each is self-contained and runnable with `python examples/NN_name.py` after
 setting `AMBERTRACE_API_KEY` and `AMBERTRACE_BASE_URL`.
 

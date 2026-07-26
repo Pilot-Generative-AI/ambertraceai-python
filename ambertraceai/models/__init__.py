@@ -61,9 +61,13 @@ from .entity_out import EntityOut
 from .entity_out_properties_type_0 import EntityOutPropertiesType0
 from .entity_relations_response import EntityRelationsResponse
 from .entity_relations_response_relations_item import EntityRelationsResponseRelationsItem
+from .eval_calculation import EvalCalculation
+from .eval_calculation_aggregate_type_0 import EvalCalculationAggregateType0
+from .eval_calculation_type_type_0 import EvalCalculationTypeType0
 from .eval_config_suggest_request import EvalConfigSuggestRequest
 from .eval_config_update import EvalConfigUpdate
-from .eval_config_update_calculation_type_0 import EvalConfigUpdateCalculationType0
+from .eval_config_update_direction import EvalConfigUpdateDirection
+from .eval_config_update_unit import EvalConfigUpdateUnit
 from .export_report_request import ExportReportRequest
 from .feedback_log_entry import FeedbackLogEntry
 from .feedback_log_entry_rule_snapshot_type_0 import FeedbackLogEntryRuleSnapshotType0
@@ -237,9 +241,13 @@ __all__ = (
     "EntityOutPropertiesType0",
     "EntityRelationsResponse",
     "EntityRelationsResponseRelationsItem",
+    "EvalCalculation",
+    "EvalCalculationAggregateType0",
+    "EvalCalculationTypeType0",
     "EvalConfigSuggestRequest",
     "EvalConfigUpdate",
-    "EvalConfigUpdateCalculationType0",
+    "EvalConfigUpdateDirection",
+    "EvalConfigUpdateUnit",
     "ExportReportRequest",
     "FeedbackLogEntry",
     "FeedbackLogEntryRuleSnapshotType0",

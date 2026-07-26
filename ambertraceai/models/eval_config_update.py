@@ -6,10 +6,12 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.eval_config_update_direction import EvalConfigUpdateDirection
+from ..models.eval_config_update_unit import EvalConfigUpdateUnit
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.eval_config_update_calculation_type_0 import EvalConfigUpdateCalculationType0
+    from ..models.eval_calculation import EvalCalculation
 
 
 T = TypeVar("T", bound="EvalConfigUpdate")
@@ -19,35 +21,38 @@ T = TypeVar("T", bound="EvalConfigUpdate")
 class EvalConfigUpdate:
     """
     Attributes:
-        direction (str):
+        direction (EvalConfigUpdateDirection): Optimisation direction. 'minimize' / 'maximize' push the metric down /
+            up; 'separate' is the forecast/regime mode — the target is a forward-looking column and a rule passes if its
+            FIRING predictively separates that column (signed effect either way). Under 'separate', 'calculation' defaults
+            to the mean of the target column.
         target_metric (str):
-        calculation (EvalConfigUpdateCalculationType0 | None | Unset):
+        calculation (EvalCalculation | None | Unset):
         description (str | Unset):  Default: ''.
         min_positive_fraction (float | None | Unset):
         significance_threshold_pp (float | None | Unset):
-        unit (str | Unset):  Default: 'other'.
+        unit (EvalConfigUpdateUnit | Unset): Descriptive unit of the target metric. Default: EvalConfigUpdateUnit.OTHER.
     """
 
-    direction: str
+    direction: EvalConfigUpdateDirection
     target_metric: str
-    calculation: EvalConfigUpdateCalculationType0 | None | Unset = UNSET
+    calculation: EvalCalculation | None | Unset = UNSET
     description: str | Unset = ""
     min_positive_fraction: float | None | Unset = UNSET
     significance_threshold_pp: float | None | Unset = UNSET
-    unit: str | Unset = "other"
+    unit: EvalConfigUpdateUnit | Unset = EvalConfigUpdateUnit.OTHER
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.eval_config_update_calculation_type_0 import EvalConfigUpdateCalculationType0
+        from ..models.eval_calculation import EvalCalculation
 
-        direction = self.direction
+        direction = self.direction.value
 
         target_metric = self.target_metric
 
         calculation: dict[str, Any] | None | Unset
         if isinstance(self.calculation, Unset):
             calculation = UNSET
-        elif isinstance(self.calculation, EvalConfigUpdateCalculationType0):
+        elif isinstance(self.calculation, EvalCalculation):
             calculation = self.calculation.to_dict()
         else:
             calculation = self.calculation
@@ -66,7 +71,9 @@ class EvalConfigUpdate:
         else:
             significance_threshold_pp = self.significance_threshold_pp
 
-        unit = self.unit
+        unit: str | Unset = UNSET
+        if not isinstance(self.unit, Unset):
+            unit = self.unit.value
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -91,14 +98,14 @@ class EvalConfigUpdate:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.eval_config_update_calculation_type_0 import EvalConfigUpdateCalculationType0
+        from ..models.eval_calculation import EvalCalculation
 
         d = dict(src_dict)
-        direction = d.pop("direction")
+        direction = EvalConfigUpdateDirection(d.pop("direction"))
 
         target_metric = d.pop("target_metric")
 
-        def _parse_calculation(data: object) -> EvalConfigUpdateCalculationType0 | None | Unset:
+        def _parse_calculation(data: object) -> EvalCalculation | None | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):
@@ -106,12 +113,12 @@ class EvalConfigUpdate:
             try:
                 if not isinstance(data, dict):
                     raise TypeError()
-                calculation_type_0 = EvalConfigUpdateCalculationType0.from_dict(data)
+                calculation_type_0 = EvalCalculation.from_dict(data)
 
                 return calculation_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
                 pass
-            return cast(EvalConfigUpdateCalculationType0 | None | Unset, data)
+            return cast(EvalCalculation | None | Unset, data)
 
         calculation = _parse_calculation(d.pop("calculation", UNSET))
 
@@ -135,7 +142,12 @@ class EvalConfigUpdate:
 
         significance_threshold_pp = _parse_significance_threshold_pp(d.pop("significance_threshold_pp", UNSET))
 
-        unit = d.pop("unit", UNSET)
+        _unit = d.pop("unit", UNSET)
+        unit: EvalConfigUpdateUnit | Unset
+        if isinstance(_unit, Unset):
+            unit = UNSET
+        else:
+            unit = EvalConfigUpdateUnit(_unit)
 
         eval_config_update = cls(
             direction=direction,

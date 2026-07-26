@@ -69,10 +69,13 @@ def sync_detailed(
     client: AuthenticatedClient | Client,
     body: EvalConfigUpdate,
 ) -> Response[list[ValidationErrorModel]]:
-    """Set eval config
+    r"""Set eval config
 
      Sets or updates the evaluation configuration for a domain. Defines how rule impact is measured:
-    target metric, optimization direction, significance threshold.
+    target metric, optimization direction, significance threshold. Use direction=\"separate\" for the
+    forecast/regime mode, where the target is a forward-looking column and a rule passes if its firing
+    predictively separates that column (calculation then defaults to the mean of the target column).
+    Rejections return the specific field and its permitted values in error.details.
 
     Args:
         id (int): Resource ID
@@ -104,10 +107,13 @@ def sync(
     client: AuthenticatedClient | Client,
     body: EvalConfigUpdate,
 ) -> list[ValidationErrorModel] | None:
-    """Set eval config
+    r"""Set eval config
 
      Sets or updates the evaluation configuration for a domain. Defines how rule impact is measured:
-    target metric, optimization direction, significance threshold.
+    target metric, optimization direction, significance threshold. Use direction=\"separate\" for the
+    forecast/regime mode, where the target is a forward-looking column and a rule passes if its firing
+    predictively separates that column (calculation then defaults to the mean of the target column).
+    Rejections return the specific field and its permitted values in error.details.
 
     Args:
         id (int): Resource ID
@@ -134,10 +140,13 @@ async def asyncio_detailed(
     client: AuthenticatedClient | Client,
     body: EvalConfigUpdate,
 ) -> Response[list[ValidationErrorModel]]:
-    """Set eval config
+    r"""Set eval config
 
      Sets or updates the evaluation configuration for a domain. Defines how rule impact is measured:
-    target metric, optimization direction, significance threshold.
+    target metric, optimization direction, significance threshold. Use direction=\"separate\" for the
+    forecast/regime mode, where the target is a forward-looking column and a rule passes if its firing
+    predictively separates that column (calculation then defaults to the mean of the target column).
+    Rejections return the specific field and its permitted values in error.details.
 
     Args:
         id (int): Resource ID
@@ -167,10 +176,13 @@ async def asyncio(
     client: AuthenticatedClient | Client,
     body: EvalConfigUpdate,
 ) -> list[ValidationErrorModel] | None:
-    """Set eval config
+    r"""Set eval config
 
      Sets or updates the evaluation configuration for a domain. Defines how rule impact is measured:
-    target metric, optimization direction, significance threshold.
+    target metric, optimization direction, significance threshold. Use direction=\"separate\" for the
+    forecast/regime mode, where the target is a forward-looking column and a rule passes if its firing
+    predictively separates that column (calculation then defaults to the mean of the target column).
+    Rejections return the specific field and its permitted values in error.details.
 
     Args:
         id (int): Resource ID

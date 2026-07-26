@@ -521,9 +521,11 @@ class DomainResource(_Resource):
         suggestion / discovery is scored against — so a suggested rule earns its
         place by moving THIS metric, not a generic accuracy proxy. Fields:
         ``target_metric`` (machine-name, e.g. ``"readmission_30d"``), ``direction``
-        (``"minimize"`` | ``"maximize"``), ``unit``, ``description``,
-        ``significance_threshold_pp`` (min improvement in percentage points to
-        count), ``min_positive_fraction``, and an optional ``calculation`` block."""
+        (``"minimize"`` | ``"maximize"`` | ``"separate"``), ``unit``,
+        ``description``, ``significance_threshold_pp`` (min improvement in
+        percentage points to count), ``min_positive_fraction``, and an optional
+        ``calculation`` block. :meth:`set_eval_config` lists the permitted values
+        of every enumerated field."""
         return self._request("GET", f"/api/v1/domains/{domain_id}/eval-config")
 
     def set_eval_config(self, domain_id: int, *, target_metric: str,
@@ -533,12 +535,56 @@ class DomainResource(_Resource):
                         calculation: dict | None = None, **kwargs) -> dict:
         """Set the domain's evaluation config (see :meth:`eval_config`).
 
-        ``target_metric`` (required) is the outcome metric name; ``direction``
-        (required) is ``"minimize"`` or ``"maximize"``. ``significance_threshold_pp``
-        is the minimum improvement (percentage points) a suggested rule must show to
-        be worth adopting; ``min_positive_fraction`` bounds how often the metric's
-        positive case must occur; ``calculation`` optionally specifies how the metric
-        is computed from columns. Returns the stored config."""
+        ``target_metric`` (required) is the outcome metric name — a machine-name
+        (``^[a-zA-Z][a-zA-Z0-9_]*$``). ANY such name is accepted: it does NOT have
+        to come from :meth:`suggest_eval_config`'s output, and a column straight out
+        of your own data is the normal case.
+
+        ``direction`` (required) — one of THREE values:
+
+        - ``"minimize"`` / ``"maximize"`` — a rule earns its place by pushing the
+          metric down / up (e.g. minimise ``readmission_30d``, maximise ``roi``).
+        - ``"separate"`` — the **forecast / regime** mode. Use it when the target is
+          a FORWARD-LOOKING column in your data (e.g. ``fwd_return_1m``, or a 0/1
+          ``regime_persists_next_month``), so there is no fixed up/down direction:
+          a rule passes if its FIRING **predictively separates** that column
+          (a signed effect either way, scored by effect size). Under ``"separate"``
+          you may omit ``calculation`` entirely — it auto-defaults to the mean of
+          the target column, because the target IS a data column. This is the mode
+          for macro / timeseries / regime domains; without it the evaluation gate
+          silently skips forecast rules.
+
+        ``unit`` (default ``"other"``) — one of ``"percentage"``, ``"currency"``,
+        ``"ratio"``, ``"rate"``, ``"count"``, ``"score"``, ``"other"``. Descriptive
+        only; any other string is rejected with 422.
+
+        ``significance_threshold_pp`` is the minimum improvement (percentage points)
+        a suggested rule must show to be worth adopting; ``min_positive_fraction``
+        (0-1) bounds how often the metric's positive case must occur.
+
+        ``calculation`` (optional) says how the metric is computed from columns:
+
+        - ``{"type": "field_aggregate", "field": <column>, "aggregate": <agg>}`` —
+          ``aggregate`` is one of ``"sum"``, ``"mean"``, ``"count"``, ``"median"``,
+          ``"max"``, ``"min"``, ``"ratio"`` (default ``"mean"``).
+        - ``{"type": "sql_expression", "expression": "<SQL>"}``.
+        - ``{"type": "custom", "notes": "<how it is computed>"}`` — ``notes`` is
+          REQUIRED for this type.
+
+        A rejection returns 422 naming the offending field and its permitted values
+        (in ``error.message``, and in ``error.details`` for server-side validation),
+        so read the error rather than guessing. Returns the stored config.
+
+        Example (forecast/regime — see ``examples/47_forecast_regime_eval_config.py``)::
+
+            client.domains.set_eval_config(
+                domain_id,
+                target_metric="regime_persists_next_month",  # a 0/1 forward column
+                direction="separate",
+                unit="rate",
+                description="Does next month's curve regime match this month's?",
+            )
+        """
         body: dict[str, Any] = {"target_metric": target_metric,
                                 "direction": direction, "description": description,
                                 "unit": unit, **kwargs}
