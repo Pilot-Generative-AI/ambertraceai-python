@@ -14,6 +14,11 @@ Each clause maps to a structured search call via
       country='DE' to find German/euro-area rates.
   (b) 'economic data'        -> asset_class=economics/macro
   (c) 'asian equities'       -> asset_class=equities, region=asia
+  (c2) equity coverage       -> asset_class=equities, region=europe
+       NOTE: the redistributable equity SERIES are the OECD broad
+       share-price indices on FRED (SPASTT01EZM661N euro area,
+       SPASTT01GBM661N UK, SPASTT01USM661N US) -- monthly broad-market
+       PROXIES (2015=100), NOT the tradeable indices.
   (d) 'developed-market FX'  -> asset_class=fx, region=developed-markets
 
 Supported filters:
@@ -25,7 +30,8 @@ Supported filters:
 
 Results include both connector-level and series-level entries.
 Series-level entries cover the statically-enumerable set (ECB yield
-curves, BoE gilts, FRED DGS rates and common macro indicators).
+curves, BoE gilts, FRED DGS rates, common macro indicators, and the
+FRED OECD broad share-price proxies for the euro area/UK/US).
 
     python 19_data_search.py
 """
@@ -61,6 +67,15 @@ def main() -> None:
     print(f"  Found {resp_c['pagination']['total']} results")
     for item in resp_c["data"]:
         print(f"    [{item['level']}] {item['connector_type']}: {item['description']}")
+
+    # (c2) Equity coverage: the redistributable OECD share-price proxies.
+    step("(c2) Resolve equity coverage to redistributable series")
+    resp_c2 = api.connectors.search(asset_class="equities", region="europe")
+    print(f"  Found {resp_c2['pagination']['total']} results")
+    for item in resp_c2["data"]:
+        if item["level"] == "series":
+            print(f"    {item['connector_type']}/{item['name']} "
+                  f"({','.join(item['countries'])}): {item['description']}")
 
     # (d) Developed-market FX
     step("(d) Resolve 'developed-market FX'")

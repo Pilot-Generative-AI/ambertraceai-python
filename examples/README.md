@@ -150,6 +150,7 @@ what-if scenarios.
 | `45_symbolic_forecast_baseline_mode.py` | Selectable `baseline_mode` forecast anchor (`neural` / `climatology` / `persistence` / `drift`) — driver effects are recomposed onto the chosen anchor | An existing forecasting platform (`python 45_... [platform_id]`) |
 | `46_tiered_coverage_forecast.py` | The `neural_confidence_tau` per-point confidence gate — below-tau GBT predictions are replaced by the climatology floor; read `forecast_tier` / `confidence` | An existing forecasting platform (`python 46_... [platform_id]`) |
 | `47_forecast_regime_eval_config.py` | **Eval config for a forecast/regime domain** — `direction="separate"` scores a rule on whether its FIRING predictively separates a forward-looking column; shows the auto-defaulted `calculation` and what each 422 rejection tells you | A generated monthly curve-regime panel (or `--dataset your.csv`) |
+| `48_no_ar_level_direct_forecast.py` | **A forecast with NO last-value anchor** — `autoregressive="none"` (no target-history features) **plus** `feature_config={"target_transform": "none"}` (model the raw level, so there is no `last_value + Δ` reconstruction). Trains both configs side by side to show that `autoregressive="none"` ALONE still anchors on the last value, and that `skill_vs_persistence` is still reported | `data/credit_macro_panel.csv` (bundled, FRED public domain) |
 
 These are **classical / symbolic** forecasters — a gradient-boosted model over a broad
 macro panel plus an induced set of readable WHEN→THEN driver rules and a persistence

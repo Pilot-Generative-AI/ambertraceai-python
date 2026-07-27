@@ -10,8 +10,12 @@ Demonstrates the six public-data connectors added in 1.0.9:
     * ``fred`` with ALFRED vintage -- point-in-time snapshots for honest backtests
 
 Each section shows (1) how to call ``api.datasets.fetch`` with the connector's
-config, (2) which config fields are required, and (3) how to merge multiple
-sources into one date-aligned panel with ``api.datasets.fetch_multi``.
+config, (2) which config fields are required, (3) how to merge multiple
+sources into one date-aligned panel with ``api.datasets.fetch_multi``, and
+(4) how to check the merged panel's SUFFICIENCY with
+``api.datasets.panel_report`` -- usable rows after the all-columns-non-null
+intersection, the binding-constraint column, co-missing recovery groups, and
+stale/discontinued series -- before you train on it.
 
 Prerequisites:
     * ``AMBERTRACE_API_KEY`` -- your Ambertrace API key (see examples/.env).
@@ -28,6 +32,7 @@ from __future__ import annotations
 
 import os
 import sys
+import time
 
 from _common import banner, get_client, step
 from ambertraceai import AmbertraceError
@@ -238,6 +243,49 @@ def main() -> None:
             aggregation="last",
         )
         step(f"Merged dataset {ds.get('id')}: status={ds.get('status')}")
+
+        # --- 7b. Panel sufficiency -- check BEFORE training on the panel ----
+        # An outer join across sources of different vintages keeps every date,
+        # but a row is usable for training only where EVERY column is non-null.
+        # One discontinued series can cut a 40-year panel to a few years with no
+        # error raised anywhere. panel_report() makes that visible up front.
+        step("Checking panel sufficiency (polling until the merge is ready)...")
+        for _ in range(30):
+            if api.datasets.get(ds["id"]).get("status") in ("ready", "error"):
+                break
+            time.sleep(2)
+
+        report = api.datasets.panel_report(ds["id"], index_column="date")
+        if report.get("skipped_reason"):
+            step(f"Panel report skipped: {report['skipped_reason']}")
+        else:
+            inter = report["intersection"]
+            step(
+                f"{report['column_count']} columns over {report['row_count']} "
+                f"rows -> {inter['usable_rows']} USABLE rows "
+                f"({inter['first_index']} .. {inter['last_index']}, "
+                f"{inter['coverage_pct']}% coverage)"
+            )
+            binding = report.get("binding_constraint")
+            if binding:
+                step(
+                    f"Binding constraint: '{binding['column']}' -- dropping it "
+                    f"alone recovers {binding['rows_recovered_if_dropped']} "
+                    f"rows ({binding['usable_rows_if_dropped']} usable, window "
+                    f"to {binding['last_index_if_dropped']})"
+                )
+            # Two series that die in the SAME window recover nothing
+            # individually -- only as a group.
+            for group in report.get("recovery_groups", [])[:3]:
+                step(
+                    f"Recovery group {group['columns']}: drop all -> "
+                    f"+{group['rows_recovered_if_all_dropped']} rows "
+                    f"({group['usable_rows_if_all_dropped']} usable)"
+                )
+            if report.get("stale_columns"):
+                step(f"Stale/discontinued series: {report['stale_columns']}")
+            for caveat in report.get("caveats", []):
+                step(f"Caveat: {caveat}")
     except AmbertraceError as e:
         step(f"fetch_multi returned {e.code}: {e}")
 

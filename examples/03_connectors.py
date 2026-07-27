@@ -64,6 +64,26 @@ def main() -> None:
         except AmbertraceError as e:
             step(f"Test rejected ({e.code}): {e}  -- expected without provider config.")
 
+    # --- 7. validate_only: check a config WITHOUT fetching -------------------
+    # An ASYNC connector (one that fetches in the background) cannot be tested
+    # inline -- a plain test() returns 422.  validate_only=True checks the
+    # config only, and works for every connector including the async ones.
+    step("Validating an async connector's config with validate_only=True...")
+    check = api.connectors.test(
+        connector_type="boe_yield_curves",
+        config={"curve_types": ["nominal"], "max_backfill_archives": 2},
+        validate_only=True,
+    )
+    step(f"  valid={check.get('valid')} errors={check.get('errors')}")
+
+    # The same call with a bad config reports WHY, without any network fetch.
+    bad = api.connectors.test(
+        connector_type="boe_yield_curves",
+        config={"curve_types": ["not_a_curve"]},
+        validate_only=True,
+    )
+    step(f"  bad config -> valid={bad.get('valid')} errors={bad.get('errors')}")
+
     print("\nConnector discovery complete.")
 
 
