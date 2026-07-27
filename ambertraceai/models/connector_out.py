@@ -29,6 +29,9 @@ class ConnectorOut:
         entitlement (str | Unset):  Default: 'restricted'.
         redistributable (bool | Unset):  Default: False.
         requires (list[str] | Unset):
+        source_notice (None | str | Unset): Licence notice (#976) that must be shown wherever this source's data -- or a
+            derivative of it -- is delivered. Some source licences impose a per-access disclosure duty that a signup-time
+            acceptance or a static legal footer does not discharge. None when no notice is due.
     """
 
     description: str
@@ -40,6 +43,7 @@ class ConnectorOut:
     entitlement: str | Unset = "restricted"
     redistributable: bool | Unset = False
     requires: list[str] | Unset = UNSET
+    source_notice: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -74,6 +78,12 @@ class ConnectorOut:
         if not isinstance(self.requires, Unset):
             requires = self.requires
 
+        source_notice: None | str | Unset
+        if isinstance(self.source_notice, Unset):
+            source_notice = UNSET
+        else:
+            source_notice = self.source_notice
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -96,6 +106,8 @@ class ConnectorOut:
             field_dict["redistributable"] = redistributable
         if requires is not UNSET:
             field_dict["requires"] = requires
+        if source_notice is not UNSET:
+            field_dict["source_notice"] = source_notice
 
         return field_dict
 
@@ -129,6 +141,15 @@ class ConnectorOut:
 
         requires = cast(list[str], d.pop("requires", UNSET))
 
+        def _parse_source_notice(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        source_notice = _parse_source_notice(d.pop("source_notice", UNSET))
+
         connector_out = cls(
             description=description,
             type_=type_,
@@ -139,6 +160,7 @@ class ConnectorOut:
             entitlement=entitlement,
             redistributable=redistributable,
             requires=requires,
+            source_notice=source_notice,
         )
 
         connector_out.additional_properties = d

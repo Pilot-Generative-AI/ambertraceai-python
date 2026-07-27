@@ -33,6 +33,9 @@ class DatasetOut:
         relation_name (None | str | Unset):
         row_count (int | None | Unset):
         schema_info (DatasetOutSchemaInfoType0 | None | Unset):
+        source_notices (list[str] | Unset): Licence notices (#976) due for the connector source(s) this dataset was
+            fetched from -- rendered on every access, because some source licences impose a per-access disclosure duty.
+            Empty for uploads and for sources with no notice due.
         updated_at (None | str | Unset):
     """
 
@@ -50,6 +53,7 @@ class DatasetOut:
     relation_name: None | str | Unset = UNSET
     row_count: int | None | Unset = UNSET
     schema_info: DatasetOutSchemaInfoType0 | None | Unset = UNSET
+    source_notices: list[str] | Unset = UNSET
     updated_at: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -118,6 +122,10 @@ class DatasetOut:
         else:
             schema_info = self.schema_info
 
+        source_notices: list[str] | Unset = UNSET
+        if not isinstance(self.source_notices, Unset):
+            source_notices = self.source_notices
+
         updated_at: None | str | Unset
         if isinstance(self.updated_at, Unset):
             updated_at = UNSET
@@ -152,6 +160,8 @@ class DatasetOut:
             field_dict["row_count"] = row_count
         if schema_info is not UNSET:
             field_dict["schema_info"] = schema_info
+        if source_notices is not UNSET:
+            field_dict["source_notices"] = source_notices
         if updated_at is not UNSET:
             field_dict["updated_at"] = updated_at
 
@@ -254,6 +264,8 @@ class DatasetOut:
 
         schema_info = _parse_schema_info(d.pop("schema_info", UNSET))
 
+        source_notices = cast(list[str], d.pop("source_notices", UNSET))
+
         def _parse_updated_at(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -278,6 +290,7 @@ class DatasetOut:
             relation_name=relation_name,
             row_count=row_count,
             schema_info=schema_info,
+            source_notices=source_notices,
             updated_at=updated_at,
         )
 

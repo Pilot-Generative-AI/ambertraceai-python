@@ -688,6 +688,13 @@ class DatasetResource(_Resource):
         the platform build diagnostics: a supervised build can leave some
         declared decision classes unreachable — check
         ``generation_diagnostics`` after the build.)
+
+        For a date-indexed panel, the ingest also records a **panel sufficiency**
+        summary on ``schema_info["panel_sufficiency"]`` — how many rows survive
+        an all-columns-non-null intersection, over what window, and per-column
+        first/last non-null dates with a staleness flag. Call
+        :meth:`panel_report` for the full report (binding constraint, recovery
+        groups) before training.
         """
         with open(file_path, "rb") as f:
             files = {"file": (name or file_path.split("/")[-1], f)}
@@ -750,6 +757,14 @@ class DatasetResource(_Resource):
         the call returns the dataset record (HTTP 202, ``status == "processing"``)
         — poll :meth:`get` until ``status == "ready"`` before building on it. See
         ``api.connectors.list()`` for available connectors and their requirements.
+
+        ALWAYS check :meth:`panel_report` once the dataset is ready. An outer
+        join across sources of different vintages means a row survives training
+        only where EVERY column is non-null, so a single discontinued series can
+        cut a 40-year panel to a few years with no error anywhere. The report
+        names the binding-constraint column (and the co-missing GROUPS that no
+        single-column check would find), and flags stale series; the same summary
+        is persisted on ``schema_info["panel_sufficiency"]``.
         """
         body: dict[str, Any] = {
             "domain_id": domain_id,
@@ -765,6 +780,64 @@ class DatasetResource(_Resource):
     def quality(self, dataset_id: int) -> dict:
         return self._request("GET", f"/api/v1/datasets/{dataset_id}/quality")
 
+    def panel_report(self, dataset_id: int, *, index_column: str | None = None,
+                     stale_periods: int = 3) -> dict:
+        """Panel SUFFICIENCY report — how much usable data a wide panel really has.
+
+        Broadening a forecast panel can silently and severely REDUCE the usable
+        training sample: a row survives only where EVERY column is non-null, so
+        one discontinued series truncates decades of history to a few years.
+        Call this BEFORE building/training to see the damage and what to cut.
+
+        Returns:
+
+        * ``intersection`` — ``usable_rows`` (rows where every column is
+          non-null), ``first_index``/``last_index`` (the surviving window) and
+          ``coverage_pct``.
+        * ``binding_constraint`` — the single column costing the most rows, with
+          ``rows_recovered_if_dropped``, ``usable_rows_if_dropped`` and
+          ``last_index_if_dropped``.
+        * ``recovery_groups`` — small SETS of columns that go missing TOGETHER.
+          When two series die in the same window, dropping either one ALONE
+          recovers nothing; only the group does. **This is a heuristic** (each
+          entry carries ``heuristic="observed_co_missing_sets"``): candidates are
+          the co-missing sets actually OBSERVED as some row's exact missing set,
+          not every subset of columns — so the best set to drop may be a SUPERSET
+          that never appears on its own. Candidates are scored by their true
+          recovery and ranked before the list is truncated.
+        * ``columns`` — per column: ``first_non_null``, ``last_non_null``,
+          ``non_null_count``/``null_count``, ``recency_lag_periods``, ``stale``,
+          ``rows_recovered_if_dropped``. ``stale_columns`` lists the flagged
+          ones — a discontinued or lagging series surfaces here without
+          hand-checking hundreds of date ranges.
+        * ``caveats`` — READ THESE: ``usable_rows`` is the RAW intersection;
+          time-series training removes a further warmup of
+          ``horizon + max(lag, rolling window)`` rows on top of it.
+        * ``skipped_reason`` — non-null when the report could not be computed
+          (no index column, unsupported format). Always present, so an
+          uncomputable report can never be mistaken for a clean panel.
+
+        ``index_column`` names the panel index. Leave it unset (the default) to
+        auto-detect the first of ``date``/``time``/``timestamp``/``datetime``/
+        ``period`` present — the same detection the ingest-time block uses, so
+        the two agree on a panel whose index is not literally called ``"date"``.
+        Naming a column that is absent returns
+        ``skipped_reason="index_column_not_found"`` rather than falling back
+        silently. ``stale_periods`` is the staleness threshold in index periods
+        (cadence = median index spacing).
+
+        The same summary is persisted at ingest under
+        ``dataset["schema_info"]["panel_sufficiency"]``, with the per-column
+        freshness fields merged into ``schema_info["columns"]`` — so :meth:`get`
+        already shows it without a second call. It is refreshed by
+        :meth:`clean` too, so it never describes bytes the clean replaced.
+        """
+        params: dict[str, Any] = {"stale_periods": stale_periods}
+        if index_column is not None:
+            params["index_column"] = index_column
+        return self._request(
+            "GET", f"/api/v1/datasets/{dataset_id}/panel-report", params=params)
+
     def clean(self, dataset_id: int, *, steps: list[str] | None = None) -> DatasetOut:
         """Clean/normalise a dataset (dedupe, type-coerce, drop-empty, ...).
 
@@ -772,6 +845,10 @@ class DatasetResource(_Resource):
         goes back to ``status == "processing"`` — poll :meth:`get` until
         ``status == "ready"`` before building on the cleaned dataset. ``steps``
         (optional) selects specific cleaning steps; omit for the server defaults.
+
+        Cleaning rewrites the stored file, so the persisted
+        ``schema_info["panel_sufficiency"]`` block is recomputed as part of the
+        job — it never describes the pre-clean bytes. See :meth:`panel_report`.
         """
         # The endpoint expects a JSON body even though all fields default
         # server-side; send {} (or the chosen steps) so validation passes.
@@ -1354,6 +1431,47 @@ class PredictionResource(_Resource):
         * ``max_ar_lag`` — advanced numeric override for ``autoregressive``: ``0``
           = drivers only, ``k`` = allow target-history features with
           lag/window/period <= ``k``. Overrides the enum when set.
+        * ``feature_config={"target_transform": ...}`` — how the forecast TARGET
+          is framed. NESTED inside ``feature_config`` (not a top-level kwarg),
+          one of ``"auto"`` (the default) | ``"none"`` | ``"difference"``:
+
+          - ``"auto"`` — differences a TRENDING target automatically, because a
+            tree model cannot extrapolate a non-stationary level beyond its
+            training range (that is what produces a negative R²).
+          - ``"difference"`` — model the h-step CHANGE and reconstruct the level
+            as ``baseline + change``.
+          - ``"none"`` — model the raw LEVEL ``y_{t+h}`` DIRECTLY. There is no
+            ``last_value + change`` reconstruction step at all.
+
+          **No-AR / level-direct recipe (a forecast with NO last-value anchor).**
+          ``autoregressive="none"`` ALONE does NOT remove the last-value anchor:
+          ``target_transform`` defaults to ``"auto"``, which for a trending
+          series resolves to ``"difference"``, so the forecast is still
+          ``last_value + modelled change``. For a genuinely persistence-free
+          forecast set BOTH::
+
+              client.predictions.create_config(
+                  platform_id, mode="timeseries", target_field="IG_SPREAD",
+                  time_index_field="date", horizon=1, frequency="monthly",
+                  autoregressive="none",                       # no target-history features
+                  feature_config={"target_transform": "none"}, # no last-value anchor
+              )
+
+          ``skill_vs_persistence`` is STILL reported (it is computed from the
+          ground truth in the backtest window, so persistence remains the
+          BENCHMARK even when it is no longer a COMPONENT of the model), and
+          ``predict(...)["prediction"]["baseline"]`` comes back ``null`` —
+          there is nothing to rebuild the level from. The honest cost: on a
+          strongly TRENDING target a level-direct tree saturates at its
+          training range and can post a sharply NEGATIVE level R², which is
+          exactly why ``"auto"`` differences such a target for you. Worked
+          example: ``examples/48_no_ar_level_direct_forecast.py``.
+
+          Other ``feature_config`` keys (timeseries only): ``lags``,
+          ``rolling_mean``, ``rolling_std``, ``roc`` (lists of int),
+          ``seasonal_dummies``, ``differencing`` (bool). An UNKNOWN key is
+          rejected with 422 rather than silently ignored; keys you omit keep
+          their frequency-dependent defaults.
 
         Metrics (read off ``predict(...)["explanation"]["model"]["metrics"]``):
         when a
@@ -1373,7 +1491,10 @@ class PredictionResource(_Resource):
         ``target_transform`` was given these are populated immediately; when
         ``"auto"`` was requested the transform resolves at TRAIN time, so before
         training they read ``"auto (resolved at train time)"`` and reflect the
-        concrete resolved transform once the config is trained.
+        concrete resolved transform once the config is trained. Pass
+        ``feature_config={"target_transform": ...}`` EXPLICITLY (``"auto"``
+        included) whenever you rely on this echo before training, so the output
+        space is never inferred from a default.
         """
         return self._request("POST", f"/api/v1/platforms/{platform_id}/prediction-configs", json=kwargs)
 
@@ -1965,6 +2086,12 @@ class ConnectorResource(_Resource):
     the ``config`` dict -- Ambertrace does not supply third-party keys on your
     behalf.
 
+    **Config check** (``test()``): fetches a small sample by default.  Pass
+    ``validate_only=True`` to check the config WITHOUT fetching -- the only way
+    to validate an **asynchronous** connector (``boe_yield_curves``,
+    ``swap_curves``, ``sentiment``, ...), which otherwise returns HTTP 422
+    because it cannot be tested inline.
+
     **Search** (``search()``): resolve natural-language data requests to concrete
     connector and series entries.  Supports structured filters (``asset_class``,
     ``country``, ``region``, ``currency``, ``tenor``) and free-text search.
@@ -1974,19 +2101,62 @@ class ConnectorResource(_Resource):
     """
 
     def list(self) -> list[dict]:
-        """List available connectors and their config requirements."""
+        """List available connectors and their config requirements.
+
+        Connector-level ``countries`` tags are matched by EXACT membership, and
+        they describe the connector, not every series it can serve: ``fred`` is
+        tagged ``['US']`` even though it serves the euro-area and UK OECD
+        share-price series.  For per-series discovery use
+        :meth:`search` (``search(asset_class='equities', country='EA')``, i.e.
+        ``GET /api/v1/data/search``), which carries per-series country and
+        currency tags.
+        """
         return self._request("GET", "/api/v1/connectors")
 
-    def test(self, *, connector_type: str, config: dict) -> dict:
-        """Validate a connector config by fetching a small sample.
+    def test(
+        self,
+        *,
+        connector_type: str,
+        config: dict,
+        validate_only: bool = False,
+    ) -> dict:
+        """Validate a connector config, optionally without fetching any data.
 
         ``config`` carries any provider credentials the connector needs
         (e.g. ``{"api_key": "<your FRED key>", ...}``).
+
+        Parameters
+        ----------
+        connector_type : str
+            Connector to test (e.g. ``"fred"``, ``"boe_yield_curves"``).
+        config : dict
+            The connector config, including any provider credentials.
+        validate_only : bool
+            When ``True``, only VALIDATE the config -- no data is fetched --
+            returning ``{"valid": bool, "errors": [...]}``.  This is the only
+            way to check the config of an **asynchronous** connector (one that
+            fetches in the background: ``boe_yield_curves``, ``swap_curves``,
+            ``sentiment``, ...), which otherwise returns HTTP 422 because it
+            cannot be tested inline.  Default ``False``, which fetches a small
+            sample and returns the row count, column names, and first 5 rows.
+
+        Example -- check an async connector's config before building::
+
+            result = api.connectors.test(
+                connector_type="boe_yield_curves",
+                config={"curve_types": ["nominal"], "max_backfill_archives": 2},
+                validate_only=True,
+            )
+            assert result["valid"], result["errors"]
         """
         return self._request(
             "POST",
             "/api/v1/connectors/test",
-            json={"connector_type": connector_type, "config": config},
+            json={
+                "connector_type": connector_type,
+                "config": config,
+                "validate_only": validate_only,
+            },
         )
 
     def search(
@@ -2013,6 +2183,12 @@ class ConnectorResource(_Resource):
         FRED DGS rates and common macro indicators).  Series search covers
         the statically-enumerable set; dynamic dataflow enumeration (arbitrary
         FRED/Yahoo/SDMX series) is follow-up.
+
+        Equity series coverage: the ``'equities'`` asset class resolves to the
+        OECD broad share-price indices on the ``fred`` connector —
+        ``SPASTT01EZM661N`` (euro area), ``SPASTT01GBM661N`` (UK) and
+        ``SPASTT01USM661N`` (US).  These are monthly broad-market **proxies**
+        (2015=100), **not** the tradeable indices.
 
         Parameters
         ----------

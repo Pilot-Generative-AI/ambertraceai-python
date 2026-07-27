@@ -136,8 +136,9 @@ def sync_detailed(
     region (e.g. Yahoo Finance under region=asia). Note: euro-area sovereign yield curves are tagged
     country=EA, not DE -- for German rates, use region=eurozone (which includes EA) instead of
     country=DE. Series-level results cover the statically-enumerable set (ECB yield-curve keys, BoE
-    known series, FRED DGS family and common macro indicators); dynamic dataflow enumeration is follow-
-    up work.
+    known series, FRED DGS family, common macro indicators, and the FRED OECD broad share-price family
+    for the euro area/UK/US -- monthly broad-market PROXIES (2015=100), NOT the tradeable indices);
+    dynamic dataflow enumeration is follow-up work.
 
     Args:
         q (None | str | Unset): Free-text search term (lexical, case-insensitive substring match
@@ -200,8 +201,9 @@ def sync(
     region (e.g. Yahoo Finance under region=asia). Note: euro-area sovereign yield curves are tagged
     country=EA, not DE -- for German rates, use region=eurozone (which includes EA) instead of
     country=DE. Series-level results cover the statically-enumerable set (ECB yield-curve keys, BoE
-    known series, FRED DGS family and common macro indicators); dynamic dataflow enumeration is follow-
-    up work.
+    known series, FRED DGS family, common macro indicators, and the FRED OECD broad share-price family
+    for the euro area/UK/US -- monthly broad-market PROXIES (2015=100), NOT the tradeable indices);
+    dynamic dataflow enumeration is follow-up work.
 
     Args:
         q (None | str | Unset): Free-text search term (lexical, case-insensitive substring match
@@ -259,8 +261,9 @@ async def asyncio_detailed(
     region (e.g. Yahoo Finance under region=asia). Note: euro-area sovereign yield curves are tagged
     country=EA, not DE -- for German rates, use region=eurozone (which includes EA) instead of
     country=DE. Series-level results cover the statically-enumerable set (ECB yield-curve keys, BoE
-    known series, FRED DGS family and common macro indicators); dynamic dataflow enumeration is follow-
-    up work.
+    known series, FRED DGS family, common macro indicators, and the FRED OECD broad share-price family
+    for the euro area/UK/US -- monthly broad-market PROXIES (2015=100), NOT the tradeable indices);
+    dynamic dataflow enumeration is follow-up work.
 
     Args:
         q (None | str | Unset): Free-text search term (lexical, case-insensitive substring match
@@ -321,8 +324,9 @@ async def asyncio(
     region (e.g. Yahoo Finance under region=asia). Note: euro-area sovereign yield curves are tagged
     country=EA, not DE -- for German rates, use region=eurozone (which includes EA) instead of
     country=DE. Series-level results cover the statically-enumerable set (ECB yield-curve keys, BoE
-    known series, FRED DGS family and common macro indicators); dynamic dataflow enumeration is follow-
-    up work.
+    known series, FRED DGS family, common macro indicators, and the FRED OECD broad share-price family
+    for the euro area/UK/US -- monthly broad-market PROXIES (2015=100), NOT the tradeable indices);
+    dynamic dataflow enumeration is follow-up work.
 
     Args:
         q (None | str | Unset): Free-text search term (lexical, case-insensitive substring match
