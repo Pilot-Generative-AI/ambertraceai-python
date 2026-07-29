@@ -4,12 +4,12 @@ Demonstrates the ``neural_confidence_tau`` config parameter that activates
 the per-point GBT neural-tier confidence gate:
 
 - **tau=0.0** (default) -- the gate labels every prediction with its
-  ``forecast_tier`` and ``confidence`` but does NOT replace below-tau
+  ``forecast_tier`` and ``confidence`` but does NOT distinguish below-tau
   predictions. Backward-compatible: the ``value`` is always the GBT output.
-- **tau>0** (e.g. 0.5) -- the gate REPLACES below-tau GBT predictions with
-  the **climatology floor** (the fit-window target LEVEL mean -- a genuine
-  non-persistence anchor). The ``forecast_tier`` is ``neural_scored@<tau>``
-  when admitted, ``climatology_floor`` when floored.
+- **tau>0** (e.g. 0.5) -- below-tau GBT predictions are served with
+  ``forecast_tier='neural_weak@<tau>'`` and the full confidence certificate
+  so consumers can distinguish strong from weak neural predictions. The raw
+  GBT value is always served -- never replaced (#1485).
 
 The two-axis gate (Axis A: in-training-range OOD gate; Axis B: interval
 sharpness) mirrors the ``ScoredDetermination`` trust-tier pattern

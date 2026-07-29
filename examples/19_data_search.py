@@ -20,6 +20,7 @@ Each clause maps to a structured search call via
        SPASTT01GBM661N UK, SPASTT01USM661N US) -- monthly broad-market
        PROXIES (2015=100), NOT the tradeable indices.
   (d) 'developed-market FX'  -> asset_class=fx, region=developed-markets
+  (e) 'UK inflation'         -> q='UK inflation' (or country='GB')
 
 Supported filters:
   - Structured: asset_class, country, region, currency, tenor
@@ -30,8 +31,11 @@ Supported filters:
 
 Results include both connector-level and series-level entries.
 Series-level entries cover the statically-enumerable set (ECB yield
-curves, BoE gilts, FRED DGS rates, common macro indicators, and the
-FRED OECD broad share-price proxies for the euro area/UK/US).
+curves, BoE gilts, FRED DGS rates, common macro indicators, the FRED
+OECD broad share-price proxies for the euro area/UK/US, and the curated
+ONS UK CPI catalog -- 62 MM23 CDIDs covering the headline and core
+measures, the 12 COICOP division indices and annual rates, their annual
+expenditure weights and their contributions to the all-items rate).
 
     python 19_data_search.py
 """
@@ -83,6 +87,25 @@ def main() -> None:
     print(f"  Found {resp_d['pagination']['total']} results")
     for item in resp_d["data"]:
         print(f"    [{item['level']}] {item['connector_type']}: {item['description']}")
+
+    # (e) UK inflation -> the curated ONS CPI catalog (dataset MM23).
+    # Free text finds the whole family; country='GB' also returns the BoE
+    # rate series and the OECD UK share-price proxy from (c2), so filter on
+    # connector_type='ons' for CPI only.
+    step("(e) Resolve 'UK inflation'")
+    resp_e = api.connectors.search(q="UK inflation", limit=200)
+    print(f"  Found {resp_e['pagination']['total']} results")
+    headline = [i for i in resp_e["data"] if i["name"] in ("D7BT", "D7G7")]
+    for item in headline:
+        print(f"    [{item['level']}] {item['connector_type']}/{item['name']}: {item['description']}")
+    # One COICOP division resolves to its index, annual rate, expenditure
+    # weight and contribution -- everything needed to decompose the headline.
+    resp_e7 = api.connectors.search(q="COICOP 07", limit=200)
+    print(f"  Transport (COICOP 07): "
+          f"{sorted(i['name'] for i in resp_e7['data'])}")
+    # Fetch them: the CDIDs go straight into an `ons` connector config.
+    print("  -> connector config: "
+          "{'series': ['D7BT', 'D7G7', 'D7C2', 'CHZX'], 'dataset': 'MM23'}")
 
     # Bonus: free-text search
     step("Free-text search: 'treasury'")

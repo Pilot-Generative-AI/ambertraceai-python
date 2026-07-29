@@ -10,6 +10,9 @@ trap this demo exists to close:
 2. ``feature_config={"target_transform": "none"}`` (NESTED inside
    ``feature_config``) makes the model forecast the raw LEVEL ``y_{t+h}``
    directly, so the forecast is **not** reconstructed as ``last_value + Δ̂``.
+   The equivalent TOP-LEVEL shorthand ``target_transform="none"`` works too —
+   both forms are accepted and mean exactly the same thing (step 5 below
+   demonstrates the shorthand and asserts the echoed output space).
 
 ``autoregressive="none"`` ALONE does not remove the last-value anchor.
 ``target_transform`` defaults to ``"auto"``, which for a trending or
@@ -64,6 +67,7 @@ from _common import (
     run_demo,
     train_prediction_model,
 )
+from ambertraceai import AmbertraceError
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 DEFAULT_DATASET = DATA_DIR / "credit_macro_panel.csv"
@@ -118,7 +122,7 @@ def run_no_ar_level_direct(api, args: argparse.Namespace) -> None:
     if not args.dataset.exists():
         print(f"ERROR: {args.dataset} not found.", file=sys.stderr)
         sys.exit(1)
-    total = 4
+    total = 5
 
     print_section(1, total, "Creating domain + uploading the bundled credit-spread panel")
     domain = api.domains.create(name=DOMAIN_NAME, description=DOMAIN_DESCRIPTION)
@@ -169,6 +173,25 @@ def run_no_ar_level_direct(api, args: argparse.Namespace) -> None:
     assert direct.get("target_transform_reason") == "explicit", direct
     direct_pred = api.predictions.predict(pid, prediction_config_id=direct["id"])
     _print_forecast("level-direct", direct, direct_pred)
+
+    print_section(5, total, "THE SHORTHAND — target_transform as a top-level kwarg")
+    # Both forms are accepted and mean the same thing: the TOP-LEVEL
+    # target_transform="difference" kwarg is folded into feature_config for you.
+    # (It used to be silently dropped — even a bogus value — which is why this
+    # step asserts the echo rather than just printing it.)
+    shorthand = api.predictions.create_config(
+        pid, **common, target_transform="difference")
+    print(f"  config {shorthand['id']} (target_transform='difference', top level): "
+          f"{_config_space(shorthand)}")
+    assert shorthand.get("resolved_target_transform") == "difference", shorthand
+    assert shorthand.get("output_space") == "change", shorthand
+    # An unknown value is REJECTED (422) rather than silently resolving to 'none'.
+    try:
+        api.predictions.create_config(pid, **common, target_transform="bogus_value_xyz")
+    except AmbertraceError as exc:
+        print(f"  bogus target_transform rejected as expected: {exc}")
+    else:  # pragma: no cover - the server must reject this
+        raise AssertionError("a bogus target_transform must be rejected with 422")
 
     direct_metrics = _metrics(direct_pred)
     # The point of the demo: no anchor, yet the skill metric is still there.
