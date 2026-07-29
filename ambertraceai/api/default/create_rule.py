@@ -84,8 +84,12 @@ def sync_detailed(
     input-field reference is also validated against the domain dataset columns (data-driven ontology
     §2.3): a reference that maps to no real column or in-set derived head is rejected with 400 (code
     schema_conflict), carrying a schema_reconciliation report; if the rule references fields but the
-    domain has no dataset attached, the request is rejected with 400 (code data_required). Returns 201
-    with the created rule, including its schema_reconciliation report (field-to-column mappings).
+    domain has no dataset attached, the request is rejected with 400 (code data_required). The condition
+    is STORED in its canonical nesting form — a non-canonical vocabulary (all/any, or the {conditions,
+    operator} dialect) is rewritten to and/or/not before persisting, so the condition that executes is
+    the one the gates judged; the response echoes the stored (canonical) condition, which may therefore
+    differ in shape from the request body. Returns 201 with the created rule, including its
+    schema_reconciliation report (field-to-column mappings).
 
     Args:
         id (int): Resource ID
@@ -126,8 +130,12 @@ def sync(
     input-field reference is also validated against the domain dataset columns (data-driven ontology
     §2.3): a reference that maps to no real column or in-set derived head is rejected with 400 (code
     schema_conflict), carrying a schema_reconciliation report; if the rule references fields but the
-    domain has no dataset attached, the request is rejected with 400 (code data_required). Returns 201
-    with the created rule, including its schema_reconciliation report (field-to-column mappings).
+    domain has no dataset attached, the request is rejected with 400 (code data_required). The condition
+    is STORED in its canonical nesting form — a non-canonical vocabulary (all/any, or the {conditions,
+    operator} dialect) is rewritten to and/or/not before persisting, so the condition that executes is
+    the one the gates judged; the response echoes the stored (canonical) condition, which may therefore
+    differ in shape from the request body. Returns 201 with the created rule, including its
+    schema_reconciliation report (field-to-column mappings).
 
     Args:
         id (int): Resource ID
@@ -163,8 +171,12 @@ async def asyncio_detailed(
     input-field reference is also validated against the domain dataset columns (data-driven ontology
     §2.3): a reference that maps to no real column or in-set derived head is rejected with 400 (code
     schema_conflict), carrying a schema_reconciliation report; if the rule references fields but the
-    domain has no dataset attached, the request is rejected with 400 (code data_required). Returns 201
-    with the created rule, including its schema_reconciliation report (field-to-column mappings).
+    domain has no dataset attached, the request is rejected with 400 (code data_required). The condition
+    is STORED in its canonical nesting form — a non-canonical vocabulary (all/any, or the {conditions,
+    operator} dialect) is rewritten to and/or/not before persisting, so the condition that executes is
+    the one the gates judged; the response echoes the stored (canonical) condition, which may therefore
+    differ in shape from the request body. Returns 201 with the created rule, including its
+    schema_reconciliation report (field-to-column mappings).
 
     Args:
         id (int): Resource ID
@@ -203,8 +215,12 @@ async def asyncio(
     input-field reference is also validated against the domain dataset columns (data-driven ontology
     §2.3): a reference that maps to no real column or in-set derived head is rejected with 400 (code
     schema_conflict), carrying a schema_reconciliation report; if the rule references fields but the
-    domain has no dataset attached, the request is rejected with 400 (code data_required). Returns 201
-    with the created rule, including its schema_reconciliation report (field-to-column mappings).
+    domain has no dataset attached, the request is rejected with 400 (code data_required). The condition
+    is STORED in its canonical nesting form — a non-canonical vocabulary (all/any, or the {conditions,
+    operator} dialect) is rewritten to and/or/not before persisting, so the condition that executes is
+    the one the gates judged; the response echoes the stored (canonical) condition, which may therefore
+    differ in shape from the request body. Returns 201 with the created rule, including its
+    schema_reconciliation report (field-to-column mappings).
 
     Args:
         id (int): Resource ID

@@ -87,10 +87,12 @@ def sync_detailed(
     condition, every input-field reference is re-validated against the domain dataset columns (data-
     driven ontology §2.3): an unmappable reference is rejected with 400 (code schema_conflict) carrying
     a schema_reconciliation report, and the rule is left unchanged; if the new condition references
-    fields but no dataset is attached, the request is rejected with 400 (code data_required).
-    Deactivating a rule is always permitted. Returns 200 with the updated rule (including its
-    schema_reconciliation report when the condition changed); 404 if the rule does not belong to the
-    platform.
+    fields but no dataset is attached, the request is rejected with 400 (code data_required). A patched
+    condition is STORED in its canonical nesting form (all/any and the {conditions, operator} dialect
+    are rewritten to and/or/not), so the condition that executes is the one the gates judged; the
+    response echoes the stored form. Deactivating a rule is always permitted. Returns 200 with the
+    updated rule (including its schema_reconciliation report when the condition changed); 404 if the
+    rule does not belong to the platform.
 
     Args:
         id (int): Platform ID
@@ -135,10 +137,12 @@ def sync(
     condition, every input-field reference is re-validated against the domain dataset columns (data-
     driven ontology §2.3): an unmappable reference is rejected with 400 (code schema_conflict) carrying
     a schema_reconciliation report, and the rule is left unchanged; if the new condition references
-    fields but no dataset is attached, the request is rejected with 400 (code data_required).
-    Deactivating a rule is always permitted. Returns 200 with the updated rule (including its
-    schema_reconciliation report when the condition changed); 404 if the rule does not belong to the
-    platform.
+    fields but no dataset is attached, the request is rejected with 400 (code data_required). A patched
+    condition is STORED in its canonical nesting form (all/any and the {conditions, operator} dialect
+    are rewritten to and/or/not), so the condition that executes is the one the gates judged; the
+    response echoes the stored form. Deactivating a rule is always permitted. Returns 200 with the
+    updated rule (including its schema_reconciliation report when the condition changed); 404 if the
+    rule does not belong to the platform.
 
     Args:
         id (int): Platform ID
@@ -178,10 +182,12 @@ async def asyncio_detailed(
     condition, every input-field reference is re-validated against the domain dataset columns (data-
     driven ontology §2.3): an unmappable reference is rejected with 400 (code schema_conflict) carrying
     a schema_reconciliation report, and the rule is left unchanged; if the new condition references
-    fields but no dataset is attached, the request is rejected with 400 (code data_required).
-    Deactivating a rule is always permitted. Returns 200 with the updated rule (including its
-    schema_reconciliation report when the condition changed); 404 if the rule does not belong to the
-    platform.
+    fields but no dataset is attached, the request is rejected with 400 (code data_required). A patched
+    condition is STORED in its canonical nesting form (all/any and the {conditions, operator} dialect
+    are rewritten to and/or/not), so the condition that executes is the one the gates judged; the
+    response echoes the stored form. Deactivating a rule is always permitted. Returns 200 with the
+    updated rule (including its schema_reconciliation report when the condition changed); 404 if the
+    rule does not belong to the platform.
 
     Args:
         id (int): Platform ID
@@ -224,10 +230,12 @@ async def asyncio(
     condition, every input-field reference is re-validated against the domain dataset columns (data-
     driven ontology §2.3): an unmappable reference is rejected with 400 (code schema_conflict) carrying
     a schema_reconciliation report, and the rule is left unchanged; if the new condition references
-    fields but no dataset is attached, the request is rejected with 400 (code data_required).
-    Deactivating a rule is always permitted. Returns 200 with the updated rule (including its
-    schema_reconciliation report when the condition changed); 404 if the rule does not belong to the
-    platform.
+    fields but no dataset is attached, the request is rejected with 400 (code data_required). A patched
+    condition is STORED in its canonical nesting form (all/any and the {conditions, operator} dialect
+    are rewritten to and/or/not), so the condition that executes is the one the gates judged; the
+    response echoes the stored form. Deactivating a rule is always permitted. Returns 200 with the
+    updated rule (including its schema_reconciliation report when the condition changed); 404 if the
+    rule does not belong to the platform.
 
     Args:
         id (int): Platform ID

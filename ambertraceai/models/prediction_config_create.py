@@ -50,11 +50,10 @@ class PredictionConfigCreate:
                 to prevent future leakage. In cross_sectional mode, uses stratified random splits.
             baseline_mode (str | Unset): Forecast anchor for the symbolic forecaster (timeseries mode only). Controls the
                 reference model the forecast composes onto: 'neural' (default — GBT prediction through the S2 confidence gate
-                for no-driver points; falls to climatology floor when the platform has no trained model or the gate is not
-                certified); 'climatology' (fit-window mean); 'persistence' (last observed level); 'drift' (last level + h * OLS
-                slope — a linear-trend anchor). The holdout acceptance gate recomposes driver effects onto the chosen anchor so
-                they are not mis-scaled. skill_vs_persistence is ALWAYS reported as the external benchmark regardless of anchor.
-                Ignored in cross_sectional mode. Default: 'neural'.
+                for no-driver points; no_forecast when the platform has no trained model); 'persistence' (last observed level);
+                'drift' (last level + h * OLS slope — a linear-trend anchor). The holdout acceptance gate recomposes driver
+                effects onto the chosen anchor so they are not mis-scaled. skill_vs_persistence is ALWAYS reported as the
+                external benchmark regardless of anchor. Ignored in cross_sectional mode. Default: 'neural'.
             eval_metric (str | Unset): Primary evaluation metric. Options: 'rmse' (root mean squared error), 'mae' (mean
                 absolute error), 'r2' (R-squared), 'dir_accuracy' (directional accuracy — timeseries only). Default: 'rmse'.
             eval_metric_config (None | PredictionConfigCreateEvalMetricConfigType0 | Unset): Additional metric
@@ -90,9 +89,14 @@ class PredictionConfigCreate:
                 'gbt'.
             neural_confidence_tau (float | Unset): Per-point neural-tier confidence threshold (timeseries mode only). The
                 GBT prediction is admitted as 'neural_scored@tau' when its two-axis confidence (Axis A: in-training-range OOD
-                gate + Axis B: interval sharpness) >= tau. Below tau the point falls to the climatology floor (the fit-window
-                target level mean). Default 0.0 (gate labels every prediction with its tier and confidence but does not replace
-                below-tau predictions; set > 0 to activate replacement). Default: 0.0.
+                gate + Axis B: interval sharpness) >= tau. Below tau the raw GBT prediction is still served with tier
+                'neural_weak@tau' and the full confidence certificate (#1485). Default 0.0 (gate labels every prediction with
+                its tier and confidence; set > 0 to distinguish strong vs weak neural predictions). Default: 0.0.
+            target_transform (None | str | Unset): Top-level shorthand for feature_config['target_transform'] (timeseries
+                mode only). One of 'auto' (the default when omitted) | 'none' | 'difference'; an unknown value is rejected with
+                422 naming the valid set. Equivalent to nesting the same value under feature_config — when BOTH are supplied the
+                NESTED value wins and the conflict is logged, but the LOSING value is still validated, so an out-of-set spelling
+                can never vanish behind the precedence rule. Ignored in cross_sectional mode.
             time_index_field (None | str | Unset): Column containing date/time values used to order observations. Required
                 for timeseries mode (e.g. 'date', 'observation_month'). Must be omitted or null for cross_sectional mode — rows
                 have no temporal ordering.
@@ -113,6 +117,7 @@ class PredictionConfigCreate:
     model_tier: str | Unset = "tier1"
     model_type: str | Unset = "gbt"
     neural_confidence_tau: float | Unset = 0.0
+    target_transform: None | str | Unset = UNSET
     time_index_field: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -190,6 +195,12 @@ class PredictionConfigCreate:
 
         neural_confidence_tau = self.neural_confidence_tau
 
+        target_transform: None | str | Unset
+        if isinstance(self.target_transform, Unset):
+            target_transform = UNSET
+        else:
+            target_transform = self.target_transform
+
         time_index_field: None | str | Unset
         if isinstance(self.time_index_field, Unset):
             time_index_field = UNSET
@@ -231,6 +242,8 @@ class PredictionConfigCreate:
             field_dict["model_type"] = model_type
         if neural_confidence_tau is not UNSET:
             field_dict["neural_confidence_tau"] = neural_confidence_tau
+        if target_transform is not UNSET:
+            field_dict["target_transform"] = target_transform
         if time_index_field is not UNSET:
             field_dict["time_index_field"] = time_index_field
 
@@ -356,6 +369,15 @@ class PredictionConfigCreate:
 
         neural_confidence_tau = d.pop("neural_confidence_tau", UNSET)
 
+        def _parse_target_transform(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        target_transform = _parse_target_transform(d.pop("target_transform", UNSET))
+
         def _parse_time_index_field(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -381,6 +403,7 @@ class PredictionConfigCreate:
             model_tier=model_tier,
             model_type=model_type,
             neural_confidence_tau=neural_confidence_tau,
+            target_transform=target_transform,
             time_index_field=time_index_field,
         )
 

@@ -20,10 +20,11 @@ class PredictionOutPrediction:
     a level because a difference transform had no base history, treat 'value' as unreliable), 'target_transform' (the
     EFFECTIVE, post-'auto'-resolution transform applied at train time), and 'baseline' (the level used to reconstruct a
     differenced forecast, or null when not applicable). Tiered coverage (#1185): 'forecast_tier' labels the trust tier
-    of the point ('neural_scored@<tau>' when the GBT prediction's two-axis confidence >= tau, 'climatology_floor' when
-    below tau — the value is then the fit-window level mean, a genuine non-persistence anchor). 'confidence' is the per-
-    point confidence in [0,1]. 'confidence_basis' is the structured certificate (method, in_range, sigma_clim,
-    interval_half_width, uncertified_reason). Null for legacy models without fit-time artifacts.
+    of the point ('neural_scored@<tau>' when the GBT prediction's two-axis confidence >= tau, 'neural_weak@<tau>' when
+    below tau — the raw GBT prediction is always served with its confidence metric, never replaced; 'no_forecast' when
+    no model exists — value is null). 'confidence' is the per-point confidence in [0,1]. 'confidence_basis' is the
+    structured certificate (method, in_range, sigma_clim, interval_half_width, uncertified_reason). Null for legacy
+    models without fit-time artifacts.
 
     """
 

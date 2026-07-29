@@ -34,8 +34,8 @@ class PredictionConfigOut:
         autoregressive (str | Unset): Autoregression control: 'full' (history allowed, default), 'limited' (drivers + a
             little history), or 'none' (drivers only). Default: 'full'.
         backtest_config (None | PredictionConfigOutBacktestConfigType0 | Unset):
-        baseline_mode (str | Unset): Forecast anchor mode: 'neural' (default), 'climatology', 'persistence', or 'drift'.
-            Default: 'neural'.
+        baseline_mode (str | Unset): Forecast anchor mode: 'neural' (default), 'persistence', or 'drift'. Default:
+            'neural'.
         created_at (None | str | Unset):
         error_message (None | str | Unset): Human-readable error details when status is 'failed'.
         eval_metric_config (None | PredictionConfigOutEvalMetricConfigType0 | Unset):
@@ -46,17 +46,22 @@ class PredictionConfigOut:
         max_ar_lag (int | None | Unset): Advanced numeric autoregression cap (overrides the enum when set): 0 = drivers
             only, k = target-history features with lag/window <= k.
         mode (str | Unset): Prediction mode: 'timeseries' or 'cross_sectional'. Default: 'timeseries'.
-        neural_confidence_tau (float | Unset): Per-point neural-tier confidence threshold: GBT prediction admitted when
-            confidence >= tau, else climatology floor. 0.0 = gate labels only (no replacement). Default: 0.0.
+        neural_confidence_tau (float | Unset): Per-point neural-tier confidence threshold: GBT prediction admitted as
+            neural_scored when confidence >= tau, else neural_weak (raw GBT still served, #1485). 0.0 = gate labels only.
+            Default: 0.0.
         output_space (None | str | Unset): Item 6 — the space predict() 'value' will be in given the resolved transform:
             'level' (transform 'none' — value is a level) or 'change' (a differencing transform — predict() reconstructs to
             a level when history is available; see the predict response's 'value_space'). 'unknown (auto — resolved at train
-            time)' before an 'auto' config is trained. Null for cross_sectional configs.
+            time)' before an 'auto' config is trained, and for a stored out-of-set transform (the engine falls back to
+            auto). Null for cross_sectional configs.
         resolved_target_transform (None | str | Unset): Item 6 — the EFFECTIVE target transform, echoed on the config so
             the output space is known without predicting. When a concrete transform was requested ('none' or 'difference')
             this echoes it immediately at create_config time. When 'auto' was requested it resolves at TRAIN time, so before
             training this reads 'auto (resolved at train time)'; once trained it reflects the concrete transform the trainer
-            chose (persisted back onto the config). Null for cross_sectional configs.
+            chose (persisted back onto the config). Omitting the transform echoes the 'auto' default too. A stored value
+            OUTSIDE the valid set (only reachable on a config written before create-time validation existed) reads "invalid
+            (<value>) — engine falls back to auto, resolved at train time", mirroring the engine's fallback rather than
+            promising a transform it will not apply. Null for cross_sectional configs.
         target_transform_reason (None | str | Unset): Why the resolved transform was chosen (the auto-heuristic detail,
             or 'explicit'). Populated once trained (or when the config carries it). Null otherwise.
         time_index_field (None | str | Unset):

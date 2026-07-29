@@ -128,7 +128,7 @@ def sync_detailed(
     offset: int | Unset = 0,
     limit: int | Unset = 50,
 ) -> Response[DataSearchResultOut | list[ValidationErrorModel]]:
-    """Search connectors and series
+    r"""Search connectors and series
 
      Search the connector and series corpus by structured filters (asset_class, country, region,
     currency, tenor) and/or free-text query. Filters are AND-ed. Region expands to constituent country
@@ -136,9 +136,16 @@ def sync_detailed(
     region (e.g. Yahoo Finance under region=asia). Note: euro-area sovereign yield curves are tagged
     country=EA, not DE -- for German rates, use region=eurozone (which includes EA) instead of
     country=DE. Series-level results cover the statically-enumerable set (ECB yield-curve keys, BoE
-    known series, FRED DGS family, common macro indicators, and the FRED OECD broad share-price family
-    for the euro area/UK/US -- monthly broad-market PROXIES (2015=100), NOT the tradeable indices);
-    dynamic dataflow enumeration is follow-up work.
+    known series, FRED DGS family, common macro indicators, the FRED OECD broad share-price family for
+    the euro area/UK/US -- monthly broad-market PROXIES (2015=100), NOT the tradeable indices -- and the
+    ONS UK CPI family); dynamic dataflow enumeration is follow-up work. UK inflation: q=UK inflation (or
+    country=GB) resolves 62 curated ONS CDIDs from dataset MM23 -- the headline index and annual rate
+    (D7BT, D7G7), CPIH (L522, L55O), the core/goods/services aggregates (DKC6, DKO8, D7F4, D7NM, D7F5,
+    D7NN), and for each of the 12 COICOP divisions its index, annual rate, annual expenditure weight
+    (CHZQ-CJUW) and contribution to the all-items annual rate (WUMA-WUNG). q=COICOP 07 returns exactly
+    transport's four series. Raise limit (default 50, max 200) to page the whole family in one call,
+    then feed the CDIDs to the ons connector: {\"series\": [\"D7BT\", \"D7G7\"], \"dataset\": \"MM23\"}.
+    Source: Office for National Statistics, OGL v3.0.
 
     Args:
         q (None | str | Unset): Free-text search term (lexical, case-insensitive substring match
@@ -193,7 +200,7 @@ def sync(
     offset: int | Unset = 0,
     limit: int | Unset = 50,
 ) -> DataSearchResultOut | list[ValidationErrorModel] | None:
-    """Search connectors and series
+    r"""Search connectors and series
 
      Search the connector and series corpus by structured filters (asset_class, country, region,
     currency, tenor) and/or free-text query. Filters are AND-ed. Region expands to constituent country
@@ -201,9 +208,16 @@ def sync(
     region (e.g. Yahoo Finance under region=asia). Note: euro-area sovereign yield curves are tagged
     country=EA, not DE -- for German rates, use region=eurozone (which includes EA) instead of
     country=DE. Series-level results cover the statically-enumerable set (ECB yield-curve keys, BoE
-    known series, FRED DGS family, common macro indicators, and the FRED OECD broad share-price family
-    for the euro area/UK/US -- monthly broad-market PROXIES (2015=100), NOT the tradeable indices);
-    dynamic dataflow enumeration is follow-up work.
+    known series, FRED DGS family, common macro indicators, the FRED OECD broad share-price family for
+    the euro area/UK/US -- monthly broad-market PROXIES (2015=100), NOT the tradeable indices -- and the
+    ONS UK CPI family); dynamic dataflow enumeration is follow-up work. UK inflation: q=UK inflation (or
+    country=GB) resolves 62 curated ONS CDIDs from dataset MM23 -- the headline index and annual rate
+    (D7BT, D7G7), CPIH (L522, L55O), the core/goods/services aggregates (DKC6, DKO8, D7F4, D7NM, D7F5,
+    D7NN), and for each of the 12 COICOP divisions its index, annual rate, annual expenditure weight
+    (CHZQ-CJUW) and contribution to the all-items annual rate (WUMA-WUNG). q=COICOP 07 returns exactly
+    transport's four series. Raise limit (default 50, max 200) to page the whole family in one call,
+    then feed the CDIDs to the ons connector: {\"series\": [\"D7BT\", \"D7G7\"], \"dataset\": \"MM23\"}.
+    Source: Office for National Statistics, OGL v3.0.
 
     Args:
         q (None | str | Unset): Free-text search term (lexical, case-insensitive substring match
@@ -253,7 +267,7 @@ async def asyncio_detailed(
     offset: int | Unset = 0,
     limit: int | Unset = 50,
 ) -> Response[DataSearchResultOut | list[ValidationErrorModel]]:
-    """Search connectors and series
+    r"""Search connectors and series
 
      Search the connector and series corpus by structured filters (asset_class, country, region,
     currency, tenor) and/or free-text query. Filters are AND-ed. Region expands to constituent country
@@ -261,9 +275,16 @@ async def asyncio_detailed(
     region (e.g. Yahoo Finance under region=asia). Note: euro-area sovereign yield curves are tagged
     country=EA, not DE -- for German rates, use region=eurozone (which includes EA) instead of
     country=DE. Series-level results cover the statically-enumerable set (ECB yield-curve keys, BoE
-    known series, FRED DGS family, common macro indicators, and the FRED OECD broad share-price family
-    for the euro area/UK/US -- monthly broad-market PROXIES (2015=100), NOT the tradeable indices);
-    dynamic dataflow enumeration is follow-up work.
+    known series, FRED DGS family, common macro indicators, the FRED OECD broad share-price family for
+    the euro area/UK/US -- monthly broad-market PROXIES (2015=100), NOT the tradeable indices -- and the
+    ONS UK CPI family); dynamic dataflow enumeration is follow-up work. UK inflation: q=UK inflation (or
+    country=GB) resolves 62 curated ONS CDIDs from dataset MM23 -- the headline index and annual rate
+    (D7BT, D7G7), CPIH (L522, L55O), the core/goods/services aggregates (DKC6, DKO8, D7F4, D7NM, D7F5,
+    D7NN), and for each of the 12 COICOP divisions its index, annual rate, annual expenditure weight
+    (CHZQ-CJUW) and contribution to the all-items annual rate (WUMA-WUNG). q=COICOP 07 returns exactly
+    transport's four series. Raise limit (default 50, max 200) to page the whole family in one call,
+    then feed the CDIDs to the ons connector: {\"series\": [\"D7BT\", \"D7G7\"], \"dataset\": \"MM23\"}.
+    Source: Office for National Statistics, OGL v3.0.
 
     Args:
         q (None | str | Unset): Free-text search term (lexical, case-insensitive substring match
@@ -316,7 +337,7 @@ async def asyncio(
     offset: int | Unset = 0,
     limit: int | Unset = 50,
 ) -> DataSearchResultOut | list[ValidationErrorModel] | None:
-    """Search connectors and series
+    r"""Search connectors and series
 
      Search the connector and series corpus by structured filters (asset_class, country, region,
     currency, tenor) and/or free-text query. Filters are AND-ed. Region expands to constituent country
@@ -324,9 +345,16 @@ async def asyncio(
     region (e.g. Yahoo Finance under region=asia). Note: euro-area sovereign yield curves are tagged
     country=EA, not DE -- for German rates, use region=eurozone (which includes EA) instead of
     country=DE. Series-level results cover the statically-enumerable set (ECB yield-curve keys, BoE
-    known series, FRED DGS family, common macro indicators, and the FRED OECD broad share-price family
-    for the euro area/UK/US -- monthly broad-market PROXIES (2015=100), NOT the tradeable indices);
-    dynamic dataflow enumeration is follow-up work.
+    known series, FRED DGS family, common macro indicators, the FRED OECD broad share-price family for
+    the euro area/UK/US -- monthly broad-market PROXIES (2015=100), NOT the tradeable indices -- and the
+    ONS UK CPI family); dynamic dataflow enumeration is follow-up work. UK inflation: q=UK inflation (or
+    country=GB) resolves 62 curated ONS CDIDs from dataset MM23 -- the headline index and annual rate
+    (D7BT, D7G7), CPIH (L522, L55O), the core/goods/services aggregates (DKC6, DKO8, D7F4, D7NM, D7F5,
+    D7NN), and for each of the 12 COICOP divisions its index, annual rate, annual expenditure weight
+    (CHZQ-CJUW) and contribution to the all-items annual rate (WUMA-WUNG). q=COICOP 07 returns exactly
+    transport's four series. Raise limit (default 50, max 200) to page the whole family in one call,
+    then feed the CDIDs to the ons connector: {\"series\": [\"D7BT\", \"D7G7\"], \"dataset\": \"MM23\"}.
+    Source: Office for National Statistics, OGL v3.0.
 
     Args:
         q (None | str | Unset): Free-text search term (lexical, case-insensitive substring match

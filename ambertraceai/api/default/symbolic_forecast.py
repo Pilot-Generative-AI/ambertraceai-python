@@ -82,11 +82,12 @@ def sync_detailed(
     at least one ready/ingested dataset. No training and no minimum row count is required — when too few
     rows or too weak a signal yield no driver-rules, the response is an HONEST forecast: with the
     default baseline_mode=neural the value is the GBT prediction through the S2 confidence gate
-    (forecast_tier=neural_scored@tau or climatology_floor); with other anchors it is the baseline anchor
-    (forecast_tier=baseline_anchor; point_is_persistence==true ONLY when baseline_mode is persistence).
-    WITH a real RMSE-based interval, not an error. Unmet preconditions return a STRUCTURED error (409
-    when the target is absent from every dataset; 422 when the latest row's target is non-numeric),
-    never a raw 404.
+    (forecast_tier=neural_scored@tau when confident, neural_weak@tau when below threshold — the raw GBT
+    prediction is always served, never replaced; no_forecast only when no model exists); with other
+    anchors it is the baseline anchor (forecast_tier=baseline_anchor; point_is_persistence==true ONLY
+    when baseline_mode is persistence). WITH a real RMSE-based interval, not an error. Unmet
+    preconditions return a STRUCTURED error (409 when the target is absent from every dataset; 422 when
+    the latest row's target is non-numeric), never a raw 404.
 
     Capability gating: requires the \"predictions\" capability (see GET /api/v1/capabilities). Returns
     403 capability_disabled when the capability is not enabled for the org.
@@ -142,11 +143,12 @@ def sync(
     at least one ready/ingested dataset. No training and no minimum row count is required — when too few
     rows or too weak a signal yield no driver-rules, the response is an HONEST forecast: with the
     default baseline_mode=neural the value is the GBT prediction through the S2 confidence gate
-    (forecast_tier=neural_scored@tau or climatology_floor); with other anchors it is the baseline anchor
-    (forecast_tier=baseline_anchor; point_is_persistence==true ONLY when baseline_mode is persistence).
-    WITH a real RMSE-based interval, not an error. Unmet preconditions return a STRUCTURED error (409
-    when the target is absent from every dataset; 422 when the latest row's target is non-numeric),
-    never a raw 404.
+    (forecast_tier=neural_scored@tau when confident, neural_weak@tau when below threshold — the raw GBT
+    prediction is always served, never replaced; no_forecast only when no model exists); with other
+    anchors it is the baseline anchor (forecast_tier=baseline_anchor; point_is_persistence==true ONLY
+    when baseline_mode is persistence). WITH a real RMSE-based interval, not an error. Unmet
+    preconditions return a STRUCTURED error (409 when the target is absent from every dataset; 422 when
+    the latest row's target is non-numeric), never a raw 404.
 
     Capability gating: requires the \"predictions\" capability (see GET /api/v1/capabilities). Returns
     403 capability_disabled when the capability is not enabled for the org.
@@ -197,11 +199,12 @@ async def asyncio_detailed(
     at least one ready/ingested dataset. No training and no minimum row count is required — when too few
     rows or too weak a signal yield no driver-rules, the response is an HONEST forecast: with the
     default baseline_mode=neural the value is the GBT prediction through the S2 confidence gate
-    (forecast_tier=neural_scored@tau or climatology_floor); with other anchors it is the baseline anchor
-    (forecast_tier=baseline_anchor; point_is_persistence==true ONLY when baseline_mode is persistence).
-    WITH a real RMSE-based interval, not an error. Unmet preconditions return a STRUCTURED error (409
-    when the target is absent from every dataset; 422 when the latest row's target is non-numeric),
-    never a raw 404.
+    (forecast_tier=neural_scored@tau when confident, neural_weak@tau when below threshold — the raw GBT
+    prediction is always served, never replaced; no_forecast only when no model exists); with other
+    anchors it is the baseline anchor (forecast_tier=baseline_anchor; point_is_persistence==true ONLY
+    when baseline_mode is persistence). WITH a real RMSE-based interval, not an error. Unmet
+    preconditions return a STRUCTURED error (409 when the target is absent from every dataset; 422 when
+    the latest row's target is non-numeric), never a raw 404.
 
     Capability gating: requires the \"predictions\" capability (see GET /api/v1/capabilities). Returns
     403 capability_disabled when the capability is not enabled for the org.
@@ -255,11 +258,12 @@ async def asyncio(
     at least one ready/ingested dataset. No training and no minimum row count is required — when too few
     rows or too weak a signal yield no driver-rules, the response is an HONEST forecast: with the
     default baseline_mode=neural the value is the GBT prediction through the S2 confidence gate
-    (forecast_tier=neural_scored@tau or climatology_floor); with other anchors it is the baseline anchor
-    (forecast_tier=baseline_anchor; point_is_persistence==true ONLY when baseline_mode is persistence).
-    WITH a real RMSE-based interval, not an error. Unmet preconditions return a STRUCTURED error (409
-    when the target is absent from every dataset; 422 when the latest row's target is non-numeric),
-    never a raw 404.
+    (forecast_tier=neural_scored@tau when confident, neural_weak@tau when below threshold — the raw GBT
+    prediction is always served, never replaced; no_forecast only when no model exists); with other
+    anchors it is the baseline anchor (forecast_tier=baseline_anchor; point_is_persistence==true ONLY
+    when baseline_mode is persistence). WITH a real RMSE-based interval, not an error. Unmet
+    preconditions return a STRUCTURED error (409 when the target is absent from every dataset; 422 when
+    the latest row's target is non-numeric), never a raw 404.
 
     Capability gating: requires the \"predictions\" capability (see GET /api/v1/capabilities). Returns
     403 capability_disabled when the capability is not enabled for the org.

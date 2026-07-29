@@ -6,6 +6,7 @@ import os
 import random
 import time
 import urllib.parse
+import warnings
 from typing import Any, Callable, cast
 
 import httpx
@@ -712,7 +713,9 @@ class DatasetResource(_Resource):
 
         * **Keyless (public data):** ``yahoo``, ``coinbase``, ``boe``, ``ecb``,
           ``oecd``, ``eurostat``, ``fiscaldata``, ``edgar``, ``worldbank``,
-          ``gdelt``, ``sentiment``.
+          ``gdelt``, ``sentiment``, ``ons`` (UK ONS timeseries by CDID —
+          ``config={"series": ["D7BT", "D7G7"], "dataset": "MM23"}``; find
+          CDIDs with ``api.connectors.search(q="UK inflation")``; OGL v3.0).
         * **Bring-your-own-key:** ``fred`` / ``fred_sentiment`` (free FRED key,
           ``config["api_key"]``), ``imf`` (IMF iData subscription key,
           ``config["api_key"]`` = ``Ocp-Apim-Subscription-Key``; set
@@ -1431,9 +1434,30 @@ class PredictionResource(_Resource):
         * ``max_ar_lag`` — advanced numeric override for ``autoregressive``: ``0``
           = drivers only, ``k`` = allow target-history features with
           lag/window/period <= ``k``. Overrides the enum when set.
-        * ``feature_config={"target_transform": ...}`` — how the forecast TARGET
-          is framed. NESTED inside ``feature_config`` (not a top-level kwarg),
-          one of ``"auto"`` (the default) | ``"none"`` | ``"difference"``:
+        * ``target_transform`` — how the forecast TARGET is framed, one of
+          ``"auto"`` (the default) | ``"none"`` | ``"difference"``. BOTH forms
+          work and are exactly equivalent::
+
+              create_config(..., target_transform="difference")
+              create_config(..., feature_config={"target_transform": "difference"})
+
+          An unknown value is rejected with 422 naming the valid set (it is
+          never silently ignored) — in EITHER position. Timeseries mode only:
+          like ``feature_config``, it is ignored in ``cross_sectional`` mode.
+
+          The four cases when you supply both spellings:
+
+          * **both valid, same value** — accepted, no warning.
+          * **both valid, DIFFERENT values** (e.g. top-level ``"none"`` +
+            nested ``"difference"``) — the NESTED value wins, the SDK emits a
+            ``UserWarning``, and the config is created.
+          * **bogus top-level + valid nested** — **422**, not a warning-and-win.
+            The losing value is still validated, so a wrong spelling can never
+            disappear behind "the nested value won".
+          * **valid top-level + bogus nested** — **422** on the nested value.
+
+          A bogus value on its own (either position) is likewise a 422 naming
+          the valid set.
 
           - ``"auto"`` — differences a TRENDING target automatically, because a
             tree model cannot extrapolate a non-stationary level beyond its
@@ -1442,6 +1466,11 @@ class PredictionResource(_Resource):
             as ``baseline + change``.
           - ``"none"`` — model the raw LEVEL ``y_{t+h}`` DIRECTLY. There is no
             ``last_value + change`` reconstruction step at all.
+
+          .. versionchanged:: 1.0.16
+             The top-level ``target_transform=`` kwarg is honoured. Before this
+             it was silently dropped by the server and the config resolved to
+             ``"none"`` with no error, even for a bogus value.
 
           **No-AR / level-direct recipe (a forecast with NO last-value anchor).**
           ``autoregressive="none"`` ALONE does NOT remove the last-value anchor:
@@ -1474,8 +1503,8 @@ class PredictionResource(_Resource):
           their frequency-dependent defaults.
 
         Metrics (read off ``predict(...)["explanation"]["model"]["metrics"]``):
-        when a
-        ``target_transform`` (difference / pct-change / log-diff) is applied, the
+        when a ``target_transform`` of ``"difference"`` is applied (whether
+        explicitly or by ``"auto"``), the
         ``metrics`` block reports THREE views so no single number misleads:
         ``transformed`` ({r2, rmse, mae} on the modelled change — the hard part),
         ``level`` ({r2, rmse, mae} on the reconstructed level — what you track,
@@ -1491,11 +1520,45 @@ class PredictionResource(_Resource):
         ``target_transform`` was given these are populated immediately; when
         ``"auto"`` was requested the transform resolves at TRAIN time, so before
         training they read ``"auto (resolved at train time)"`` and reflect the
-        concrete resolved transform once the config is trained. Pass
-        ``feature_config={"target_transform": ...}`` EXPLICITLY (``"auto"``
-        included) whenever you rely on this echo before training, so the output
-        space is never inferred from a default.
+        concrete resolved transform once the config is trained. Omitting
+        ``target_transform`` altogether now echoes the ``"auto"`` default too
+        (it used to read ``"none"`` while the trainer applied ``"auto"``).
         """
+        # Map the top-level target_transform shorthand into feature_config so
+        # the documented surface is real on any server (the server accepts the
+        # top-level field too; doing it here also gives an immediate,
+        # client-side conflict warning). An explicit NESTED value wins.
+        #
+        # The shorthand is timeseries-only, mirroring the server's mode guard —
+        # in cross_sectional mode the server ignores feature_config entirely, so
+        # folding into it here would invent a difference the server does not make.
+        #
+        # On CONFLICT the top-level value is deliberately LEFT IN kwargs rather
+        # than dropped: the server then validates it and 422s an out-of-set
+        # value. Dropping the loser would re-create the #1416 defect inside the
+        # SDK — a bogus spelling vanishing with only a "the nested value wins"
+        # warning, which reads as "your spelling was legitimate but lost a
+        # precedence contest".
+        target_transform = kwargs.get("target_transform")
+        mode = kwargs.get("mode") or "timeseries"
+        if target_transform is not None and mode != "cross_sectional":
+            feature_config = dict(kwargs.get("feature_config") or {})
+            nested = feature_config.get("target_transform")
+            if nested is None:
+                feature_config["target_transform"] = target_transform
+                kwargs["feature_config"] = feature_config
+                kwargs.pop("target_transform")
+            elif nested == target_transform:
+                kwargs.pop("target_transform")
+            else:
+                warnings.warn(
+                    "create_config: target_transform conflict — top-level "
+                    f"{target_transform!r} vs feature_config "
+                    f"{nested!r}; the nested value wins. Both are sent, so an "
+                    "out-of-set value in EITHER position is rejected (422).",
+                    UserWarning,
+                    stacklevel=2,
+                )
         return self._request("POST", f"/api/v1/platforms/{platform_id}/prediction-configs", json=kwargs)
 
     def delete_config(self, platform_id: int, config_id: int) -> dict:
@@ -1833,7 +1896,8 @@ class PredictionResource(_Resource):
                             "model_id": ..., "as_of": ...},
               "why_certification": { ... the embedded certificate (verified=True) ... },
               "forecast_tier": "verified_symbolic"|"neural_scored@<tau>"|
-                               "climatology_floor"|"baseline_anchor"|null,
+                               "neural_weak@<tau>"|"no_forecast"|
+                               "baseline_anchor"|null,
               "point_is_persistence": <bool or null>,
               "per_point_forecast_tiers": [{"index": 0,
                   "forecast_tier": "verified_symbolic"}, ...] or null,
@@ -1850,9 +1914,11 @@ class PredictionResource(_Resource):
         ``forecast_tier`` is the honest per-point tier label: ``"verified_symbolic"``
         when driver-rules fired AND were proof-checked; ``"neural_scored@<tau>"`` when
         the neural confidence gate served the GBT prediction (``baseline_mode='neural'``
-        with no fired drivers, above the tau threshold); ``"climatology_floor"`` when
-        below tau or model unavailable; ``"baseline_anchor"`` for non-neural anchors
-        (persistence / climatology) with no fired drivers. Record-first consumers
+        with no fired drivers, above the tau threshold); ``"neural_weak@<tau>"`` when
+        below tau (the raw GBT prediction is always served with the full confidence
+        metric -- never replaced, #1485); ``"no_forecast"`` when genuinely no model
+        exists (value is null); ``"baseline_anchor"`` for non-neural anchors
+        (persistence / drift) with no fired drivers. Record-first consumers
         (the decision-bridge ``predictions={role: record}`` fan-in) should key on
         ``forecast_tier`` to distinguish genuine driver-based forecasts from anchor
         filler -- not ``point_is_persistence``, which is True ONLY under a persistence
@@ -2180,9 +2246,26 @@ class ConnectorResource(_Resource):
         All filters are AND-ed.  Results include both **connector-level**
         entries (all registered connectors) and **series-level** entries
         (statically-enumerable series — ECB yield-curve keys, BoE known series,
-        FRED DGS rates and common macro indicators).  Series search covers
-        the statically-enumerable set; dynamic dataflow enumeration (arbitrary
-        FRED/Yahoo/SDMX series) is follow-up.
+        FRED DGS rates and common macro indicators, and the curated **ONS UK
+        CPI family**).  Series search covers the statically-enumerable set;
+        dynamic dataflow enumeration (arbitrary FRED/Yahoo/SDMX series) is
+        follow-up.
+
+        **UK inflation (ONS CPI, dataset MM23).**  ``q='UK inflation'`` (or
+        ``country='GB'``) resolves 62 curated ONS CDIDs — more than the
+        default page holds, so pass ``limit=200`` (the maximum) or page with
+        ``offset``; ``pagination['total']`` always reports the full count
+        even when ``data`` is truncated to the default ``limit=50``.  The
+        62: the headline index
+        and annual rate (``D7BT`` / ``D7G7``), CPIH (``L522`` / ``L55O``),
+        the core, goods and services aggregates (``DKC6`` / ``DKO8``,
+        ``D7F4`` / ``D7NM``, ``D7F5`` / ``D7NN``), and — for each of the 12
+        COICOP divisions — its index, its annual rate, its annual
+        expenditure weight (``CHZQ``–``CJUW``) and its contribution to the
+        all-items annual rate (``WUMA``–``WUNG``).  ``q='COICOP 07'`` returns
+        exactly transport's four series.  Feed the CDIDs straight to the
+        ``ons`` connector: ``{"series": ["D7BT", "D7G7"], "dataset": "MM23"}``.
+        Source: Office for National Statistics, OGL v3.0.
 
         Equity series coverage: the ``'equities'`` asset class resolves to the
         OECD broad share-price indices on the ``fred`` connector —
@@ -2237,6 +2320,16 @@ class ConnectorResource(_Resource):
             )
             for item in results["data"]:
                 print(item["name"], item.get("tenor"))
+
+        Example — resolving ``'UK inflation'``::
+
+            results = api.connectors.search(q="UK inflation", limit=200)
+            cdids = [i["name"] for i in results["data"] if i["level"] == "series"]
+            ds = api.datasets.fetch(
+                domain_id=domain.id,
+                connector_type="ons",
+                config={"series": cdids[:5], "dataset": "MM23"},
+            )
         """
         params: dict[str, str | int] = {}
         if q is not None:
