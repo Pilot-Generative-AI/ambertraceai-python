@@ -6,36 +6,30 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
+from ...models.neurosymbolic_comparison_query import NeurosymbolicComparisonQuery
 from ...models.validation_error_model import ValidationErrorModel
-from ...types import UNSET, Response, Unset
+from ...types import Response
 
 
 def _get_kwargs(
     id: int,
     *,
-    prediction_config_id: int,
-    include_pending: bool | Unset = False,
-    include_series: bool | Unset = False,
+    body: NeurosymbolicComparisonQuery,
 ) -> dict[str, Any]:
-
-    params: dict[str, Any] = {}
-
-    params["prediction_config_id"] = prediction_config_id
-
-    params["include_pending"] = include_pending
-
-    params["include_series"] = include_series
-
-    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
+    headers: dict[str, Any] = {}
 
     _kwargs: dict[str, Any] = {
-        "method": "get",
+        "method": "post",
         "url": "/api/v1/platforms/{id}/neurosymbolic-comparison".format(
             id=quote(str(id), safe=""),
         ),
-        "params": params,
     }
 
+    _kwargs["json"] = body.to_dict()
+
+    headers["Content-Type"] = "application/json"
+
+    _kwargs["headers"] = headers
     return _kwargs
 
 
@@ -73,9 +67,7 @@ def sync_detailed(
     id: int,
     *,
     client: AuthenticatedClient | Client,
-    prediction_config_id: int,
-    include_pending: bool | Unset = False,
-    include_series: bool | Unset = False,
+    body: NeurosymbolicComparisonQuery,
 ) -> Response[list[ValidationErrorModel]]:
     r"""Neural-vs-neurosymbolic backtest comparison
 
@@ -88,34 +80,25 @@ def sync_detailed(
     approval gate; mode=preview_pending). Set include_series=true to ALSO get a per-period \"series\"
     array over the SAME holdout (each entry {index, time, actual, neural, neurosymbolic, rule_fired}) so
     the head-to-head can be charted over time; it reconciles with the aggregate metrics and is omitted
-    by default. Timeseries configs only. BACKTEST-ONLY (no what-if): this endpoint deliberately accepts
-    NO feature_overrides. It scores BOTH branches against KNOWN historical actuals over the expanding-
-    window holdout, so injecting a counterfactual override would compare predictions for inputs that
-    never occurred against the real outcomes — distorting the head-to-head. For scenario / what-if
-    analysis use POST /platforms/{id}/predict (neural what-if, recomputes engineered features from the
-    override) or POST /platforms/{id}/symbolic-forecast (symbolic driver-rule what-if).
+    by default. Timeseries configs only. feature_overrides applies a what-if override to the FORWARD
+    projection only (#1550). The backtest-scoring path (expanding-window holdout scored against real
+    historical actuals) is NEVER overridden — the head-to-head metrics are always the real historical
+    skill. The forward what-if number and the backtest impact information are returned side-by-side so
+    the user sees both \"what-if projection under overrides\" and \"how this model performed
+    historically\".
 
     Args:
         id (int): Resource ID
-        prediction_config_id (int): The timeseries prediction config to compare. Neural metrics
-            are computed from the model alone; neurosymbolic metrics apply the platform's active
-            adjustment+constraint rules over the same holdout.
-        include_pending (bool | Unset): When true, the neurosymbolic branch ALSO applies the
-            accepted-but-pending discovered rules for this config (a read-only 'what-if' preview of
-            the discovered set BEFORE the human approval gate). is_active is never mutated. The result
-            carries mode='preview_pending' and n_pending_rules. Default false: active rules only (the
-            shipped delta). Default: False.
-        include_series (bool | Unset): When true, the completed job result ALSO carries a 'series'
-            array — the per-period neural-vs-neurosymbolic head-to-head over the SAME held-out
-            backtest points the aggregate metrics are computed from, so the comparison can be charted
-            OVER TIME. Each entry is {index (position in the engineered holdout), time (ISO-8601
-            period, when the config has a usable time_index_field), actual (the realised level
-            target), neural (the model-only level prediction), neurosymbolic (the prediction after the
-            rules are applied), rule_fired (true iff applying the rules CHANGED the prediction for
-            that period — i.e. neural != neurosymbolic)}. The series reconciles with the aggregate
-            metrics (it is the same computation, not a recompute). Honours include_pending (the
-            preview series applies the pending rules too). Default false: the 'series' field is
-            omitted entirely (additive / back-compatible). Default: False.
+        body (NeurosymbolicComparisonQuery): Request body for the neural-vs-neurosymbolic
+            comparison.
+
+            The comparison scores BOTH branches against KNOWN historical actuals over
+            the expanding-window holdout (the backtest is NEVER overridden).  When
+            ``feature_overrides`` is supplied (#1550), a FORWARD what-if projection is
+            computed alongside the backtest: the overrides are injected into the latest
+            data row and propagated through the neural+symbolic forward forecast.  The
+            response carries both the forward what-if result and the backtest impact
+            information side-by-side (``forward_whatif`` + ``backtest_impact``).
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -127,9 +110,7 @@ def sync_detailed(
 
     kwargs = _get_kwargs(
         id=id,
-        prediction_config_id=prediction_config_id,
-        include_pending=include_pending,
-        include_series=include_series,
+        body=body,
     )
 
     response = client.get_httpx_client().request(
@@ -143,9 +124,7 @@ def sync(
     id: int,
     *,
     client: AuthenticatedClient | Client,
-    prediction_config_id: int,
-    include_pending: bool | Unset = False,
-    include_series: bool | Unset = False,
+    body: NeurosymbolicComparisonQuery,
 ) -> list[ValidationErrorModel] | None:
     r"""Neural-vs-neurosymbolic backtest comparison
 
@@ -158,34 +137,25 @@ def sync(
     approval gate; mode=preview_pending). Set include_series=true to ALSO get a per-period \"series\"
     array over the SAME holdout (each entry {index, time, actual, neural, neurosymbolic, rule_fired}) so
     the head-to-head can be charted over time; it reconciles with the aggregate metrics and is omitted
-    by default. Timeseries configs only. BACKTEST-ONLY (no what-if): this endpoint deliberately accepts
-    NO feature_overrides. It scores BOTH branches against KNOWN historical actuals over the expanding-
-    window holdout, so injecting a counterfactual override would compare predictions for inputs that
-    never occurred against the real outcomes — distorting the head-to-head. For scenario / what-if
-    analysis use POST /platforms/{id}/predict (neural what-if, recomputes engineered features from the
-    override) or POST /platforms/{id}/symbolic-forecast (symbolic driver-rule what-if).
+    by default. Timeseries configs only. feature_overrides applies a what-if override to the FORWARD
+    projection only (#1550). The backtest-scoring path (expanding-window holdout scored against real
+    historical actuals) is NEVER overridden — the head-to-head metrics are always the real historical
+    skill. The forward what-if number and the backtest impact information are returned side-by-side so
+    the user sees both \"what-if projection under overrides\" and \"how this model performed
+    historically\".
 
     Args:
         id (int): Resource ID
-        prediction_config_id (int): The timeseries prediction config to compare. Neural metrics
-            are computed from the model alone; neurosymbolic metrics apply the platform's active
-            adjustment+constraint rules over the same holdout.
-        include_pending (bool | Unset): When true, the neurosymbolic branch ALSO applies the
-            accepted-but-pending discovered rules for this config (a read-only 'what-if' preview of
-            the discovered set BEFORE the human approval gate). is_active is never mutated. The result
-            carries mode='preview_pending' and n_pending_rules. Default false: active rules only (the
-            shipped delta). Default: False.
-        include_series (bool | Unset): When true, the completed job result ALSO carries a 'series'
-            array — the per-period neural-vs-neurosymbolic head-to-head over the SAME held-out
-            backtest points the aggregate metrics are computed from, so the comparison can be charted
-            OVER TIME. Each entry is {index (position in the engineered holdout), time (ISO-8601
-            period, when the config has a usable time_index_field), actual (the realised level
-            target), neural (the model-only level prediction), neurosymbolic (the prediction after the
-            rules are applied), rule_fired (true iff applying the rules CHANGED the prediction for
-            that period — i.e. neural != neurosymbolic)}. The series reconciles with the aggregate
-            metrics (it is the same computation, not a recompute). Honours include_pending (the
-            preview series applies the pending rules too). Default false: the 'series' field is
-            omitted entirely (additive / back-compatible). Default: False.
+        body (NeurosymbolicComparisonQuery): Request body for the neural-vs-neurosymbolic
+            comparison.
+
+            The comparison scores BOTH branches against KNOWN historical actuals over
+            the expanding-window holdout (the backtest is NEVER overridden).  When
+            ``feature_overrides`` is supplied (#1550), a FORWARD what-if projection is
+            computed alongside the backtest: the overrides are injected into the latest
+            data row and propagated through the neural+symbolic forward forecast.  The
+            response carries both the forward what-if result and the backtest impact
+            information side-by-side (``forward_whatif`` + ``backtest_impact``).
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -198,9 +168,7 @@ def sync(
     return sync_detailed(
         id=id,
         client=client,
-        prediction_config_id=prediction_config_id,
-        include_pending=include_pending,
-        include_series=include_series,
+        body=body,
     ).parsed
 
 
@@ -208,9 +176,7 @@ async def asyncio_detailed(
     id: int,
     *,
     client: AuthenticatedClient | Client,
-    prediction_config_id: int,
-    include_pending: bool | Unset = False,
-    include_series: bool | Unset = False,
+    body: NeurosymbolicComparisonQuery,
 ) -> Response[list[ValidationErrorModel]]:
     r"""Neural-vs-neurosymbolic backtest comparison
 
@@ -223,34 +189,25 @@ async def asyncio_detailed(
     approval gate; mode=preview_pending). Set include_series=true to ALSO get a per-period \"series\"
     array over the SAME holdout (each entry {index, time, actual, neural, neurosymbolic, rule_fired}) so
     the head-to-head can be charted over time; it reconciles with the aggregate metrics and is omitted
-    by default. Timeseries configs only. BACKTEST-ONLY (no what-if): this endpoint deliberately accepts
-    NO feature_overrides. It scores BOTH branches against KNOWN historical actuals over the expanding-
-    window holdout, so injecting a counterfactual override would compare predictions for inputs that
-    never occurred against the real outcomes — distorting the head-to-head. For scenario / what-if
-    analysis use POST /platforms/{id}/predict (neural what-if, recomputes engineered features from the
-    override) or POST /platforms/{id}/symbolic-forecast (symbolic driver-rule what-if).
+    by default. Timeseries configs only. feature_overrides applies a what-if override to the FORWARD
+    projection only (#1550). The backtest-scoring path (expanding-window holdout scored against real
+    historical actuals) is NEVER overridden — the head-to-head metrics are always the real historical
+    skill. The forward what-if number and the backtest impact information are returned side-by-side so
+    the user sees both \"what-if projection under overrides\" and \"how this model performed
+    historically\".
 
     Args:
         id (int): Resource ID
-        prediction_config_id (int): The timeseries prediction config to compare. Neural metrics
-            are computed from the model alone; neurosymbolic metrics apply the platform's active
-            adjustment+constraint rules over the same holdout.
-        include_pending (bool | Unset): When true, the neurosymbolic branch ALSO applies the
-            accepted-but-pending discovered rules for this config (a read-only 'what-if' preview of
-            the discovered set BEFORE the human approval gate). is_active is never mutated. The result
-            carries mode='preview_pending' and n_pending_rules. Default false: active rules only (the
-            shipped delta). Default: False.
-        include_series (bool | Unset): When true, the completed job result ALSO carries a 'series'
-            array — the per-period neural-vs-neurosymbolic head-to-head over the SAME held-out
-            backtest points the aggregate metrics are computed from, so the comparison can be charted
-            OVER TIME. Each entry is {index (position in the engineered holdout), time (ISO-8601
-            period, when the config has a usable time_index_field), actual (the realised level
-            target), neural (the model-only level prediction), neurosymbolic (the prediction after the
-            rules are applied), rule_fired (true iff applying the rules CHANGED the prediction for
-            that period — i.e. neural != neurosymbolic)}. The series reconciles with the aggregate
-            metrics (it is the same computation, not a recompute). Honours include_pending (the
-            preview series applies the pending rules too). Default false: the 'series' field is
-            omitted entirely (additive / back-compatible). Default: False.
+        body (NeurosymbolicComparisonQuery): Request body for the neural-vs-neurosymbolic
+            comparison.
+
+            The comparison scores BOTH branches against KNOWN historical actuals over
+            the expanding-window holdout (the backtest is NEVER overridden).  When
+            ``feature_overrides`` is supplied (#1550), a FORWARD what-if projection is
+            computed alongside the backtest: the overrides are injected into the latest
+            data row and propagated through the neural+symbolic forward forecast.  The
+            response carries both the forward what-if result and the backtest impact
+            information side-by-side (``forward_whatif`` + ``backtest_impact``).
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -262,9 +219,7 @@ async def asyncio_detailed(
 
     kwargs = _get_kwargs(
         id=id,
-        prediction_config_id=prediction_config_id,
-        include_pending=include_pending,
-        include_series=include_series,
+        body=body,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -276,9 +231,7 @@ async def asyncio(
     id: int,
     *,
     client: AuthenticatedClient | Client,
-    prediction_config_id: int,
-    include_pending: bool | Unset = False,
-    include_series: bool | Unset = False,
+    body: NeurosymbolicComparisonQuery,
 ) -> list[ValidationErrorModel] | None:
     r"""Neural-vs-neurosymbolic backtest comparison
 
@@ -291,34 +244,25 @@ async def asyncio(
     approval gate; mode=preview_pending). Set include_series=true to ALSO get a per-period \"series\"
     array over the SAME holdout (each entry {index, time, actual, neural, neurosymbolic, rule_fired}) so
     the head-to-head can be charted over time; it reconciles with the aggregate metrics and is omitted
-    by default. Timeseries configs only. BACKTEST-ONLY (no what-if): this endpoint deliberately accepts
-    NO feature_overrides. It scores BOTH branches against KNOWN historical actuals over the expanding-
-    window holdout, so injecting a counterfactual override would compare predictions for inputs that
-    never occurred against the real outcomes — distorting the head-to-head. For scenario / what-if
-    analysis use POST /platforms/{id}/predict (neural what-if, recomputes engineered features from the
-    override) or POST /platforms/{id}/symbolic-forecast (symbolic driver-rule what-if).
+    by default. Timeseries configs only. feature_overrides applies a what-if override to the FORWARD
+    projection only (#1550). The backtest-scoring path (expanding-window holdout scored against real
+    historical actuals) is NEVER overridden — the head-to-head metrics are always the real historical
+    skill. The forward what-if number and the backtest impact information are returned side-by-side so
+    the user sees both \"what-if projection under overrides\" and \"how this model performed
+    historically\".
 
     Args:
         id (int): Resource ID
-        prediction_config_id (int): The timeseries prediction config to compare. Neural metrics
-            are computed from the model alone; neurosymbolic metrics apply the platform's active
-            adjustment+constraint rules over the same holdout.
-        include_pending (bool | Unset): When true, the neurosymbolic branch ALSO applies the
-            accepted-but-pending discovered rules for this config (a read-only 'what-if' preview of
-            the discovered set BEFORE the human approval gate). is_active is never mutated. The result
-            carries mode='preview_pending' and n_pending_rules. Default false: active rules only (the
-            shipped delta). Default: False.
-        include_series (bool | Unset): When true, the completed job result ALSO carries a 'series'
-            array — the per-period neural-vs-neurosymbolic head-to-head over the SAME held-out
-            backtest points the aggregate metrics are computed from, so the comparison can be charted
-            OVER TIME. Each entry is {index (position in the engineered holdout), time (ISO-8601
-            period, when the config has a usable time_index_field), actual (the realised level
-            target), neural (the model-only level prediction), neurosymbolic (the prediction after the
-            rules are applied), rule_fired (true iff applying the rules CHANGED the prediction for
-            that period — i.e. neural != neurosymbolic)}. The series reconciles with the aggregate
-            metrics (it is the same computation, not a recompute). Honours include_pending (the
-            preview series applies the pending rules too). Default false: the 'series' field is
-            omitted entirely (additive / back-compatible). Default: False.
+        body (NeurosymbolicComparisonQuery): Request body for the neural-vs-neurosymbolic
+            comparison.
+
+            The comparison scores BOTH branches against KNOWN historical actuals over
+            the expanding-window holdout (the backtest is NEVER overridden).  When
+            ``feature_overrides`` is supplied (#1550), a FORWARD what-if projection is
+            computed alongside the backtest: the overrides are injected into the latest
+            data row and propagated through the neural+symbolic forward forecast.  The
+            response carries both the forward what-if result and the backtest impact
+            information side-by-side (``forward_whatif`` + ``backtest_impact``).
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -332,8 +276,6 @@ async def asyncio(
         await asyncio_detailed(
             id=id,
             client=client,
-            prediction_config_id=prediction_config_id,
-            include_pending=include_pending,
-            include_series=include_series,
+            body=body,
         )
     ).parsed

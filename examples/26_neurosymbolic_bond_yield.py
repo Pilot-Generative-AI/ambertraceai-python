@@ -154,7 +154,7 @@ def print_comparison(cmp: dict[str, Any]) -> None:
 
 
 def run_neurosymbolic_bond_yield(api, args: argparse.Namespace) -> None:
-    total = 6
+    total = 7
 
     print_section(1, total, "Creating domain + loading FRED macro data")
     domain = api.domains.create(name=DOMAIN_NAME, description=DOMAIN_DESCRIPTION)
@@ -229,6 +229,27 @@ def run_neurosymbolic_bond_yield(api, args: argparse.Namespace) -> None:
         print_comparison(comparison)
     except AmbertraceError as exc:
         print(f"  ! Comparison unavailable ({exc.status_code} {exc.code}): {exc}")
+
+    # What-if: comparison with feature_overrides (#1550). The backtest metrics
+    # are UNCHANGED (scored against real actuals); the forward_whatif block
+    # carries the what-if projection under the supplied overrides.
+    print_section(7, total, "Neurosymbolic comparison with what-if override")
+    try:
+        whatif_cmp = api.predictions.neurosymbolic_comparison(
+            platform["id"], prediction_config_id=config["id"],
+            feature_overrides={"FEDFUNDS": 6.0}, timeout=args.timeout,
+        )
+        if "forward_whatif" in whatif_cmp:
+            fwd = whatif_cmp["forward_whatif"]
+            print("  Forward what-if (FEDFUNDS=6.0):")
+            print(f"    neural={fwd['neural']}  neurosymbolic={fwd['neurosymbolic']}")
+            print(f"    overrides_applied={fwd['overrides_applied']}")
+        if "backtest_impact" in whatif_cmp:
+            bi = whatif_cmp["backtest_impact"]
+            print("  Backtest impact (unchanged):")
+            print(f"    holdout_r2={bi['holdout_r2']}  holdout_rmse={bi['holdout_rmse']}")
+    except AmbertraceError as exc:
+        print(f"  ! What-if comparison unavailable ({exc.status_code} {exc.code}): {exc}")
 
     print(f"\nDone. Platform {platform['id']}, PredictionConfig {config['id']}.")
 

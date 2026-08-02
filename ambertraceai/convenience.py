@@ -1715,6 +1715,7 @@ class PredictionResource(_Resource):
                                  prediction_config_id: int,
                                  include_pending: bool = False,
                                  include_series: bool = False,
+                                 feature_overrides: dict | None = None,
                                  wait: bool = True,
                                  timeout: float = 600.0,
                                  poll_interval: float = 5.0) -> NeurosymbolicComparison:
@@ -1758,14 +1759,25 @@ class PredictionResource(_Resource):
         computation, not a recompute) and honours ``include_pending`` (the preview
         series applies the pending rules too). Timeseries configs only.
 
+        Pass ``feature_overrides`` (e.g. ``{"FEDFUNDS": 6.0}``) for a FORWARD
+        what-if projection alongside the backtest. The overrides are applied ONLY
+        to the forward forecast — the backtest scoring path is NEVER overridden.
+        The result then carries ``forward_whatif`` (the forward projection under
+        overrides: ``{neural, neurosymbolic, overrides_applied}``) and
+        ``backtest_impact`` (the historical skill metrics). Omit for a
+        backtest-only comparison (backward-compatible).
+
         Pass ``wait=False`` for the raw 202 envelope (``{"job_id", "poll", ...}``)
         to poll the job yourself.
         """
+        body: dict = {"prediction_config_id": prediction_config_id,
+                      "include_pending": include_pending,
+                      "include_series": include_series}
+        if feature_overrides is not None:
+            body["feature_overrides"] = feature_overrides
         resp = self._request(
-            "GET", f"/api/v1/platforms/{platform_id}/neurosymbolic-comparison",
-            params={"prediction_config_id": prediction_config_id,
-                    "include_pending": include_pending,
-                    "include_series": include_series})
+            "POST", f"/api/v1/platforms/{platform_id}/neurosymbolic-comparison",
+            json=body)
         if not wait:
             return resp
         job_id = resp.get("job_id")
@@ -1866,9 +1878,12 @@ class PredictionResource(_Resource):
         excluded are honestly left unstamped, fail-closed), and a
         ``why_certification`` block (the certified facts, any rejected facts, the
         proof + summary) is attached. ``feature_overrides`` applies what-if values
-        to the most recent row before composing (e.g. ``{"inflation": 5.0}``). The
-        config need not be trained — the symbolic forecaster is independent of the
-        neural model.
+        to the most recent row before composing (e.g. ``{"FEDFUNDS": 6.0}``). The
+        override propagates through BOTH the fired driver-rules AND the neural
+        baseline (when ``baseline_mode='neural'`` the GBT anchor is recomputed with
+        the overridden engineered features, so the baseline itself moves -- #1550).
+        Column matching is case-insensitive. The config need not be trained -- the
+        symbolic forecaster is independent of the neural model.
 
         ``prediction_record`` — THE CANONICAL STAGE-A OUTPUT (always present)
         --------------------------------------------------------------------

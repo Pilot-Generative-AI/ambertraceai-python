@@ -84,7 +84,23 @@ def main() -> None:
         if cert:
             step(f"Certification: {cert.get('proof_summary')}")
 
-        # 2) Residual diagnosis on a constructed breach (what-if value+actual).
+        # 2) What-if override: ask "what would the forecast look like if a key
+        #    driver were at a different level?". The override is injected into the
+        #    raw data before feature engineering + composition, so the baseline
+        #    AND the fired driver-rules respond to the scenario (#1550).
+        overrides = {"FEDFUNDS": 6.0}
+        whatif = api.predictions.symbolic_forecast(
+            platform_id, prediction_config_id=config_id,
+            feature_overrides=overrides,
+        )
+        whatif_fc = whatif["forecast"]
+        step(
+            f"What-if ({overrides}): value={whatif_fc['value']} "
+            f"baseline={whatif['baseline']}  "
+            f"(vs no-override: value={fc['value']} baseline={result['baseline']})"
+        )
+
+        # 3) Residual diagnosis on a constructed breach (what-if value+actual).
         #    Use the forecast value as the issued value and a far-off actual so the
         #    breach gate trips, then read the drift/correction call.
         actual = fc["value"] + 5.0 * (abs(fc["value"]) + 1.0)

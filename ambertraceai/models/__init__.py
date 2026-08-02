@@ -94,6 +94,8 @@ from .job_out import JobOut
 from .job_out_result_type_0 import JobOutResultType0
 from .linked_dataset_out import LinkedDatasetOut
 from .linked_series_out import LinkedSeriesOut
+from .neurosymbolic_comparison_query import NeurosymbolicComparisonQuery
+from .neurosymbolic_comparison_query_feature_overrides_type_0 import NeurosymbolicComparisonQueryFeatureOverridesType0
 from .node_out import NodeOut
 from .node_out_properties_type_0 import NodeOutPropertiesType0
 from .obligation_suggestion import ObligationSuggestion
@@ -279,6 +281,8 @@ __all__ = (
     "JobOutResultType0",
     "LinkedDatasetOut",
     "LinkedSeriesOut",
+    "NeurosymbolicComparisonQuery",
+    "NeurosymbolicComparisonQueryFeatureOverridesType0",
     "NodeOut",
     "NodeOutPropertiesType0",
     "ObligationSuggestion",
