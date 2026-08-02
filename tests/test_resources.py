@@ -346,7 +346,7 @@ class TestPredictionResource:
 
     @respx.mock
     def test_neurosymbolic_comparison_wait_polls(self, api):
-        respx.get(
+        respx.post(
             "https://test.ambertrace.ai/api/v1/platforms/1/neurosymbolic-comparison"
         ).mock(
             return_value=httpx.Response(202, json=_envelope({"job_id": 21, "status": "comparing"}))
@@ -371,7 +371,7 @@ class TestPredictionResource:
 
     @respx.mock
     def test_neurosymbolic_comparison_no_wait_returns_envelope(self, api):
-        respx.get(
+        respx.post(
             "https://test.ambertrace.ai/api/v1/platforms/1/neurosymbolic-comparison"
         ).mock(
             return_value=httpx.Response(202, json=_envelope({"job_id": 21, "status": "comparing"}))
@@ -381,7 +381,7 @@ class TestPredictionResource:
 
     @respx.mock
     def test_neurosymbolic_comparison_include_series(self, api):
-        route = respx.get(
+        route = respx.post(
             "https://test.ambertrace.ai/api/v1/platforms/1/neurosymbolic-comparison"
         ).mock(
             return_value=httpx.Response(202, json=_envelope({"job_id": 21, "status": "comparing"}))
@@ -408,8 +408,10 @@ class TestPredictionResource:
         with patch("time.sleep"):
             result = api.predictions.neurosymbolic_comparison(
                 1, prediction_config_id=5, include_series=True)
-        # include_series is wired into the query params
-        assert "include_series=true" in str(route.calls.last.request.url).lower()
+        # include_series is wired into the POST body
+        import json
+        body = json.loads(route.calls.last.request.content)
+        assert body["include_series"] is True
         assert len(result["series"]) == 2
         assert result["series"][0]["rule_fired"] is True
         assert result["series"][1]["rule_fired"] is False
