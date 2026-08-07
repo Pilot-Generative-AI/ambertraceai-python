@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from ..models.prediction_config_out_backtest_config_type_0 import PredictionConfigOutBacktestConfigType0
     from ..models.prediction_config_out_eval_metric_config_type_0 import PredictionConfigOutEvalMetricConfigType0
     from ..models.prediction_config_out_feature_config_type_0 import PredictionConfigOutFeatureConfigType0
+    from ..models.prediction_config_out_panel_sufficiency_type_0 import PredictionConfigOutPanelSufficiencyType0
 
 
 T = TypeVar("T", bound="PredictionConfigOut")
@@ -45,6 +46,8 @@ class PredictionConfigOut:
         horizon (int | None | Unset):
         max_ar_lag (int | None | Unset): Advanced numeric autoregression cap (overrides the enum when set): 0 = drivers
             only, k = target-history features with lag/window <= k.
+        min_history_years (float | None | Unset): Declared minimum history span (years) for the sufficiency gate.
+        min_rows (int | None | Unset): Declared minimum post-warmup row count for the sufficiency gate.
         mode (str | Unset): Prediction mode: 'timeseries' or 'cross_sectional'. Default: 'timeseries'.
         neural_confidence_tau (float | Unset): Per-point neural-tier confidence threshold: GBT prediction admitted as
             neural_scored when confidence >= tau, else neural_weak (raw GBT still served, #1485). 0.0 = gate labels only.
@@ -54,6 +57,9 @@ class PredictionConfigOut:
             a level when history is available; see the predict response's 'value_space'). 'unknown (auto — resolved at train
             time)' before an 'auto' config is trained, and for a stored out-of-set transform (the engine falls back to
             auto). Null for cross_sectional configs.
+        panel_sufficiency (None | PredictionConfigOutPanelSufficiencyType0 | Unset): Panel sufficiency advisory from the
+            dataset's schema_info. Contains tradeoff_curve, recovery_groups, and summary metrics when the dataset has been
+            analysed for missing-value patterns. Null when unavailable.
         resolved_target_transform (None | str | Unset): Item 6 — the EFFECTIVE target transform, echoed on the config so
             the output space is known without predicting. When a concrete transform was requested ('none' or 'difference')
             this echoes it immediately at create_config time. When 'auto' was requested it resolves at TRAIN time, so before
@@ -87,9 +93,12 @@ class PredictionConfigOut:
     frequency: None | str | Unset = UNSET
     horizon: int | None | Unset = UNSET
     max_ar_lag: int | None | Unset = UNSET
+    min_history_years: float | None | Unset = UNSET
+    min_rows: int | None | Unset = UNSET
     mode: str | Unset = "timeseries"
     neural_confidence_tau: float | Unset = 0.0
     output_space: None | str | Unset = UNSET
+    panel_sufficiency: None | PredictionConfigOutPanelSufficiencyType0 | Unset = UNSET
     resolved_target_transform: None | str | Unset = UNSET
     target_transform_reason: None | str | Unset = UNSET
     time_index_field: None | str | Unset = UNSET
@@ -100,6 +109,7 @@ class PredictionConfigOut:
         from ..models.prediction_config_out_backtest_config_type_0 import PredictionConfigOutBacktestConfigType0
         from ..models.prediction_config_out_eval_metric_config_type_0 import PredictionConfigOutEvalMetricConfigType0
         from ..models.prediction_config_out_feature_config_type_0 import PredictionConfigOutFeatureConfigType0
+        from ..models.prediction_config_out_panel_sufficiency_type_0 import PredictionConfigOutPanelSufficiencyType0
 
         eval_metric = self.eval_metric
 
@@ -184,6 +194,18 @@ class PredictionConfigOut:
         else:
             max_ar_lag = self.max_ar_lag
 
+        min_history_years: float | None | Unset
+        if isinstance(self.min_history_years, Unset):
+            min_history_years = UNSET
+        else:
+            min_history_years = self.min_history_years
+
+        min_rows: int | None | Unset
+        if isinstance(self.min_rows, Unset):
+            min_rows = UNSET
+        else:
+            min_rows = self.min_rows
+
         mode = self.mode
 
         neural_confidence_tau = self.neural_confidence_tau
@@ -193,6 +215,14 @@ class PredictionConfigOut:
             output_space = UNSET
         else:
             output_space = self.output_space
+
+        panel_sufficiency: dict[str, Any] | None | Unset
+        if isinstance(self.panel_sufficiency, Unset):
+            panel_sufficiency = UNSET
+        elif isinstance(self.panel_sufficiency, PredictionConfigOutPanelSufficiencyType0):
+            panel_sufficiency = self.panel_sufficiency.to_dict()
+        else:
+            panel_sufficiency = self.panel_sufficiency
 
         resolved_target_transform: None | str | Unset
         if isinstance(self.resolved_target_transform, Unset):
@@ -254,12 +284,18 @@ class PredictionConfigOut:
             field_dict["horizon"] = horizon
         if max_ar_lag is not UNSET:
             field_dict["max_ar_lag"] = max_ar_lag
+        if min_history_years is not UNSET:
+            field_dict["min_history_years"] = min_history_years
+        if min_rows is not UNSET:
+            field_dict["min_rows"] = min_rows
         if mode is not UNSET:
             field_dict["mode"] = mode
         if neural_confidence_tau is not UNSET:
             field_dict["neural_confidence_tau"] = neural_confidence_tau
         if output_space is not UNSET:
             field_dict["output_space"] = output_space
+        if panel_sufficiency is not UNSET:
+            field_dict["panel_sufficiency"] = panel_sufficiency
         if resolved_target_transform is not UNSET:
             field_dict["resolved_target_transform"] = resolved_target_transform
         if target_transform_reason is not UNSET:
@@ -276,6 +312,7 @@ class PredictionConfigOut:
         from ..models.prediction_config_out_backtest_config_type_0 import PredictionConfigOutBacktestConfigType0
         from ..models.prediction_config_out_eval_metric_config_type_0 import PredictionConfigOutEvalMetricConfigType0
         from ..models.prediction_config_out_feature_config_type_0 import PredictionConfigOutFeatureConfigType0
+        from ..models.prediction_config_out_panel_sufficiency_type_0 import PredictionConfigOutPanelSufficiencyType0
 
         d = dict(src_dict)
         eval_metric = d.pop("eval_metric")
@@ -411,6 +448,24 @@ class PredictionConfigOut:
 
         max_ar_lag = _parse_max_ar_lag(d.pop("max_ar_lag", UNSET))
 
+        def _parse_min_history_years(data: object) -> float | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(float | None | Unset, data)
+
+        min_history_years = _parse_min_history_years(d.pop("min_history_years", UNSET))
+
+        def _parse_min_rows(data: object) -> int | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(int | None | Unset, data)
+
+        min_rows = _parse_min_rows(d.pop("min_rows", UNSET))
+
         mode = d.pop("mode", UNSET)
 
         neural_confidence_tau = d.pop("neural_confidence_tau", UNSET)
@@ -423,6 +478,23 @@ class PredictionConfigOut:
             return cast(None | str | Unset, data)
 
         output_space = _parse_output_space(d.pop("output_space", UNSET))
+
+        def _parse_panel_sufficiency(data: object) -> None | PredictionConfigOutPanelSufficiencyType0 | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                panel_sufficiency_type_0 = PredictionConfigOutPanelSufficiencyType0.from_dict(data)
+
+                return panel_sufficiency_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(None | PredictionConfigOutPanelSufficiencyType0 | Unset, data)
+
+        panel_sufficiency = _parse_panel_sufficiency(d.pop("panel_sufficiency", UNSET))
 
         def _parse_resolved_target_transform(data: object) -> None | str | Unset:
             if data is None:
@@ -480,9 +552,12 @@ class PredictionConfigOut:
             frequency=frequency,
             horizon=horizon,
             max_ar_lag=max_ar_lag,
+            min_history_years=min_history_years,
+            min_rows=min_rows,
             mode=mode,
             neural_confidence_tau=neural_confidence_tau,
             output_space=output_space,
+            panel_sufficiency=panel_sufficiency,
             resolved_target_transform=resolved_target_transform,
             target_transform_reason=target_transform_reason,
             time_index_field=time_index_field,

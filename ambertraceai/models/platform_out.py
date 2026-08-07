@@ -36,6 +36,8 @@ class PlatformOut:
         description (None | str | Unset):
         neural_config (None | PlatformOutNeuralConfigType0 | Unset):
         owner_user_id (int | None | Unset):
+        require_confidence (bool | None | Unset): Whether every query fact must be a FactWithConfidence carrier (per-
+            observation confidence required). Surfaced from neural_config.
         team_id (int | None | Unset):
         updated_at (None | str | Unset):
         verified_min_confidence (float | None | Unset): The certified-fact confidence threshold τ, surfaced from
@@ -58,6 +60,7 @@ class PlatformOut:
     description: None | str | Unset = UNSET
     neural_config: None | PlatformOutNeuralConfigType0 | Unset = UNSET
     owner_user_id: int | None | Unset = UNSET
+    require_confidence: bool | None | Unset = UNSET
     team_id: int | None | Unset = UNSET
     updated_at: None | str | Unset = UNSET
     verified_min_confidence: float | None | Unset = UNSET
@@ -123,6 +126,12 @@ class PlatformOut:
         else:
             owner_user_id = self.owner_user_id
 
+        require_confidence: bool | None | Unset
+        if isinstance(self.require_confidence, Unset):
+            require_confidence = UNSET
+        else:
+            require_confidence = self.require_confidence
+
         team_id: int | None | Unset
         if isinstance(self.team_id, Unset):
             team_id = UNSET
@@ -170,6 +179,8 @@ class PlatformOut:
             field_dict["neural_config"] = neural_config
         if owner_user_id is not UNSET:
             field_dict["owner_user_id"] = owner_user_id
+        if require_confidence is not UNSET:
+            field_dict["require_confidence"] = require_confidence
         if team_id is not UNSET:
             field_dict["team_id"] = team_id
         if updated_at is not UNSET:
@@ -280,6 +291,15 @@ class PlatformOut:
 
         owner_user_id = _parse_owner_user_id(d.pop("owner_user_id", UNSET))
 
+        def _parse_require_confidence(data: object) -> bool | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(bool | None | Unset, data)
+
+        require_confidence = _parse_require_confidence(d.pop("require_confidence", UNSET))
+
         def _parse_team_id(data: object) -> int | None | Unset:
             if data is None:
                 return data
@@ -325,6 +345,7 @@ class PlatformOut:
             description=description,
             neural_config=neural_config,
             owner_user_id=owner_user_id,
+            require_confidence=require_confidence,
             team_id=team_id,
             updated_at=updated_at,
             verified_min_confidence=verified_min_confidence,

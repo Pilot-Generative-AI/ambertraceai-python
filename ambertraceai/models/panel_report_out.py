@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from ..models.panel_column_out import PanelColumnOut
     from ..models.panel_intersection_out import PanelIntersectionOut
     from ..models.panel_recovery_group_out import PanelRecoveryGroupOut
+    from ..models.panel_tradeoff_step_out import PanelTradeoffStepOut
 
 
 T = TypeVar("T", bound="PanelReportOut")
@@ -36,6 +37,9 @@ class PanelReportOut:
         skipped_reason (None | str | Unset): Populated when the report could not be computed (unparseable file, no index
             column, unsupported format). Always present in the body -- an ABSENT report block would read as a clean panel.
         stale_columns (list[str] | Unset):
+        tradeoff_curve (list[PanelTradeoffStepOut] | Unset): Sparsity-ordered greedy column-drop curve.  At each step
+            the SPARSEST remaining column is dropped and usable_rows is recomputed. Step 0 is the baseline (no drops).  Use
+            this to see how many rows you recover by cutting the N sparsest columns.
     """
 
     intersection: PanelIntersectionOut
@@ -51,6 +55,7 @@ class PanelReportOut:
     row_count: int | Unset = 0
     skipped_reason: None | str | Unset = UNSET
     stale_columns: list[str] | Unset = UNSET
+    tradeoff_curve: list[PanelTradeoffStepOut] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -122,6 +127,13 @@ class PanelReportOut:
         if not isinstance(self.stale_columns, Unset):
             stale_columns = self.stale_columns
 
+        tradeoff_curve: list[dict[str, Any]] | Unset = UNSET
+        if not isinstance(self.tradeoff_curve, Unset):
+            tradeoff_curve = []
+            for tradeoff_curve_item_data in self.tradeoff_curve:
+                tradeoff_curve_item = tradeoff_curve_item_data.to_dict()
+                tradeoff_curve.append(tradeoff_curve_item)
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -153,6 +165,8 @@ class PanelReportOut:
             field_dict["skipped_reason"] = skipped_reason
         if stale_columns is not UNSET:
             field_dict["stale_columns"] = stale_columns
+        if tradeoff_curve is not UNSET:
+            field_dict["tradeoff_curve"] = tradeoff_curve
 
         return field_dict
 
@@ -162,6 +176,7 @@ class PanelReportOut:
         from ..models.panel_column_out import PanelColumnOut
         from ..models.panel_intersection_out import PanelIntersectionOut
         from ..models.panel_recovery_group_out import PanelRecoveryGroupOut
+        from ..models.panel_tradeoff_step_out import PanelTradeoffStepOut
 
         d = dict(src_dict)
         intersection = PanelIntersectionOut.from_dict(d.pop("intersection"))
@@ -254,6 +269,15 @@ class PanelReportOut:
 
         stale_columns = cast(list[str], d.pop("stale_columns", UNSET))
 
+        _tradeoff_curve = d.pop("tradeoff_curve", UNSET)
+        tradeoff_curve: list[PanelTradeoffStepOut] | Unset = UNSET
+        if _tradeoff_curve is not UNSET:
+            tradeoff_curve = []
+            for tradeoff_curve_item_data in _tradeoff_curve:
+                tradeoff_curve_item = PanelTradeoffStepOut.from_dict(tradeoff_curve_item_data)
+
+                tradeoff_curve.append(tradeoff_curve_item)
+
         panel_report_out = cls(
             intersection=intersection,
             binding_constraint=binding_constraint,
@@ -268,6 +292,7 @@ class PanelReportOut:
             row_count=row_count,
             skipped_reason=skipped_reason,
             stale_columns=stale_columns,
+            tradeoff_curve=tradeoff_curve,
         )
 
         panel_report_out.additional_properties = d

@@ -248,6 +248,26 @@ def _symbolic_trace(report: dict[str, Any]) -> dict[str, Any]:
 # Domain polling
 # ---------------------------------------------------------------------------
 
+def wait_for_dataset(api, dataset_id: int, *, timeout: int = 120, poll_interval: int = 3) -> dict:
+    """Poll a dataset until it reaches a terminal status ('ready' or 'error').
+
+    Used after ``datasets.fetch()`` / ``datasets.fetch_multi()`` which return
+    HTTP 202 with ``status="processing"``.
+    """
+    deadline = time.monotonic() + timeout
+    while True:
+        ds = api.datasets.get(dataset_id)
+        status = ds.get("status", "")
+        if status in ("ready", "ingested", "error"):
+            return ds
+        if time.monotonic() >= deadline:
+            raise TimeoutError(
+                f"Dataset {dataset_id} did not finish within {timeout}s "
+                f"(last status: {status})"
+            )
+        time.sleep(poll_interval)
+
+
 def wait_for_domain(api, domain_id: int, *, timeout: int = 180, poll_interval: int = 4) -> dict:
     """Poll a domain until its ontology build reaches a terminal status."""
     deadline = time.monotonic() + timeout

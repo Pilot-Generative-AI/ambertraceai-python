@@ -69,6 +69,7 @@ from .eval_config_update import EvalConfigUpdate
 from .eval_config_update_direction import EvalConfigUpdateDirection
 from .eval_config_update_unit import EvalConfigUpdateUnit
 from .export_report_request import ExportReportRequest
+from .fact_with_confidence import FactWithConfidence
 from .feedback_log_entry import FeedbackLogEntry
 from .feedback_log_entry_rule_snapshot_type_0 import FeedbackLogEntryRuleSnapshotType0
 from .feedback_log_entry_scorecard_snapshot_type_0 import FeedbackLogEntryScorecardSnapshotType0
@@ -100,11 +101,13 @@ from .node_out import NodeOut
 from .node_out_properties_type_0 import NodeOutPropertiesType0
 from .obligation_suggestion import ObligationSuggestion
 from .obligation_suggestions_out import ObligationSuggestionsOut
+from .on_missing_policy import OnMissingPolicy
 from .panel_binding_constraint_out import PanelBindingConstraintOut
 from .panel_column_out import PanelColumnOut
 from .panel_intersection_out import PanelIntersectionOut
 from .panel_recovery_group_out import PanelRecoveryGroupOut
 from .panel_report_out import PanelReportOut
+from .panel_tradeoff_step_out import PanelTradeoffStepOut
 from .platform_out import PlatformOut
 from .platform_out_build_quality_type_0 import PlatformOutBuildQualityType0
 from .platform_out_config_type_0 import PlatformOutConfigType0
@@ -122,6 +125,7 @@ from .prediction_config_out import PredictionConfigOut
 from .prediction_config_out_backtest_config_type_0 import PredictionConfigOutBacktestConfigType0
 from .prediction_config_out_eval_metric_config_type_0 import PredictionConfigOutEvalMetricConfigType0
 from .prediction_config_out_feature_config_type_0 import PredictionConfigOutFeatureConfigType0
+from .prediction_config_out_panel_sufficiency_type_0 import PredictionConfigOutPanelSufficiencyType0
 from .prediction_out import PredictionOut
 from .prediction_out_explanation_type_0 import PredictionOutExplanationType0
 from .prediction_out_prediction import PredictionOutPrediction
@@ -256,6 +260,7 @@ __all__ = (
     "EvalConfigUpdateDirection",
     "EvalConfigUpdateUnit",
     "ExportReportRequest",
+    "FactWithConfidence",
     "FeedbackLogEntry",
     "FeedbackLogEntryRuleSnapshotType0",
     "FeedbackLogEntryScorecardSnapshotType0",
@@ -287,11 +292,13 @@ __all__ = (
     "NodeOutPropertiesType0",
     "ObligationSuggestion",
     "ObligationSuggestionsOut",
+    "OnMissingPolicy",
     "PanelBindingConstraintOut",
     "PanelColumnOut",
     "PanelIntersectionOut",
     "PanelRecoveryGroupOut",
     "PanelReportOut",
+    "PanelTradeoffStepOut",
     "PlatformOut",
     "PlatformOutBuildQualityType0",
     "PlatformOutConfigType0",
@@ -307,6 +314,7 @@ __all__ = (
     "PredictionConfigOutBacktestConfigType0",
     "PredictionConfigOutEvalMetricConfigType0",
     "PredictionConfigOutFeatureConfigType0",
+    "PredictionConfigOutPanelSufficiencyType0",
     "PredictionOut",
     "PredictionOutExplanationType0",
     "PredictionOutPrediction",

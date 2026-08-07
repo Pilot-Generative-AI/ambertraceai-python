@@ -22,6 +22,7 @@ example that shows it). If you're unsure whether something is `author()`,
 | APG temporal / sequencing (precedence, rate, pairing) | `agent_policy.author("… preceded by …")` + `create_session` + `step` | 40 |
 | APG distinct-actor quorum + separation-of-duties | `agent_policy.author("… two DIFFERENT approvers, none the author …")` + `authorize_action(relations=…)` | 28 |
 | Explainable symbolic forecasting + WHY | `predictions.symbolic_forecast(...)` (`why` / `prediction_record`) | 23, 26 |
+| Per-fact confidence carrier (supplied observation certainty, tau-gated fail-closed) | `platforms.query(facts={"f": {"value": v, "confidence": c}})` or `authorize_action(args={"f": {"value": v, "confidence": c}})` -- requires `require_confidence=True` on the platform | 50 |
 | Neural-evidence retrieval breadth on a query | `platforms.query(..., top_k=N)` | -- |
 | Org-capability discovery + 403 handling | `GET /api/v1/capabilities` (user-scoped key) + branch on `AmbertraceError.code == "capability_disabled"` | 42 |
 
@@ -740,6 +741,25 @@ All new connectors are async (`is_async = True`) -- `datasets.fetch` returns
 HTTP 202 with `status="processing"`; poll `datasets.get(id)` until
 `status="ready"`. New example `44_public_data_connectors.py` covers all six
 plus a `fetch_multi` merge.
+
+### 1.1.0
+
+**Per-fact supplied confidence -- `FactWithConfidence` carrier + fail-closed
+tau refusal (#1655).** Verified platforms built with `require_confidence=True`
+(in `neural_config`) now accept per-observation confidence via a
+`FactWithConfidence` carrier (`{"value": <v>, "confidence": <c>}`). Each
+fact's `confidence` is gated independently against the platform's verified
+`verified_min_confidence` (tau): a fact with `confidence < tau` is REFUSED and
+the whole decision fails closed (HTTP 503, `rejected_facts` in the body). The
+carried confidence is also surfaced into the certified EDB as a companion
+ground atom `_aria_confidence__{field}` (float [0, 1]) so authored rules can
+reason over observation certainty directly. Bare scalars sent to a
+`require_confidence` platform are refused (fail-closed on absent confidence).
+A confidence carrier sent to a non-verified platform is rejected with a clear
+error (fail-loud, not a silent no-op). New `FactWithConfidence` model in the
+generated client (`ambertraceai.models.FactWithConfidence`). Both
+`platforms.query()` and `agent_policy.authorize_action()` accept the carrier.
+New runnable demo `examples/50_supplied_confidence.py`.
 
 ### Unreleased
 

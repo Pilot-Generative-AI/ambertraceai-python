@@ -30,6 +30,12 @@ class BuildRequest:
             platform and the violations are recorded in ``config.verification_gate_violations``. The verified label is
             reserved for rule sets that pass the gate. The query-time proof is never overridable, so this can never produce
             an unsound ``proof_checked`` certificate. Default: False.
+        require_confidence (bool | None | Unset): Verified profile only.  When ``true``, every client-supplied fact in
+            ``query(..., facts={...})`` MUST be a ``FactWithConfidence`` carrier ``{"value": <v>, "confidence": <c>}``; a
+            bare scalar is REFUSED (fail-closed on absent confidence).  Each carried confidence is gated independently per
+            fact by ``verified_min_confidence`` (τ); if ANY fact is sub-τ the whole decision is refused.  The confidence
+            value is also emitted as a companion EDB atom ``_aria_confidence__{field}`` so rules can reason over observation
+            certainty.
         scored_determinations (BuildRequestScoredDeterminationsType0 | None | Unset): Verified profile only. Score an
             OPEN-TEXTURED predicate that bright-line rules cannot decide (e.g. compatibility, reasonableness, materiality,
             good-faith). When enabled, at query time the platform's own language model is given the predicate's doctrine
@@ -55,6 +61,7 @@ class BuildRequest:
     config: BuildRequestConfig | Unset = UNSET
     invariant_manifest: list[Invariant] | None | Unset = UNSET
     override_verification_gate: bool | Unset = False
+    require_confidence: bool | None | Unset = UNSET
     scored_determinations: BuildRequestScoredDeterminationsType0 | None | Unset = UNSET
     team_id: int | None | Unset = UNSET
     verified_min_confidence: float | None | Unset = UNSET
@@ -84,6 +91,12 @@ class BuildRequest:
             invariant_manifest = self.invariant_manifest
 
         override_verification_gate = self.override_verification_gate
+
+        require_confidence: bool | None | Unset
+        if isinstance(self.require_confidence, Unset):
+            require_confidence = UNSET
+        else:
+            require_confidence = self.require_confidence
 
         scored_determinations: dict[str, Any] | None | Unset
         if isinstance(self.scored_determinations, Unset):
@@ -126,6 +139,8 @@ class BuildRequest:
             field_dict["invariant_manifest"] = invariant_manifest
         if override_verification_gate is not UNSET:
             field_dict["override_verification_gate"] = override_verification_gate
+        if require_confidence is not UNSET:
+            field_dict["require_confidence"] = require_confidence
         if scored_determinations is not UNSET:
             field_dict["scored_determinations"] = scored_determinations
         if team_id is not UNSET:
@@ -179,6 +194,15 @@ class BuildRequest:
 
         override_verification_gate = d.pop("override_verification_gate", UNSET)
 
+        def _parse_require_confidence(data: object) -> bool | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(bool | None | Unset, data)
+
+        require_confidence = _parse_require_confidence(d.pop("require_confidence", UNSET))
+
         def _parse_scored_determinations(data: object) -> BuildRequestScoredDeterminationsType0 | None | Unset:
             if data is None:
                 return data
@@ -230,6 +254,7 @@ class BuildRequest:
             config=config,
             invariant_manifest=invariant_manifest,
             override_verification_gate=override_verification_gate,
+            require_confidence=require_confidence,
             scored_determinations=scored_determinations,
             team_id=team_id,
             verified_min_confidence=verified_min_confidence,

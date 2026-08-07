@@ -741,7 +741,8 @@ class DatasetResource(_Resource):
 
     def fetch_multi(self, *, domain_id: int, sources: list[dict],
                     join_on: str = "date", frequency: str | None = None,
-                    aggregation: str | None = None) -> DatasetOut:
+                    aggregation: str | None = None,
+                    on_missing: dict | None = None) -> DatasetOut:
         """Fetch from two or more connectors and MERGE them into ONE date-aligned
         dataset, so a forecaster can train across sources in a single panel.
 
@@ -756,9 +757,31 @@ class DatasetResource(_Resource):
         onto a common grid before joining; without it, mixed-frequency sources
         outer-join to a mostly-null table.
 
-        Like :meth:`fetch`, this always runs asynchronously (network fetch × N):
+        ``on_missing`` -- **missing-value policy** applied after the outer join.
+        Controls how NaN cells (from misaligned series or discontinued sources)
+        are handled. Accepted shapes:
+
+        * ``None`` / omit: forward-fill (backward-compatible default).
+        * ``{"method": "drop"}``: drop rows with any NaN -- no fill at all.
+        * ``{"method": "ffill"}``: forward-fill (last observation carried
+          forward). Explicit version of the default.
+        * ``{"method": "interpolate", "max_gap": N}``: linear interpolation
+          for short gaps (up to ``max_gap`` contiguous NaN; default 3). Gaps
+          longer than ``max_gap`` are NOT interpolated -- those rows are
+          dropped. Prevents a 10-year gap from being silently interpolated.
+        * ``{"method": "proxy_splice"}``: forward-fill + back-fill to splice
+          proxy series into gaps. Fills ALL NaN, but every filled cell is
+          flagged ``modeled_extrapolation: true`` in the **transformation
+          manifest** (the values are NOT observed data).
+
+        After the merge completes, the resulting dataset's
+        ``schema_info["transformation_manifest"]`` records every
+        fill/drop/interpolation: ``[{"column": ..., "method": ...,
+        "rows_affected": ..., "modeled_extrapolation": bool}, ...]``.
+
+        Like :meth:`fetch`, this always runs asynchronously (network fetch x N):
         the call returns the dataset record (HTTP 202, ``status == "processing"``)
-        — poll :meth:`get` until ``status == "ready"`` before building on it. See
+        -- poll :meth:`get` until ``status == "ready"`` before building on it. See
         ``api.connectors.list()`` for available connectors and their requirements.
 
         ALWAYS check :meth:`panel_report` once the dataset is ready. An outer
@@ -778,6 +801,8 @@ class DatasetResource(_Resource):
             body["frequency"] = frequency
         if aggregation is not None:
             body["aggregation"] = aggregation
+        if on_missing is not None:
+            body["on_missing"] = on_missing
         return self._request("POST", "/api/v1/datasets/fetch-multi", json=body)
 
     def quality(self, dataset_id: int) -> dict:
@@ -808,6 +833,14 @@ class DatasetResource(_Resource):
           not every subset of columns — so the best set to drop may be a SUPERSET
           that never appears on its own. Candidates are scored by their true
           recovery and ranked before the list is truncated.
+        * ``tradeoff_curve`` — sparsity-ordered greedy column-drop curve.  At
+          each step the column with the MOST nulls is dropped, and
+          ``usable_rows`` is recomputed (O(rows x cols) total via suffix-AND).
+          Step 0 is the baseline (no drops); subsequent steps each name the
+          ``dropped_column`` and the resulting ``usable_rows`` /
+          ``usable_first_index`` / ``usable_last_index``.  Each entry carries
+          ``heuristic="sparsity_greedy"``.  Use this to see how many rows you
+          recover by cutting the N sparsest columns.
         * ``columns`` — per column: ``first_non_null``, ``last_non_null``,
           ``non_null_count``/``null_count``, ``recency_lag_periods``, ``stale``,
           ``rows_recovered_if_dropped``. ``stale_columns`` lists the flagged
@@ -893,6 +926,12 @@ class PlatformResource(_Resource):
           answer carries a checked proof; uncertifiable queries fail closed).
         * ``verified_min_confidence: float`` -- the fact-gate confidence threshold τ
           (e.g. ``0.85``); a fact below τ is not certified.
+        * ``require_confidence: bool`` -- when True, every query ``facts`` value
+          MUST be a ``FactWithConfidence`` carrier
+          ``{"value": <v>, "confidence": <c>}``; a bare scalar is refused.
+          Each carried confidence is gated per fact by τ; the value is also
+          emitted as a companion EDB atom ``_aria_confidence__{field}`` so rules can
+          reason over observation certainty. See example 50.
         * ``invariant_manifest: list[dict]`` -- named invariants the build must
           satisfy (each ``{"name": str, "kind": ..., ...}``); a violated invariant
           fails the build rather than shipping an unsound platform.
@@ -996,11 +1035,24 @@ class PlatformResource(_Resource):
               **kwargs) -> QueryResult:
         """Query a platform; returns ``{answer, decision, explanation, ...}``.
 
-        ``facts`` (``{field: scalar}``) is the FOCAL row. On a verified platform
-        these ARE the certified EDB — each is certified through the fact gate
-        (declared in the domain schema, in-domain, ground); neural retrieval is
-        not consulted for the fact base, so a fully-specified request decides
-        deterministically.
+        ``facts`` (``{field: scalar | {"value": v, "confidence": c}}``) is the
+        FOCAL row.  Each value is EITHER a bare scalar (confidence 1.0,
+        backward-compatible) OR a ``FactWithConfidence`` carrier
+        ``{"value": <v>, "confidence": <c>}`` that states per-observation
+        confidence explicitly (#1655).
+
+        **Per-fact confidence** (requires ``require_confidence=True`` in
+        ``neural_config``): every fact MUST be a carrier; a bare scalar is
+        REFUSED.  Each carried confidence is gated independently per fact
+        against ``verified_min_confidence`` (tau); if ANY fact is sub-tau the
+        whole decision is refused.  The confidence value is also emitted as a
+        companion EDB atom ``_aria_confidence__{field}`` (float [0, 1]) so rules
+        can reason over observation certainty.
+
+        On a verified platform these ARE the certified EDB — each is certified
+        through the fact gate (declared in the domain schema, in-domain,
+        ground); neural retrieval is not consulted for the fact base, so a
+        fully-specified request decides deterministically.
 
         ``predictions`` (``{role: {"model_id": str, "as_of": str|None,
         "mode": "fatal"|"non_fatal"}}``) is the native, FAIL-CLOSED
@@ -1512,6 +1564,23 @@ class PredictionResource(_Resource):
         ``skill_vs_persistence`` (level-space — the part the model adds over
         predicting last value), plus ``target_transform``. With no transform,
         ``transformed == level`` (backward compatible).
+
+        Sufficiency gate (Part of #1383):
+
+        * ``min_rows`` — optional int (>= 1).  Minimum post-warmup row count
+          required for :meth:`train`.  When set, the train endpoint runs feature
+          engineering, checks the ACTUAL row count, and returns a **structured
+          HTTP 409 ``sufficiency_gate_failed``** if the data falls short.  The
+          409 payload carries ``{min_rows, actual_rows, min_history_years,
+          actual_history_years, recovery_groups}`` — the ``recovery_groups``
+          cut-list from :meth:`~DatasetResource.panel_report` names which
+          columns to drop.  ``None`` (the default) disables the gate.
+        * ``min_history_years`` — optional float (> 0).  Minimum date span in
+          years required for :meth:`train`.  Same 409 behaviour as ``min_rows``.
+        * At ``create_config`` time only an ADVISORY ``panel_sufficiency``
+          block is echoed (the persisted ingest-time report, cheap — no file
+          I/O); the HARD gate fires at ``train`` time after the post-warmup
+          row count is computed.
 
         The returned config (and every :meth:`list_configs` entry) echoes the
         resolved output space so you learn it WITHOUT predicting:
@@ -2634,6 +2703,18 @@ class AgentPolicyResource(_Resource):
         ``args`` are the action's intrinsic fields; ``context`` carries ambient
         facts the policy reasons over (``args`` wins on a key collision). Supply a
         value for each of :meth:`status`'s ``input_fields``.
+
+        **Per-fact confidence** (#1655): each value in ``args`` or ``context``
+        may be a ``FactWithConfidence`` carrier
+        ``{"value": <v>, "confidence": <c>}`` instead of a bare scalar.  On a
+        platform with ``require_confidence=True`` every value MUST be a
+        carrier; a bare scalar is refused.  Each carried confidence is gated
+        independently per fact by ``verified_min_confidence`` (tau); if ANY
+        fact is sub-tau the whole action is DENIED (fail-closed, proof_checked
+        False, ``rejected_facts`` surfaces the reason).  The confidence value
+        is also emitted as a companion EDB atom
+        ``_aria_confidence__{field}`` so rules can reason over observation
+        certainty.  See example 50.
 
         ``predictions`` (``{role: {"model_id": str, "as_of": str|None}}``) is the
         native, FAIL-CLOSED Prediction -> Decision fan-in INTO the gate — gate an
