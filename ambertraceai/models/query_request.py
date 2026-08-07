@@ -23,12 +23,22 @@ class QueryRequest:
     Attributes:
         query (str):
         explain (bool | Unset):  Default: True.
-        facts (None | QueryRequestFactsType0 | Unset): Optional structured request facts as a {field: scalar} map. When
-            supplied to a verified platform, these ARE the certified EDB — each fact is certified through the same gate
-            (declared in the domain schema, in-domain, ground) and neural retrieval is NOT consulted for the fact base, so a
-            fully-specified request decides deterministically. Use for policy-decision-point callers that hold the request
-            attributes (the request IS the facts); the natural-language `query` then drives only the answer narrative.
-            Undeclared or out-of-domain fields are rejected, surfaced in the 503 details.
+        facts (None | QueryRequestFactsType0 | Unset): Optional structured request facts as a ``{field: value}`` map.
+            Each value is EITHER a bare scalar (``str | int | float | bool``, backward-compatible — asserted at confidence
+            1.0) OR a ``FactWithConfidence`` carrier ``{"value": <v>, "confidence": <c>}`` that states per-observation
+            confidence explicitly.
+
+            When supplied to a **verified** platform, these ARE the certified EDB — each fact is certified through the same
+            gate (declared in the domain schema, in-domain, ground) and neural retrieval is NOT consulted for the fact base,
+            so a fully-specified request decides deterministically.  Use for policy-decision-point callers that hold the
+            request attributes (the request IS the facts); the natural-language ``query`` then drives only the answer
+            narrative.  Undeclared or out-of-domain fields are rejected, surfaced in the 503 details.
+
+            **Per-fact confidence** (requires ``require_confidence=True`` in ``neural_config``): every fact MUST be a
+            ``FactWithConfidence`` carrier; a bare scalar is refused.  Each carried confidence is gated against
+            ``verified_min_confidence`` (τ); if ANY fact is sub-τ the whole decision is refused.  The confidence value is
+            also emitted as a companion EDB atom ``_aria_confidence__{field}`` so rules can reason over observation
+            certainty.
         predictions (None | QueryRequestPredictionsType0 | Unset): Optional VERIFIED-PREDICTION REFERENCES as a {role:
             {model_id, as_of}} map. Each role names a persisted PredictionRecord the PLATFORM produced+stored — the caller
             references it by id + alignment period, NEVER supplying the forecast value (which the platform does not trust:

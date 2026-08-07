@@ -6,17 +6,12 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="ToolCallArgs")
+T = TypeVar("T", bound="PredictionConfigOutPanelSufficiencyType0")
 
 
 @_attrs_define
-class ToolCallArgs:
-    """Structured tool arguments. Mapped (by canonical field name) directly to client_facts — NO LLM extraction; the
-    request IS the facts. Keys matching a declared policy field are gated; unknown keys are rejected-and-surfaced by the
-    certified-fact gate. Each value may be a bare scalar OR a ``{"value": <v>, "confidence": <c>}`` carrier for per-
-    observation confidence (#1655); on a ``require_confidence`` platform every value MUST be a carrier.
-
-    """
+class PredictionConfigOutPanelSufficiencyType0:
+    """ """
 
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -30,10 +25,10 @@ class ToolCallArgs:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        tool_call_args = cls()
+        prediction_config_out_panel_sufficiency_type_0 = cls()
 
-        tool_call_args.additional_properties = d
-        return tool_call_args
+        prediction_config_out_panel_sufficiency_type_0.additional_properties = d
+        return prediction_config_out_panel_sufficiency_type_0
 
     @property
     def additional_keys(self) -> list[str]:

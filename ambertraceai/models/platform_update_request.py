@@ -29,6 +29,8 @@ class PlatformUpdateRequest:
         Attributes:
             invariant_manifest (list[Invariant] | None | Unset): Replace the platform's required-invariant manifest (see the
                 Invariant schema).
+            require_confidence (bool | None | Unset): Enable/disable per-observation confidence requirement.  When ``true``,
+                every query ``facts`` value must be a ``FactWithConfidence`` carrier.
             scored_determinations (None | PlatformUpdateRequestScoredDeterminationsType0 | Unset): Set or replace the open-
                 textured scored determinations (verified profile only). See the same field on the build request for the shape
                 and semantics — a server-computed calibrated probability for a judgment predicate, admitted as a confidence-
@@ -44,6 +46,7 @@ class PlatformUpdateRequest:
     """
 
     invariant_manifest: list[Invariant] | None | Unset = UNSET
+    require_confidence: bool | None | Unset = UNSET
     scored_determinations: None | PlatformUpdateRequestScoredDeterminationsType0 | Unset = UNSET
     team_id: int | None | Unset = UNSET
     verified_min_confidence: float | None | Unset = UNSET
@@ -67,6 +70,12 @@ class PlatformUpdateRequest:
 
         else:
             invariant_manifest = self.invariant_manifest
+
+        require_confidence: bool | None | Unset
+        if isinstance(self.require_confidence, Unset):
+            require_confidence = UNSET
+        else:
+            require_confidence = self.require_confidence
 
         scored_determinations: dict[str, Any] | None | Unset
         if isinstance(self.scored_determinations, Unset):
@@ -105,6 +114,8 @@ class PlatformUpdateRequest:
         field_dict.update({})
         if invariant_manifest is not UNSET:
             field_dict["invariant_manifest"] = invariant_manifest
+        if require_confidence is not UNSET:
+            field_dict["require_confidence"] = require_confidence
         if scored_determinations is not UNSET:
             field_dict["scored_determinations"] = scored_determinations
         if team_id is not UNSET:
@@ -148,6 +159,15 @@ class PlatformUpdateRequest:
             return cast(list[Invariant] | None | Unset, data)
 
         invariant_manifest = _parse_invariant_manifest(d.pop("invariant_manifest", UNSET))
+
+        def _parse_require_confidence(data: object) -> bool | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(bool | None | Unset, data)
+
+        require_confidence = _parse_require_confidence(d.pop("require_confidence", UNSET))
 
         def _parse_scored_determinations(data: object) -> None | PlatformUpdateRequestScoredDeterminationsType0 | Unset:
             if data is None:
@@ -204,6 +224,7 @@ class PlatformUpdateRequest:
 
         platform_update_request = cls(
             invariant_manifest=invariant_manifest,
+            require_confidence=require_confidence,
             scored_determinations=scored_determinations,
             team_id=team_id,
             verified_min_confidence=verified_min_confidence,

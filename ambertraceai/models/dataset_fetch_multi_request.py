@@ -10,6 +10,7 @@ from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..models.fetch_source import FetchSource
+    from ..models.on_missing_policy import OnMissingPolicy
 
 
 T = TypeVar("T", bound="DatasetFetchMultiRequest")
@@ -26,6 +27,9 @@ class DatasetFetchMultiRequest:
         frequency (None | str | Unset): Optional common grid to resample every source onto before joining: daily,
             weekly, monthly, quarterly, or annual. Without it, mixed-frequency sources outer-join to a mostly-null table.
         join_on (str | Unset): Index column to outer-join the sources on (default 'date'). Default: 'date'.
+        on_missing (None | OnMissingPolicy | Unset): Missing-value policy applied after the outer join (Part of #1482).
+            Omit for backward-compatible forward-fill. The transformation manifest on the resulting dataset records every
+            fill/drop/interpolation with column, method, rows_affected, and modeled_extrapolation flag.
     """
 
     domain_id: int
@@ -33,9 +37,12 @@ class DatasetFetchMultiRequest:
     aggregation: str | Unset = "last"
     frequency: None | str | Unset = UNSET
     join_on: str | Unset = "date"
+    on_missing: None | OnMissingPolicy | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        from ..models.on_missing_policy import OnMissingPolicy
+
         domain_id = self.domain_id
 
         sources = []
@@ -53,6 +60,14 @@ class DatasetFetchMultiRequest:
 
         join_on = self.join_on
 
+        on_missing: dict[str, Any] | None | Unset
+        if isinstance(self.on_missing, Unset):
+            on_missing = UNSET
+        elif isinstance(self.on_missing, OnMissingPolicy):
+            on_missing = self.on_missing.to_dict()
+        else:
+            on_missing = self.on_missing
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -67,12 +82,15 @@ class DatasetFetchMultiRequest:
             field_dict["frequency"] = frequency
         if join_on is not UNSET:
             field_dict["join_on"] = join_on
+        if on_missing is not UNSET:
+            field_dict["on_missing"] = on_missing
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         from ..models.fetch_source import FetchSource
+        from ..models.on_missing_policy import OnMissingPolicy
 
         d = dict(src_dict)
         domain_id = d.pop("domain_id")
@@ -97,12 +115,30 @@ class DatasetFetchMultiRequest:
 
         join_on = d.pop("join_on", UNSET)
 
+        def _parse_on_missing(data: object) -> None | OnMissingPolicy | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                on_missing_type_0 = OnMissingPolicy.from_dict(data)
+
+                return on_missing_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(None | OnMissingPolicy | Unset, data)
+
+        on_missing = _parse_on_missing(d.pop("on_missing", UNSET))
+
         dataset_fetch_multi_request = cls(
             domain_id=domain_id,
             sources=sources,
             aggregation=aggregation,
             frequency=frequency,
             join_on=join_on,
+            on_missing=on_missing,
         )
 
         dataset_fetch_multi_request.additional_properties = d

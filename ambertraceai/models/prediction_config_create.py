@@ -79,6 +79,14 @@ class PredictionConfigCreate:
                 When set, OVERRIDES 'autoregressive': 0 = no target-derived lag/roc/rolling features (drivers only); k = allow
                 target-history features with lag/window/period <= k. null (default) = defer to the 'autoregressive' enum.
                 Covariate features are never restricted. Ignored in cross_sectional mode.
+            min_history_years (float | None | Unset): Minimum history span (in years) required for training (sufficiency
+                gate).  When set, the train endpoint checks the ACTUAL date span of the post-warmup data and returns a
+                structured HTTP 409 sufficiency_gate_failed if the span is too short.  None (the default) disables the gate.
+            min_rows (int | None | Unset): Minimum post-warmup row count required for training (sufficiency gate).  When
+                set, the train endpoint checks the ACTUAL row count after feature engineering (lag/rolling dropna) and returns a
+                structured HTTP 409 sufficiency_gate_failed if the data falls short.  The 409 payload names the shortfall and
+                the recovery_groups cut-list from the panel report.  None (the default) disables the gate — old path byte-
+                identical.
             mode (str | Unset): Prediction mode. 'timeseries' learns temporal patterns (lags, rolling windows, seasonality)
                 and forecasts future values. 'cross_sectional' treats each row independently and learns a direct feature-to-
                 target mapping. Default: 'timeseries'. Default: 'timeseries'.
@@ -113,6 +121,8 @@ class PredictionConfigCreate:
     frequency: None | str | Unset = UNSET
     horizon: int | None | Unset = UNSET
     max_ar_lag: int | None | Unset = UNSET
+    min_history_years: float | None | Unset = UNSET
+    min_rows: int | None | Unset = UNSET
     mode: str | Unset = "timeseries"
     model_tier: str | Unset = "tier1"
     model_type: str | Unset = "gbt"
@@ -187,6 +197,18 @@ class PredictionConfigCreate:
         else:
             max_ar_lag = self.max_ar_lag
 
+        min_history_years: float | None | Unset
+        if isinstance(self.min_history_years, Unset):
+            min_history_years = UNSET
+        else:
+            min_history_years = self.min_history_years
+
+        min_rows: int | None | Unset
+        if isinstance(self.min_rows, Unset):
+            min_rows = UNSET
+        else:
+            min_rows = self.min_rows
+
         mode = self.mode
 
         model_tier = self.model_tier
@@ -234,6 +256,10 @@ class PredictionConfigCreate:
             field_dict["horizon"] = horizon
         if max_ar_lag is not UNSET:
             field_dict["max_ar_lag"] = max_ar_lag
+        if min_history_years is not UNSET:
+            field_dict["min_history_years"] = min_history_years
+        if min_rows is not UNSET:
+            field_dict["min_rows"] = min_rows
         if mode is not UNSET:
             field_dict["mode"] = mode
         if model_tier is not UNSET:
@@ -361,6 +387,24 @@ class PredictionConfigCreate:
 
         max_ar_lag = _parse_max_ar_lag(d.pop("max_ar_lag", UNSET))
 
+        def _parse_min_history_years(data: object) -> float | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(float | None | Unset, data)
+
+        min_history_years = _parse_min_history_years(d.pop("min_history_years", UNSET))
+
+        def _parse_min_rows(data: object) -> int | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(int | None | Unset, data)
+
+        min_rows = _parse_min_rows(d.pop("min_rows", UNSET))
+
         mode = d.pop("mode", UNSET)
 
         model_tier = d.pop("model_tier", UNSET)
@@ -399,6 +443,8 @@ class PredictionConfigCreate:
             frequency=frequency,
             horizon=horizon,
             max_ar_lag=max_ar_lag,
+            min_history_years=min_history_years,
+            min_rows=min_rows,
             mode=mode,
             model_tier=model_tier,
             model_type=model_type,
