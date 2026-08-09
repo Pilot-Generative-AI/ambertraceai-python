@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from ..models.prediction_config_out_eval_metric_config_type_0 import PredictionConfigOutEvalMetricConfigType0
     from ..models.prediction_config_out_feature_config_type_0 import PredictionConfigOutFeatureConfigType0
     from ..models.prediction_config_out_panel_sufficiency_type_0 import PredictionConfigOutPanelSufficiencyType0
+    from ..models.prediction_config_out_reduction_manifest_type_0 import PredictionConfigOutReductionManifestType0
 
 
 T = TypeVar("T", bound="PredictionConfigOut")
@@ -32,11 +33,15 @@ class PredictionConfigOut:
         status (str): Config lifecycle status: 'pending' (created, not yet trained), 'training' (training in progress),
             'trained' (ready to predict), 'failed' (training failed — see error_message).
         target_field (str):
+        auto_reduce (bool | Unset): Whether auto-reduce (#1482 ask 2) is opted in — drop the sparsest auxiliary columns
+            to meet a declared sufficiency bar instead of returning HTTP 409. Default: False.
         autoregressive (str | Unset): Autoregression control: 'full' (history allowed, default), 'limited' (drivers + a
             little history), or 'none' (drivers only). Default: 'full'.
         backtest_config (None | PredictionConfigOutBacktestConfigType0 | Unset):
         baseline_mode (str | Unset): Forecast anchor mode: 'neural' (default), 'persistence', or 'drift'. Default:
             'neural'.
+        core_columns (list[str] | None | Unset): Declared never-drop columns (#1482 ask 2). The target_field and
+            time_index_field are implicitly core regardless of this list.
         created_at (None | str | Unset):
         error_message (None | str | Unset): Human-readable error details when status is 'failed'.
         eval_metric_config (None | PredictionConfigOutEvalMetricConfigType0 | Unset):
@@ -60,6 +65,10 @@ class PredictionConfigOut:
         panel_sufficiency (None | PredictionConfigOutPanelSufficiencyType0 | Unset): Panel sufficiency advisory from the
             dataset's schema_info. Contains tradeoff_curve, recovery_groups, and summary metrics when the dataset has been
             analysed for missing-value patterns. Null when unavailable.
+        reduction_manifest (None | PredictionConfigOutReductionManifestType0 | Unset): Manifest from the most recent
+            auto_reduce run: 'dropped_columns' (per-column {column, action:'dropped_auxiliary', null_count}),
+            'usable_rows_before'/'usable_rows_after', 'target_rows', 'target_years', 'usable_span_years_after'. Null when
+            auto_reduce has never run or the panel already met the declared bar.
         resolved_target_transform (None | str | Unset): Item 6 — the EFFECTIVE target transform, echoed on the config so
             the output space is known without predicting. When a concrete transform was requested ('none' or 'difference')
             this echoes it immediately at create_config time. When 'auto' was requested it resolves at TRAIN time, so before
@@ -82,9 +91,11 @@ class PredictionConfigOut:
     platform_id: int
     status: str
     target_field: str
+    auto_reduce: bool | Unset = False
     autoregressive: str | Unset = "full"
     backtest_config: None | PredictionConfigOutBacktestConfigType0 | Unset = UNSET
     baseline_mode: str | Unset = "neural"
+    core_columns: list[str] | None | Unset = UNSET
     created_at: None | str | Unset = UNSET
     error_message: None | str | Unset = UNSET
     eval_metric_config: None | PredictionConfigOutEvalMetricConfigType0 | Unset = UNSET
@@ -99,6 +110,7 @@ class PredictionConfigOut:
     neural_confidence_tau: float | Unset = 0.0
     output_space: None | str | Unset = UNSET
     panel_sufficiency: None | PredictionConfigOutPanelSufficiencyType0 | Unset = UNSET
+    reduction_manifest: None | PredictionConfigOutReductionManifestType0 | Unset = UNSET
     resolved_target_transform: None | str | Unset = UNSET
     target_transform_reason: None | str | Unset = UNSET
     time_index_field: None | str | Unset = UNSET
@@ -110,6 +122,7 @@ class PredictionConfigOut:
         from ..models.prediction_config_out_eval_metric_config_type_0 import PredictionConfigOutEvalMetricConfigType0
         from ..models.prediction_config_out_feature_config_type_0 import PredictionConfigOutFeatureConfigType0
         from ..models.prediction_config_out_panel_sufficiency_type_0 import PredictionConfigOutPanelSufficiencyType0
+        from ..models.prediction_config_out_reduction_manifest_type_0 import PredictionConfigOutReductionManifestType0
 
         eval_metric = self.eval_metric
 
@@ -127,6 +140,8 @@ class PredictionConfigOut:
 
         target_field = self.target_field
 
+        auto_reduce = self.auto_reduce
+
         autoregressive = self.autoregressive
 
         backtest_config: dict[str, Any] | None | Unset
@@ -138,6 +153,15 @@ class PredictionConfigOut:
             backtest_config = self.backtest_config
 
         baseline_mode = self.baseline_mode
+
+        core_columns: list[str] | None | Unset
+        if isinstance(self.core_columns, Unset):
+            core_columns = UNSET
+        elif isinstance(self.core_columns, list):
+            core_columns = self.core_columns
+
+        else:
+            core_columns = self.core_columns
 
         created_at: None | str | Unset
         if isinstance(self.created_at, Unset):
@@ -224,6 +248,14 @@ class PredictionConfigOut:
         else:
             panel_sufficiency = self.panel_sufficiency
 
+        reduction_manifest: dict[str, Any] | None | Unset
+        if isinstance(self.reduction_manifest, Unset):
+            reduction_manifest = UNSET
+        elif isinstance(self.reduction_manifest, PredictionConfigOutReductionManifestType0):
+            reduction_manifest = self.reduction_manifest.to_dict()
+        else:
+            reduction_manifest = self.reduction_manifest
+
         resolved_target_transform: None | str | Unset
         if isinstance(self.resolved_target_transform, Unset):
             resolved_target_transform = UNSET
@@ -262,12 +294,16 @@ class PredictionConfigOut:
                 "target_field": target_field,
             }
         )
+        if auto_reduce is not UNSET:
+            field_dict["auto_reduce"] = auto_reduce
         if autoregressive is not UNSET:
             field_dict["autoregressive"] = autoregressive
         if backtest_config is not UNSET:
             field_dict["backtest_config"] = backtest_config
         if baseline_mode is not UNSET:
             field_dict["baseline_mode"] = baseline_mode
+        if core_columns is not UNSET:
+            field_dict["core_columns"] = core_columns
         if created_at is not UNSET:
             field_dict["created_at"] = created_at
         if error_message is not UNSET:
@@ -296,6 +332,8 @@ class PredictionConfigOut:
             field_dict["output_space"] = output_space
         if panel_sufficiency is not UNSET:
             field_dict["panel_sufficiency"] = panel_sufficiency
+        if reduction_manifest is not UNSET:
+            field_dict["reduction_manifest"] = reduction_manifest
         if resolved_target_transform is not UNSET:
             field_dict["resolved_target_transform"] = resolved_target_transform
         if target_transform_reason is not UNSET:
@@ -313,6 +351,7 @@ class PredictionConfigOut:
         from ..models.prediction_config_out_eval_metric_config_type_0 import PredictionConfigOutEvalMetricConfigType0
         from ..models.prediction_config_out_feature_config_type_0 import PredictionConfigOutFeatureConfigType0
         from ..models.prediction_config_out_panel_sufficiency_type_0 import PredictionConfigOutPanelSufficiencyType0
+        from ..models.prediction_config_out_reduction_manifest_type_0 import PredictionConfigOutReductionManifestType0
 
         d = dict(src_dict)
         eval_metric = d.pop("eval_metric")
@@ -330,6 +369,8 @@ class PredictionConfigOut:
         status = d.pop("status")
 
         target_field = d.pop("target_field")
+
+        auto_reduce = d.pop("auto_reduce", UNSET)
 
         autoregressive = d.pop("autoregressive", UNSET)
 
@@ -351,6 +392,23 @@ class PredictionConfigOut:
         backtest_config = _parse_backtest_config(d.pop("backtest_config", UNSET))
 
         baseline_mode = d.pop("baseline_mode", UNSET)
+
+        def _parse_core_columns(data: object) -> list[str] | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, list):
+                    raise TypeError()
+                core_columns_type_0 = cast(list[str], data)
+
+                return core_columns_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(list[str] | None | Unset, data)
+
+        core_columns = _parse_core_columns(d.pop("core_columns", UNSET))
 
         def _parse_created_at(data: object) -> None | str | Unset:
             if data is None:
@@ -496,6 +554,23 @@ class PredictionConfigOut:
 
         panel_sufficiency = _parse_panel_sufficiency(d.pop("panel_sufficiency", UNSET))
 
+        def _parse_reduction_manifest(data: object) -> None | PredictionConfigOutReductionManifestType0 | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                reduction_manifest_type_0 = PredictionConfigOutReductionManifestType0.from_dict(data)
+
+                return reduction_manifest_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(None | PredictionConfigOutReductionManifestType0 | Unset, data)
+
+        reduction_manifest = _parse_reduction_manifest(d.pop("reduction_manifest", UNSET))
+
         def _parse_resolved_target_transform(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -541,9 +616,11 @@ class PredictionConfigOut:
             platform_id=platform_id,
             status=status,
             target_field=target_field,
+            auto_reduce=auto_reduce,
             autoregressive=autoregressive,
             backtest_config=backtest_config,
             baseline_mode=baseline_mode,
+            core_columns=core_columns,
             created_at=created_at,
             error_message=error_message,
             eval_metric_config=eval_metric_config,
@@ -558,6 +635,7 @@ class PredictionConfigOut:
             neural_confidence_tau=neural_confidence_tau,
             output_space=output_space,
             panel_sufficiency=panel_sufficiency,
+            reduction_manifest=reduction_manifest,
             resolved_target_transform=resolved_target_transform,
             target_transform_reason=target_transform_reason,
             time_index_field=time_index_field,

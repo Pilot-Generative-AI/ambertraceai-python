@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import importlib.resources
 import os
 import random
+import re
 import time
 import urllib.parse
 import warnings
-from typing import Any, Callable, cast
+from typing import Any, Callable, TypedDict, cast
 
 import httpx
 
@@ -742,7 +744,8 @@ class DatasetResource(_Resource):
     def fetch_multi(self, *, domain_id: int, sources: list[dict],
                     join_on: str = "date", frequency: str | None = None,
                     aggregation: str | None = None,
-                    on_missing: dict | None = None) -> DatasetOut:
+                    on_missing: dict | None = None,
+                    on_stale: dict | None = None) -> DatasetOut:
         """Fetch from two or more connectors and MERGE them into ONE date-aligned
         dataset, so a forecaster can train across sources in a single panel.
 
@@ -784,6 +787,24 @@ class DatasetResource(_Resource):
         -- poll :meth:`get` until ``status == "ready"`` before building on it. See
         ``api.connectors.list()`` for available connectors and their requirements.
 
+        ``on_stale`` -- **staleness policy** applied after the panel sufficiency
+        computation (#1382). Controls what happens when a column's last non-null
+        value lags the panel's last index by more than ``stale_periods`` cadence
+        periods (i.e. the column is discontinued/stale). Accepted shapes:
+
+        * ``None`` / omit: warn only (backward-compatible default). Staleness is
+          recorded in the panel sufficiency report but does not block.
+        * ``{"action": "warn"}``: same as omitting.
+        * ``{"action": "error"}``: mark the dataset as error. The error message
+          names the stale columns and suggests ``on_stale={"action": "warn"}``
+          or ``on_stale={"action": "drop_columns"}``.
+        * ``{"action": "drop_columns"}``: drop stale columns from the merged
+          frame, re-derive schema, and record the dropped columns as
+          ``schema_info["dropped_stale_columns"]``.
+        * ``{"action": ..., "stale_periods": N}``: override the default
+          threshold (3 cadence periods). A column is flagged stale when its lag
+          exceeds ``stale_periods * cadence_days``.
+
         ALWAYS check :meth:`panel_report` once the dataset is ready. An outer
         join across sources of different vintages means a row survives training
         only where EVERY column is non-null, so a single discontinued series can
@@ -803,6 +824,8 @@ class DatasetResource(_Resource):
             body["aggregation"] = aggregation
         if on_missing is not None:
             body["on_missing"] = on_missing
+        if on_stale is not None:
+            body["on_stale"] = on_stale
         return self._request("POST", "/api/v1/datasets/fetch-multi", json=body)
 
     def quality(self, dataset_id: int) -> dict:
@@ -892,6 +915,60 @@ class DatasetResource(_Resource):
         if steps is not None:
             body["steps"] = steps
         return self._request("POST", f"/api/v1/datasets/{dataset_id}/clean", json=body)
+
+    def derive_column(
+        self,
+        dataset_id: int,
+        *,
+        new_column: str,
+        left: str,
+        op: str,
+        right: str,
+        drop_source_columns: bool = True,
+    ) -> DatasetOut:
+        """Derive a new column as a fixed binary arithmetic expression (#1658).
+
+        Materialises ``new_column = left <op> right`` INTO the dataset file +
+        ``schema_info`` -- the derived column is then usable exactly like any
+        other panel column: as ``predictions.create_config(target_field=
+        new_column, ...)`` AND as a driver-discovery candidate (auto-included
+        by the timeseries feature engine), with NO other API call needed.
+        SYNCHRONOUS (pure CPU, no network) -- returns immediately, no polling.
+
+        ``op`` is one of ``"subtract"`` (left-right), ``"add"`` (left+right),
+        ``"multiply"`` (left*right), ``"divide"`` (left/right). v1 grammar is
+        deliberately minimal: exactly one op over two EXISTING columns -> one
+        new column. No scalars, no chaining, no general expression evaluator.
+
+        Data-safety (fail-closed): a row missing EITHER operand yields NaN in
+        the derived column -- NEVER filled. ``divide`` maps ``x/0`` (and
+        ``0/0``) to NaN, never ``inf``. ``new_column`` colliding with an
+        existing column raises (HTTP 409); a ``left``/``right`` that is not an
+        existing column raises (HTTP 422).
+
+        ``drop_source_columns`` (default ``True``) drops ``left``/``right``
+        from the dataset AFTER computing the derived column. This is the
+        RECOMMENDED setting when the derived column is a forecast target:
+        leaving the two legs in the panel makes them mechanically-perfect (and
+        therefore uninformative) drivers of their own derivation -- e.g. a
+        swap-curve slope ``10Y - 2Y`` is a linear function of its own legs, so
+        "what explains the slope" would trivially answer "the legs", which is
+        exactly the non-answer this capability exists to avoid. Pass
+        ``drop_source_columns=False`` to keep both legs in the panel (e.g. if
+        you still want them as separate forecast targets too).
+
+        See ``examples/52_swap_curve_slope_forecast.py`` for the full
+        fetch_multi -> derive_column -> create_config -> forecast flow, with
+        driver discovery running ON the derived slope target.
+        """
+        body: dict[str, Any] = {
+            "new_column": new_column,
+            "left": left,
+            "op": op,
+            "right": right,
+            "drop_source_columns": drop_source_columns,
+        }
+        return self._request("POST", f"/api/v1/datasets/{dataset_id}/derive", json=body)
 
     def preview(self, dataset_id: int) -> dict:
         return self._request("GET", f"/api/v1/datasets/{dataset_id}/preview")
@@ -1582,6 +1659,30 @@ class PredictionResource(_Resource):
           I/O); the HARD gate fires at ``train`` time after the post-warmup
           row count is computed.
 
+        Auto-reduce — customer-controlled panel construction (Part of #1482):
+
+        * ``core_columns`` — optional ``list[str]``. Columns that must NEVER be
+          dropped by auto-reduce. ``target_field`` and ``time_index_field`` are
+          implicitly core regardless of this list. Every other candidate
+          feature column is AUXILIARY — droppable, sparsest (most nulls) first.
+        * ``auto_reduce`` — optional bool, default ``False``. When a declared
+          ``min_rows``/``min_history_years`` bar is unmet at :meth:`train`
+          time, instead of the plain HTTP 409 above, the sparsest AUXILIARY
+          columns are dropped ONE AT A TIME until the bar is met — never
+          ``core_columns``, ``target_field``, or ``time_index_field``, and
+          never by filling/fabricating a value (columns are removed, nothing
+          is imputed). The reduced feature set is persisted onto the config's
+          ``feature_fields``, and a reduction manifest — the exact dropped
+          columns (with their null counts) plus ``usable_rows`` before/after —
+          is returned on :meth:`train`'s 202 response body under
+          ``reduction_manifest``, and is also readable back on the config
+          (``PredictionConfigOut.reduction_manifest``, cleared once a
+          subsequent train call no longer needs to reduce). If the bar is
+          UNREACHABLE even after dropping every auxiliary column, the 409 is
+          still returned — with the attempted cut recorded under
+          ``auto_reduce_attempted`` — because this NEVER trains on a
+          sub-bar panel. Worked example: ``examples/50_panel_auto_reduce.py``.
+
         The returned config (and every :meth:`list_configs` entry) echoes the
         resolved output space so you learn it WITHOUT predicting:
         ``resolved_target_transform`` + ``output_space`` (``"level"`` vs
@@ -1941,6 +2042,18 @@ class PredictionResource(_Resource):
         across the materially-contributing set (the strongest single driver's
         evidence), so you can gauge the explanation's overall strength at a glance.
 
+        ``sign_base_rate`` (#1702) — a top-level float, present whenever the
+        forecaster could induce driver-rules, giving the TARGET's own
+        dominant-sign base rate (the fraction of fit-window periods moving in
+        its more-common direction). This is the null EVERY accepted driver's
+        hit-rate had to beat: a rule is admitted only when its directional
+        hit-count is a statistically significant improvement over
+        ``sign_base_rate`` (a one-sided binomial test at alpha=0.05), not a
+        fixed 60% floor — so a real edge on a near-coin-flip (~0.5 base rate)
+        RETURN target can now be admitted, while a level target with a high
+        (~0.7) base rate correctly needs a HIGHER hit-rate to earn a place in
+        ``why``.
+
         Pass ``verified=True`` to run the active-driver set through the verified
         engine — each ``why`` entry that is active now is then stamped
         ``proof_checked`` with its kernel-certified antecedent (drivers not active /
@@ -2228,9 +2341,14 @@ class ConnectorResource(_Resource):
       ``oecd`` (OECD SDMX macro).
     * **BYO-key:** ``fred`` / ``fred_sentiment`` (free FRED key -- also supports
       ALFRED point-in-time vintage via ``as_of_date`` / ``vintage``), ``imf``
-      (IMF iData SDMX, ``Ocp-Apim-Subscription-Key``).
+      (IMF iData SDMX, ``Ocp-Apim-Subscription-Key``), ``eia`` (free EIA key --
+      US energy: preset oil series via ``series_ids``, or the FULL v2 catalog
+      -- electricity, natural gas, coal, nuclear, renewables, CO2 emissions,
+      international -- via ``route`` + ``facets``; browse with
+      :meth:`eia_discover`).
     * **Other:** ``rest`` (generic REST/CSV, BYO auth via headers), ``gdelt``
-      (news tone), ``sentiment`` (LLM-scored RSS sentiment).
+      (news tone), ``sentiment`` (LLM-scored RSS sentiment), ``cftc``
+      (keyless: CFTC futures-positioning reports).
 
     Connectors that hit a credentialed provider require *your own* key, passed in
     the ``config`` dict -- Ambertrace does not supply third-party keys on your
@@ -2248,6 +2366,11 @@ class ConnectorResource(_Resource):
     Region groups (``asia``, ``europe``, ``developed-markets``, ``G7``, etc.)
     expand to country sets.  A connector tagged ``country='global'`` matches
     every region (e.g. Yahoo Finance under ``region='asia'``).
+
+    **EIA general catalog** (``eia_discover()``): browse the full EIA v2
+    catalog (top-level routes -> child routes -> a leaf dataset's facets/data
+    columns/frequencies) to build a Mode B ``eia`` connector config for any
+    non-oil-preset EIA dataset.
     """
 
     def list(self) -> list[dict]:
@@ -2433,6 +2556,54 @@ class ConnectorResource(_Resource):
         if limit != 50:
             params["limit"] = limit
         return self._request("GET", "/api/v1/data/search", params=params)
+
+    def eia_discover(self, *, route: str | None = None) -> dict:
+        """Browse the EIA v2 general data catalog (#952).
+
+        The ``eia`` connector supports two mutually-exclusive modes: **Mode
+        A**, preset oil series via ``series_ids`` (``PET.RWTC.W`` etc.), and
+        **Mode B**, an arbitrary v2 catalog pull via ``route`` + ``facets``
+        (electricity, natural gas, coal, nuclear, renewables, CO2 emissions,
+        international, ...). This method browses that catalog to build a
+        Mode B config.
+
+        Parameters
+        ----------
+        route : str, optional
+            Omit for the 14 top-level routes (e.g. ``'electricity'``,
+            ``'petroleum'``). Pass a top-level route (e.g. ``'electricity'``)
+            for its child routes. Pass a full leaf dataset route (e.g.
+            ``'electricity/retail-sales'``) for its queryable facets, data
+            columns, and supported frequencies.
+
+        Returns
+        -------
+        dict
+            The raw EIA v2 catalog metadata for the given depth, unmodified.
+
+        Example -- browse then build a Mode B config for state retail
+        electricity prices::
+
+            top = api.connectors.eia_discover()
+            leaf = api.connectors.eia_discover(route="electricity/retail-sales")
+            print([f["id"] for f in leaf["facets"]])  # ['stateid', 'sectorid', ...]
+
+            dataset = api.datasets.fetch(
+                domain_id=domain.id,
+                connector_type="eia",
+                config={
+                    "route": "electricity/retail-sales",
+                    "facets": {"stateid": ["CA", "TX"], "sectorid": ["RES"]},
+                    "data": ["price", "sales"],
+                    "pivot_facet": "stateid",
+                    "api_key": eia_key,
+                },
+            )
+        """
+        params: dict[str, str] = {}
+        if route is not None:
+            params["route"] = route
+        return self._request("GET", "/api/v1/connectors/eia/discover", params=params)
 
 
 class AgentPolicyResource(_Resource):
@@ -2904,6 +3075,127 @@ class UsageResource(_Resource):
         return self._request("GET", "/api/v1/usage")
 
 
+class ExampleInfo(TypedDict):
+    """Metadata for a single shipped SDK example script."""
+    id: str
+    title: str
+    summary: str
+    filename: str
+
+
+# Pre-compiled once: matches ``"""NN — Title.\n\nSummary paragraph..."""``
+_EXAMPLE_DOCSTRING_RE = re.compile(
+    r'"""'                          # opening triple-quote
+    r'(\d+\S*)\s*'                  # id (e.g. "00", "27")
+    r'(?:[—–-]\s*)?'                # optional dash separator
+    r'([^\n.]+?)\.?\s*\n'           # title (to first period or newline)
+    r'\n'                           # blank line between title and summary
+    r'(.*?)'                        # summary paragraph(s)
+    r'"""',                         # closing triple-quote
+    re.DOTALL,
+)
+
+
+def sdk_examples(*, source: bool = False) -> list[ExampleInfo | dict]:
+    """Enumerate the runnable SDK example scripts shipped inside this package.
+
+    Returns a list of dicts, one per example, with at minimum ``id``, ``title``,
+    ``summary``, and ``filename``. When ``source=True``, each dict also carries a
+    ``source`` key with the full Python source text of the example (so a user can
+    inspect or save it without leaving the REPL).
+
+    This is the **local discovery surface** — it reads the bundled example files
+    from the installed package (no network, no API key). It is distinct from
+    :meth:`AgentPolicyResource.examples`, which hits the server's built-in
+    English policy-text library.
+
+    Usage::
+
+        import ambertraceai
+        for ex in ambertraceai.sdk_examples():
+            print(f"{ex['id']:>5s}  {ex['title']}")
+
+        # Inspect one example's source:
+        src = ambertraceai.sdk_examples(source=True)[0]["source"]
+        print(src)
+    """
+    examples_dir = _find_examples_dir()
+    if examples_dir is None:
+        return []
+    results: list[ExampleInfo | dict] = []
+    entries: list[tuple[str, Any]] = []
+    for item in examples_dir.iterdir():
+        name = item.name
+        if not name.endswith(".py"):
+            continue
+        if name.startswith("_"):
+            continue
+        entries.append((name, item))
+
+    entries.sort(key=lambda t: t[0])
+
+    for filename, item in entries:
+        text = item.read_text(encoding="utf-8")
+        m = _EXAMPLE_DOCSTRING_RE.search(text)
+        if m is None:
+            # No structured docstring — include with minimal metadata.
+            info: dict = {
+                "id": filename.split("_", 1)[0],
+                "title": filename,
+                "summary": "",
+                "filename": filename,
+            }
+        else:
+            info = {
+                "id": m.group(1),
+                "title": m.group(2).strip(),
+                "summary": m.group(3).strip(),
+                "filename": filename,
+            }
+        if source:
+            info["source"] = text
+        results.append(info)
+    return results
+
+
+def _find_examples_dir() -> Any | None:
+    """Locate the bundled examples directory.
+
+    Tries two locations in order:
+    1. ``ambertraceai/examples/`` inside the installed package (wheel / built
+       sdist) — accessed via ``importlib.resources``.
+    2. A sibling ``examples/`` directory next to the ``ambertraceai/`` package
+       root (editable install / source tree / unbuilt sdist).
+
+    Returns a path-like object whose ``.iterdir()`` yields the example files,
+    or ``None`` if neither location contains example scripts.
+    """
+    import pathlib
+
+    # 1. Inside the package (wheel installs).
+    try:
+        pkg = importlib.resources.files("ambertraceai.examples")
+        # Verify it actually contains .py files (the bare __init__.py-only
+        # state in the source overlay does NOT count).
+        if any(
+            f.name.endswith(".py") and not f.name.startswith("_")
+            for f in pkg.iterdir()
+        ):
+            return pkg
+    except (ModuleNotFoundError, TypeError, FileNotFoundError):
+        pass
+
+    # 2. Sibling directory (source tree / editable install).
+    source_examples = pathlib.Path(__file__).resolve().parent.parent / "examples"
+    if source_examples.is_dir() and any(
+        f.name.endswith(".py") and not f.name.startswith("_")
+        for f in source_examples.iterdir()
+    ):
+        return source_examples
+
+    return None
+
+
 class AmbertraceAPI:
     """High-level client for the Ambertrace API.
 
@@ -2922,6 +3214,13 @@ class AmbertraceAPI:
     passed they fall back to those env vars (``base_url`` further defaults to the
     production endpoint ``https://app.ambertrace.ai``). An explicit argument
     always wins over the environment.
+
+    **Example discovery.** To enumerate the runnable SDK examples shipped with
+    this package (no network required)::
+
+        import ambertraceai
+        for ex in ambertraceai.sdk_examples():
+            print(f"{ex['id']:>5s}  {ex['title']}")
     """
 
     def __init__(self, *, base_url: str | None = None, api_key: str | None = None,

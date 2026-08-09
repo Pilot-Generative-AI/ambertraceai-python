@@ -10,10 +10,12 @@ from .convenience import (
     ConnectorResource,
     DatasetResource,
     DomainResource,
+    ExampleInfo,
     JobResource,
     PlatformResource,
     PredictionResource,
     UsageResource,
+    sdk_examples,
 )
 from .responses import (
     AdmittedControl,
@@ -72,6 +74,7 @@ __all__ = (
     "ApiKeyResource",
     "AttrDict",
     "AuthenticatedClient",
+    "ExampleInfo",
     "AuthorResult",
     "AuthorizeActionResult",
     "BuildQuality",
@@ -123,4 +126,5 @@ __all__ = (
     "SymbolicForecastResult",
     "SymbolicTrace",
     "UsageResource",
+    "sdk_examples",
 )

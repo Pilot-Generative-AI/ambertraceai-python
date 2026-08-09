@@ -37,6 +37,14 @@ class PredictionConfigCreate:
         Attributes:
             target_field (str): Column name of the variable to predict. Must exist in the platform's dataset. Examples:
                 'yield_10y', 'loan_approved', 'fraud_score'.
+            auto_reduce (bool | Unset): Opt-in auto-reduction (#1482 ask 2). When a declared min_rows/min_history_years bar
+                is unmet at train time, instead of returning HTTP 409 sufficiency_gate_failed, the sparsest AUXILIARY columns
+                (never core_columns, target_field, or time_index_field) are dropped one at a time until the bar is met. The
+                reduced feature set is persisted to feature_fields and a reduction manifest (dropped columns + before/after
+                usable rows) is returned on the train 202 body and readable back on the config. If the bar is UNREACHABLE even
+                after dropping every auxiliary column, the 409 is still returned (fail-closed — this never trains on a sub-bar
+                panel and never fills/fabricates values to meet the bar). Default False: old 409-only behaviour, byte-identical
+                when unset. Default: False.
             autoregressive (str | Unset): Autoregression control (timeseries mode only) — how much the forecast may rely on
                 the TARGET's own recent values. Plain-language framing: 'full' = History allowed (default — the target's own
                 lags/rolling/rate-of-change features are available; today's behaviour, backward compatible); 'limited' = Drivers
@@ -54,6 +62,10 @@ class PredictionConfigCreate:
                 'drift' (last level + h * OLS slope — a linear-trend anchor). The holdout acceptance gate recomposes driver
                 effects onto the chosen anchor so they are not mis-scaled. skill_vs_persistence is ALWAYS reported as the
                 external benchmark regardless of anchor. Ignored in cross_sectional mode. Default: 'neural'.
+            core_columns (list[str] | None | Unset): Column-role declaration (#1482 ask 2): columns that must NEVER be
+                dropped by auto_reduce. The target_field and time_index_field are implicitly core regardless of this list. Every
+                other candidate feature column is treated as AUXILIARY — droppable by auto_reduce, cheapest-information-cost
+                (sparsest) first. Has no effect unless auto_reduce=true.
             eval_metric (str | Unset): Primary evaluation metric. Options: 'rmse' (root mean squared error), 'mae' (mean
                 absolute error), 'r2' (R-squared), 'dir_accuracy' (directional accuracy — timeseries only). Default: 'rmse'.
             eval_metric_config (None | PredictionConfigCreateEvalMetricConfigType0 | Unset): Additional metric
@@ -111,9 +123,11 @@ class PredictionConfigCreate:
     """
 
     target_field: str
+    auto_reduce: bool | Unset = False
     autoregressive: str | Unset = "full"
     backtest_config: None | PredictionConfigCreateBacktestConfigType0 | Unset = UNSET
     baseline_mode: str | Unset = "neural"
+    core_columns: list[str] | None | Unset = UNSET
     eval_metric: str | Unset = "rmse"
     eval_metric_config: None | PredictionConfigCreateEvalMetricConfigType0 | Unset = UNSET
     feature_config: None | PredictionConfigCreateFeatureConfigType0 | Unset = UNSET
@@ -140,6 +154,8 @@ class PredictionConfigCreate:
 
         target_field = self.target_field
 
+        auto_reduce = self.auto_reduce
+
         autoregressive = self.autoregressive
 
         backtest_config: dict[str, Any] | None | Unset
@@ -151,6 +167,15 @@ class PredictionConfigCreate:
             backtest_config = self.backtest_config
 
         baseline_mode = self.baseline_mode
+
+        core_columns: list[str] | None | Unset
+        if isinstance(self.core_columns, Unset):
+            core_columns = UNSET
+        elif isinstance(self.core_columns, list):
+            core_columns = self.core_columns
+
+        else:
+            core_columns = self.core_columns
 
         eval_metric = self.eval_metric
 
@@ -236,12 +261,16 @@ class PredictionConfigCreate:
                 "target_field": target_field,
             }
         )
+        if auto_reduce is not UNSET:
+            field_dict["auto_reduce"] = auto_reduce
         if autoregressive is not UNSET:
             field_dict["autoregressive"] = autoregressive
         if backtest_config is not UNSET:
             field_dict["backtest_config"] = backtest_config
         if baseline_mode is not UNSET:
             field_dict["baseline_mode"] = baseline_mode
+        if core_columns is not UNSET:
+            field_dict["core_columns"] = core_columns
         if eval_metric is not UNSET:
             field_dict["eval_metric"] = eval_metric
         if eval_metric_config is not UNSET:
@@ -286,6 +315,8 @@ class PredictionConfigCreate:
         d = dict(src_dict)
         target_field = d.pop("target_field")
 
+        auto_reduce = d.pop("auto_reduce", UNSET)
+
         autoregressive = d.pop("autoregressive", UNSET)
 
         def _parse_backtest_config(data: object) -> None | PredictionConfigCreateBacktestConfigType0 | Unset:
@@ -306,6 +337,23 @@ class PredictionConfigCreate:
         backtest_config = _parse_backtest_config(d.pop("backtest_config", UNSET))
 
         baseline_mode = d.pop("baseline_mode", UNSET)
+
+        def _parse_core_columns(data: object) -> list[str] | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, list):
+                    raise TypeError()
+                core_columns_type_0 = cast(list[str], data)
+
+                return core_columns_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(list[str] | None | Unset, data)
+
+        core_columns = _parse_core_columns(d.pop("core_columns", UNSET))
 
         eval_metric = d.pop("eval_metric", UNSET)
 
@@ -433,9 +481,11 @@ class PredictionConfigCreate:
 
         prediction_config_create = cls(
             target_field=target_field,
+            auto_reduce=auto_reduce,
             autoregressive=autoregressive,
             backtest_config=backtest_config,
             baseline_mode=baseline_mode,
+            core_columns=core_columns,
             eval_metric=eval_metric,
             eval_metric_config=eval_metric_config,
             feature_config=feature_config,
