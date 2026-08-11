@@ -717,7 +717,13 @@ class DatasetResource(_Resource):
           ``oecd``, ``eurostat``, ``fiscaldata``, ``edgar``, ``worldbank``,
           ``gdelt``, ``sentiment``, ``ons`` (UK ONS timeseries by CDID —
           ``config={"series": ["D7BT", "D7G7"], "dataset": "MM23"}``; find
-          CDIDs with ``api.connectors.search(q="UK inflation")``; OGL v3.0).
+          CDIDs with ``api.connectors.search(q="UK inflation")``; OGL v3.0),
+          ``boe_yield_curves`` (BoE fitted yield curves —
+          ``config={"curve_types": ["inflation"], "tenors": [10.0]}``; use
+          ``tenors`` to select specific maturities and avoid correlated-tenor
+          leakage), ``swap_curves`` (DTCC OIS swap-rate curves —
+          ``config={"currencies": ["USD"], "tenors": ["10Y"]}``; ``tenors``
+          selects standard tenor buckets).
         * **Bring-your-own-key:** ``fred`` / ``fred_sentiment`` (free FRED key,
           ``config["api_key"]``), ``imf`` (IMF iData subscription key,
           ``config["api_key"]`` = ``Ocp-Apim-Subscription-Key``; set
@@ -745,7 +751,9 @@ class DatasetResource(_Resource):
                     join_on: str = "date", frequency: str | None = None,
                     aggregation: str | None = None,
                     on_missing: dict | None = None,
-                    on_stale: dict | None = None) -> DatasetOut:
+                    on_stale: dict | None = None,
+                    column_roles: dict | None = None,
+                    require_coverage: dict | None = None) -> DatasetOut:
         """Fetch from two or more connectors and MERGE them into ONE date-aligned
         dataset, so a forecaster can train across sources in a single panel.
 
@@ -776,6 +784,14 @@ class DatasetResource(_Resource):
           proxy series into gaps. Fills ALL NaN, but every filled cell is
           flagged ``modeled_extrapolation: true`` in the **transformation
           manifest** (the values are NOT observed data).
+        * ``{"method": "...", "per_column": {col: {"method": ..., "max_gap": ...}}}``
+          -- **per-source periodicity override** (#1482 ask 6): mix methods
+          within ONE panel, e.g. ``ffill`` for a step-function policy-rate
+          series alongside ``interpolate`` for a smooth yield-curve series.
+          ``col`` is the POST-NAMESPACE column name (e.g. ``"boe__IUDSOIA"``).
+          The named columns use their own method/max_gap; every other value
+          column keeps the top-level method. The transformation manifest
+          records the ACTUAL per-column method used.
 
         After the merge completes, the resulting dataset's
         ``schema_info["transformation_manifest"]`` records every
@@ -805,6 +821,31 @@ class DatasetResource(_Resource):
           threshold (3 cadence periods). A column is flagged stale when its lag
           exceeds ``stale_periods * cadence_days``.
 
+        ``column_roles`` -- **column-role declaration** (#1482 ask 2):
+        ``{column: "core"|"auxiliary"}``, POST-NAMESPACE names. Columns not
+        listed default to ``"auxiliary"``; the ``join_on`` index column is
+        implicitly ``"core"`` regardless of this dict. CORE columns are NEVER
+        dropped by ``on_stale={"action": "drop_columns"}`` or
+        ``require_coverage`` -- a stale/low-coverage CORE column is a dataset
+        error instead of a silent drop. A key naming a column absent from the
+        merged panel (after namespacing) is a validation error. Persisted to
+        ``schema_info["column_roles"]``; when a prediction config's
+        ``core_columns`` is not set explicitly, it is DERIVED from this
+        declaration (explicit ``core_columns`` on the config always wins).
+
+        ``require_coverage`` -- **coverage filter** (#1482 ask 4):
+        ``{"relative_to": "panel"|"core", "min_pct": N}``. Applied on the raw
+        (pre-fill) outer-joined frame, after ``on_stale`` and before
+        ``on_missing``: drops AUXILIARY columns whose non-null coverage falls
+        below ``min_pct``. ``relative_to="panel"`` (default) measures coverage
+        against the total row count; ``"core"`` measures it against the rows
+        where every CORE column is non-null. CORE columns are never dropped.
+        Dropped columns are recorded in
+        ``schema_info["coverage_filter_dropped"]``
+        (``[{"column", "coverage_pct", "threshold", "relative_to"}, ...]``).
+        Fails closed (dataset error) if every auxiliary column is dropped and
+        the surviving core-only panel has no usable rows.
+
         ALWAYS check :meth:`panel_report` once the dataset is ready. An outer
         join across sources of different vintages means a row survives training
         only where EVERY column is non-null, so a single discontinued series can
@@ -826,6 +867,10 @@ class DatasetResource(_Resource):
             body["on_missing"] = on_missing
         if on_stale is not None:
             body["on_stale"] = on_stale
+        if column_roles is not None:
+            body["column_roles"] = column_roles
+        if require_coverage is not None:
+            body["require_coverage"] = require_coverage
         return self._request("POST", "/api/v1/datasets/fetch-multi", json=body)
 
     def quality(self, dataset_id: int) -> dict:
@@ -1665,6 +1710,9 @@ class PredictionResource(_Resource):
           dropped by auto-reduce. ``target_field`` and ``time_index_field`` are
           implicitly core regardless of this list. Every other candidate
           feature column is AUXILIARY — droppable, sparsest (most nulls) first.
+          When omitted, it is DERIVED from the ``column_roles`` declared at
+          ingest time via :meth:`datasets.fetch_multi` (#1482 ask 2) — set
+          ``core_columns`` explicitly here to override that derivation.
         * ``auto_reduce`` — optional bool, default ``False``. When a declared
           ``min_rows``/``min_history_years`` bar is unmet at :meth:`train`
           time, instead of the plain HTTP 409 above, the sparsest AUXILIARY
