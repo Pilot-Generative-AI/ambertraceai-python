@@ -31,6 +31,10 @@ from .dataset_clean_request import DatasetCleanRequest
 from .dataset_derive_request import DatasetDeriveRequest
 from .dataset_derive_request_op import DatasetDeriveRequestOp
 from .dataset_fetch_multi_request import DatasetFetchMultiRequest
+from .dataset_fetch_multi_request_column_roles_type_0 import DatasetFetchMultiRequestColumnRolesType0
+from .dataset_fetch_multi_request_column_roles_type_0_additional_property import (
+    DatasetFetchMultiRequestColumnRolesType0AdditionalProperty,
+)
 from .dataset_fetch_request import DatasetFetchRequest
 from .dataset_fetch_request_config import DatasetFetchRequestConfig
 from .dataset_out import DatasetOut
@@ -103,7 +107,9 @@ from .node_out import NodeOut
 from .node_out_properties_type_0 import NodeOutPropertiesType0
 from .obligation_suggestion import ObligationSuggestion
 from .obligation_suggestions_out import ObligationSuggestionsOut
+from .on_missing_column_policy import OnMissingColumnPolicy
 from .on_missing_policy import OnMissingPolicy
+from .on_missing_policy_per_column_type_0 import OnMissingPolicyPerColumnType0
 from .on_stale_policy import OnStalePolicy
 from .on_stale_policy_action import OnStalePolicyAction
 from .panel_binding_constraint_out import PanelBindingConstraintOut
@@ -156,6 +162,8 @@ from .replay_metric import ReplayMetric
 from .replay_request import ReplayRequest
 from .replay_result import ReplayResult
 from .replay_result_row_details_item import ReplayResultRowDetailsItem
+from .require_coverage import RequireCoverage
+from .require_coverage_relative_to import RequireCoverageRelativeTo
 from .residual_diagnosis_request import ResidualDiagnosisRequest
 from .rotate_key_request import RotateKeyRequest
 from .rule_create_request import RuleCreateRequest
@@ -227,6 +235,8 @@ __all__ = (
     "DatasetDeriveRequest",
     "DatasetDeriveRequestOp",
     "DatasetFetchMultiRequest",
+    "DatasetFetchMultiRequestColumnRolesType0",
+    "DatasetFetchMultiRequestColumnRolesType0AdditionalProperty",
     "DatasetFetchRequest",
     "DatasetFetchRequestConfig",
     "DatasetOut",
@@ -299,7 +309,9 @@ __all__ = (
     "NodeOutPropertiesType0",
     "ObligationSuggestion",
     "ObligationSuggestionsOut",
+    "OnMissingColumnPolicy",
     "OnMissingPolicy",
+    "OnMissingPolicyPerColumnType0",
     "OnStalePolicy",
     "OnStalePolicyAction",
     "PanelBindingConstraintOut",
@@ -352,6 +364,8 @@ __all__ = (
     "ReplayRequest",
     "ReplayResult",
     "ReplayResultRowDetailsItem",
+    "RequireCoverage",
+    "RequireCoverageRelativeTo",
     "ResidualDiagnosisRequest",
     "RotateKeyRequest",
     "RuleCreateRequest",

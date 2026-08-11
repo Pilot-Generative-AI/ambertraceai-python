@@ -21,6 +21,9 @@ class PanelColumnOut:
         non_null_count (int | Unset):  Default: 0.
         null_count (int | Unset):  Default: 0.
         recency_lag_periods (int | None | Unset):
+        role (None | str | Unset): Column role (Part of #1482 ask 2): 'core' or 'auxiliary'. Only populated when the
+            caller passed column_roles (or the ingested dataset carries a schema_info['column_roles'] declaration); None
+            when no role declaration exists for this panel.
         rows_recovered_if_dropped (int | Unset):  Default: 0.
         stale (bool | Unset):  Default: False.
     """
@@ -31,6 +34,7 @@ class PanelColumnOut:
     non_null_count: int | Unset = 0
     null_count: int | Unset = 0
     recency_lag_periods: int | None | Unset = UNSET
+    role: None | str | Unset = UNSET
     rows_recovered_if_dropped: int | Unset = 0
     stale: bool | Unset = False
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -60,6 +64,12 @@ class PanelColumnOut:
         else:
             recency_lag_periods = self.recency_lag_periods
 
+        role: None | str | Unset
+        if isinstance(self.role, Unset):
+            role = UNSET
+        else:
+            role = self.role
+
         rows_recovered_if_dropped = self.rows_recovered_if_dropped
 
         stale = self.stale
@@ -81,6 +91,8 @@ class PanelColumnOut:
             field_dict["null_count"] = null_count
         if recency_lag_periods is not UNSET:
             field_dict["recency_lag_periods"] = recency_lag_periods
+        if role is not UNSET:
+            field_dict["role"] = role
         if rows_recovered_if_dropped is not UNSET:
             field_dict["rows_recovered_if_dropped"] = rows_recovered_if_dropped
         if stale is not UNSET:
@@ -124,6 +136,15 @@ class PanelColumnOut:
 
         recency_lag_periods = _parse_recency_lag_periods(d.pop("recency_lag_periods", UNSET))
 
+        def _parse_role(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        role = _parse_role(d.pop("role", UNSET))
+
         rows_recovered_if_dropped = d.pop("rows_recovered_if_dropped", UNSET)
 
         stale = d.pop("stale", UNSET)
@@ -135,6 +156,7 @@ class PanelColumnOut:
             non_null_count=non_null_count,
             null_count=null_count,
             recency_lag_periods=recency_lag_periods,
+            role=role,
             rows_recovered_if_dropped=rows_recovered_if_dropped,
             stale=stale,
         )

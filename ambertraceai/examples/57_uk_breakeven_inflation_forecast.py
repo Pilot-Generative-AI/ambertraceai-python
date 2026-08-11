@@ -16,6 +16,18 @@ CPI), this is the market's forward inflation EXPECTATION.
   3. Read back what the SYSTEM selected: neural feature importance (which drivers it keeps), the
      induced WHEN->THEN driver rules (the WHY), and the neuro-symbolic discovery pass.
 
+To fetch the panel LIVE instead of using the bundled snapshot, use ``fetch_multi`` with the
+``tenors`` filter on the ``boe_yield_curves`` connector to keep only the 10Y breakeven::
+
+    dataset = api.datasets.fetch_multi(
+        domain_id=domain["id"],
+        sources=[
+            {"connector_type": "boe_yield_curves",
+             "config": {"curve_types": ["inflation"], "tenors": [10.0]}},
+            {"connector_type": "fred", "config": {"series_id": "..."}},
+        ],
+    )
+
 Why lasso, not gbt: on this panel sparse linear beats boosted trees on the level fit (R² 0.75 vs
 0.62) and is the only one that matches a last-value baseline on the genuinely hard month-to-month
 change (change R² +0.02 vs -0.51). When the signal is a few slow macro drivers, the model forced to
