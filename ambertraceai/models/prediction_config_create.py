@@ -108,10 +108,10 @@ class PredictionConfigCreate:
                 choice), 'ridge' (L2-regularised linear), 'lasso' (L1-regularised linear, good for sparse features). Default:
                 'gbt'.
             neural_confidence_tau (float | Unset): Per-point neural-tier confidence threshold (timeseries mode only). The
-                GBT prediction is admitted as 'neural_scored@tau' when its two-axis confidence (Axis A: in-training-range OOD
-                gate + Axis B: interval sharpness) >= tau. Below tau the raw GBT prediction is still served with tier
-                'neural_weak@tau' and the full confidence certificate (#1485). Default 0.0 (gate labels every prediction with
-                its tier and confidence; set > 0 to distinguish strong vs weak neural predictions). Default: 0.0.
+                GBT prediction is admitted as 'neural_scored' when its two-axis confidence (Axis A: in-training-range OOD gate +
+                Axis B: interval sharpness) >= tau. Below tau the raw GBT prediction is still served with tier 'neural_weak' and
+                the full confidence certificate (#1485). Default 0.0 (gate labels every prediction with its tier and confidence;
+                set > 0 to distinguish strong vs weak neural predictions). Default: 0.0.
             target_transform (None | str | Unset): Top-level shorthand for feature_config['target_transform'] (timeseries
                 mode only). One of 'auto' (the default when omitted) | 'none' | 'difference'; an unknown value is rejected with
                 422 naming the valid set. Equivalent to nesting the same value under feature_config — when BOTH are supplied the

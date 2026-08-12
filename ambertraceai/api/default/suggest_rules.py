@@ -63,11 +63,12 @@ def sync_detailed(
 
      Uses LLM to discover additional symbolic rules beyond the auto-compiled ontology constraints.
     Returns 202 with a job id — poll GET /jobs/{job_id} until status is 'completed' (success) or
-    'failed'. The completed job's result carries stats (proposed/stored/rejected_by_gate),
-    rejected_rules, and the stored suggestions. Suggested rules start in a pending state and require
-    explicit approval via the approve endpoint before they fire in queries. The platform must be active.
-    Set clear_pending=true to discard the platform's existing pending suggestions before generating a
-    fresh batch.
+    'failed'. The completed job's result carries stats (proposed/stored/rejected_by_gate including
+    verified_profile and stratification counters), rejected_rules (each entry includes the encoded
+    condition, action, and remap_provenance when an action field was remapped), and the stored
+    suggestions. Suggested rules start in a pending state and require explicit approval via the approve
+    endpoint before they fire in queries. The platform must be active. Set clear_pending=true to discard
+    the platform's existing pending suggestions before generating a fresh batch.
 
     Args:
         id (int): Resource ID
@@ -100,11 +101,12 @@ def sync(
 
      Uses LLM to discover additional symbolic rules beyond the auto-compiled ontology constraints.
     Returns 202 with a job id — poll GET /jobs/{job_id} until status is 'completed' (success) or
-    'failed'. The completed job's result carries stats (proposed/stored/rejected_by_gate),
-    rejected_rules, and the stored suggestions. Suggested rules start in a pending state and require
-    explicit approval via the approve endpoint before they fire in queries. The platform must be active.
-    Set clear_pending=true to discard the platform's existing pending suggestions before generating a
-    fresh batch.
+    'failed'. The completed job's result carries stats (proposed/stored/rejected_by_gate including
+    verified_profile and stratification counters), rejected_rules (each entry includes the encoded
+    condition, action, and remap_provenance when an action field was remapped), and the stored
+    suggestions. Suggested rules start in a pending state and require explicit approval via the approve
+    endpoint before they fire in queries. The platform must be active. Set clear_pending=true to discard
+    the platform's existing pending suggestions before generating a fresh batch.
 
     Args:
         id (int): Resource ID
@@ -132,11 +134,12 @@ async def asyncio_detailed(
 
      Uses LLM to discover additional symbolic rules beyond the auto-compiled ontology constraints.
     Returns 202 with a job id — poll GET /jobs/{job_id} until status is 'completed' (success) or
-    'failed'. The completed job's result carries stats (proposed/stored/rejected_by_gate),
-    rejected_rules, and the stored suggestions. Suggested rules start in a pending state and require
-    explicit approval via the approve endpoint before they fire in queries. The platform must be active.
-    Set clear_pending=true to discard the platform's existing pending suggestions before generating a
-    fresh batch.
+    'failed'. The completed job's result carries stats (proposed/stored/rejected_by_gate including
+    verified_profile and stratification counters), rejected_rules (each entry includes the encoded
+    condition, action, and remap_provenance when an action field was remapped), and the stored
+    suggestions. Suggested rules start in a pending state and require explicit approval via the approve
+    endpoint before they fire in queries. The platform must be active. Set clear_pending=true to discard
+    the platform's existing pending suggestions before generating a fresh batch.
 
     Args:
         id (int): Resource ID
@@ -167,11 +170,12 @@ async def asyncio(
 
      Uses LLM to discover additional symbolic rules beyond the auto-compiled ontology constraints.
     Returns 202 with a job id — poll GET /jobs/{job_id} until status is 'completed' (success) or
-    'failed'. The completed job's result carries stats (proposed/stored/rejected_by_gate),
-    rejected_rules, and the stored suggestions. Suggested rules start in a pending state and require
-    explicit approval via the approve endpoint before they fire in queries. The platform must be active.
-    Set clear_pending=true to discard the platform's existing pending suggestions before generating a
-    fresh batch.
+    'failed'. The completed job's result carries stats (proposed/stored/rejected_by_gate including
+    verified_profile and stratification counters), rejected_rules (each entry includes the encoded
+    condition, action, and remap_provenance when an action field was remapped), and the stored
+    suggestions. Suggested rules start in a pending state and require explicit approval via the approve
+    endpoint before they fire in queries. The platform must be active. Set clear_pending=true to discard
+    the platform's existing pending suggestions before generating a fresh batch.
 
     Args:
         id (int): Resource ID

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -19,30 +19,43 @@ T = TypeVar("T", bound="FetchSource")
 class FetchSource:
     """
     Attributes:
-        connector_type (str):
         config (FetchSourceConfig | Unset):
+        connector_type (None | str | Unset): Connector type (e.g. 'fred', 'boe'). Mutually exclusive with dataset_id.
+        dataset_id (int | None | Unset): ID of an already-uploaded dataset to include as a source. The dataset must be
+            in 'ready' or 'ingested' status and belong to the same organisation. Mutually exclusive with connector_type.
     """
 
-    connector_type: str
     config: FetchSourceConfig | Unset = UNSET
+    connector_type: None | str | Unset = UNSET
+    dataset_id: int | None | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        connector_type = self.connector_type
-
         config: dict[str, Any] | Unset = UNSET
         if not isinstance(self.config, Unset):
             config = self.config.to_dict()
 
+        connector_type: None | str | Unset
+        if isinstance(self.connector_type, Unset):
+            connector_type = UNSET
+        else:
+            connector_type = self.connector_type
+
+        dataset_id: int | None | Unset
+        if isinstance(self.dataset_id, Unset):
+            dataset_id = UNSET
+        else:
+            dataset_id = self.dataset_id
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "connector_type": connector_type,
-            }
-        )
+        field_dict.update({})
         if config is not UNSET:
             field_dict["config"] = config
+        if connector_type is not UNSET:
+            field_dict["connector_type"] = connector_type
+        if dataset_id is not UNSET:
+            field_dict["dataset_id"] = dataset_id
 
         return field_dict
 
@@ -51,8 +64,6 @@ class FetchSource:
         from ..models.fetch_source_config import FetchSourceConfig
 
         d = dict(src_dict)
-        connector_type = d.pop("connector_type")
-
         _config = d.pop("config", UNSET)
         config: FetchSourceConfig | Unset
         if isinstance(_config, Unset):
@@ -60,9 +71,28 @@ class FetchSource:
         else:
             config = FetchSourceConfig.from_dict(_config)
 
+        def _parse_connector_type(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        connector_type = _parse_connector_type(d.pop("connector_type", UNSET))
+
+        def _parse_dataset_id(data: object) -> int | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(int | None | Unset, data)
+
+        dataset_id = _parse_dataset_id(d.pop("dataset_id", UNSET))
+
         fetch_source = cls(
-            connector_type=connector_type,
             config=config,
+            connector_type=connector_type,
+            dataset_id=dataset_id,
         )
 
         fetch_source.additional_properties = d

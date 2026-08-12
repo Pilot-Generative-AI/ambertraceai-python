@@ -754,13 +754,24 @@ class DatasetResource(_Resource):
                     on_stale: dict | None = None,
                     column_roles: dict | None = None,
                     require_coverage: dict | None = None) -> DatasetOut:
-        """Fetch from two or more connectors and MERGE them into ONE date-aligned
+        """Fetch from two or more sources and MERGE them into ONE date-aligned
         dataset, so a forecaster can train across sources in a single panel.
 
-        ``sources`` is a list of ``{"connector_type": ..., "config": {...}}``
-        dicts (at least two), e.g. ``[{"connector_type": "fred", "config":
-        {"series_ids": [...], "api_key": ...}}, {"connector_type": "boe",
-        "config": {...}}]``. The sources are outer-joined on the ``join_on`` index
+        ``sources`` is a list of source dicts (at least two). Each source is
+        EITHER a connector source ``{"connector_type": ..., "config": {...}}``
+        OR an uploaded-dataset source ``{"dataset_id": <int>}`` (#1723).
+
+        Connector sources fetch from a registered connector (e.g. FRED, BoE).
+        Uploaded-dataset sources include an already-uploaded dataset by its ID,
+        so you can merge your own BYO data with connector series::
+
+            sources = [
+                {"connector_type": "fred", "config": {"series_ids": ["GS10"], ...}},
+                {"dataset_id": my_uploaded_dataset.id},
+            ]
+
+        The uploaded dataset must be in ``'ready'`` or ``'ingested'`` status and
+        belong to the same organisation. The sources are outer-joined on the ``join_on`` index
         column (default ``"date"``); each value column is namespaced by connector
         type to avoid collisions (e.g. ``boe__IUDSOIA``). Set ``frequency``
         (``daily``/``weekly``/``monthly``/``quarterly``/``annual``) with
@@ -2131,8 +2142,11 @@ class PredictionResource(_Resource):
               "target_field": "...", "horizon": 1,
               "value": <the LEVEL-space point forecast>,
               "interval": {"lower": ..., "upper": ..., "basis": "backtest_rmse"},
-              "probability": <calibrated float in (0,1), or null if uncertified>,
+              "probability": <calibrated float in (0,1), or null if uncertified
+                             or degenerate (threshold==value)>,
               "probability_certified": <bool>,
+              "probability_computable": <bool — False when threshold==value,
+                                        no directional signal>,
               "probability_basis": { ... see below ... },
               "fired_signals": [<driver-rules active on the latest row>],
               "top_drivers": [{"driver": "...", "kind": "symbolic"|"neural",
@@ -2140,9 +2154,10 @@ class PredictionResource(_Resource):
               "proof_ref": {"proof_checked": bool, "proof_summary": "...",
                             "model_id": ..., "as_of": ...},
               "why_certification": { ... the embedded certificate (verified=True) ... },
-              "forecast_tier": "verified_symbolic"|"neural_scored@<tau>"|
-                               "neural_weak@<tau>"|"no_forecast"|
+              "forecast_tier": "verified_symbolic"|"neural_scored"|
+                               "neural_weak"|"no_forecast"|
                                "baseline_anchor"|null,
+              "neural_confidence_tau": <float or null — tau extracted from tier>,
               "point_is_persistence": <bool or null>,
               "per_point_forecast_tiers": [{"index": 0,
                   "forecast_tier": "verified_symbolic"}, ...] or null,
@@ -2157,13 +2172,15 @@ class PredictionResource(_Resource):
         Per-point provenance (``forecast_tier`` / ``point_is_persistence``)
         ------------------------------------------------------------------
         ``forecast_tier`` is the honest per-point tier label: ``"verified_symbolic"``
-        when driver-rules fired AND were proof-checked; ``"neural_scored@<tau>"`` when
+        when driver-rules fired AND were proof-checked; ``"neural_scored"`` when
         the neural confidence gate served the GBT prediction (``baseline_mode='neural'``
-        with no fired drivers, above the tau threshold); ``"neural_weak@<tau>"`` when
+        with no fired drivers, above the tau threshold); ``"neural_weak"`` when
         below tau (the raw GBT prediction is always served with the full confidence
         metric -- never replaced, #1485); ``"no_forecast"`` when genuinely no model
         exists (value is null); ``"baseline_anchor"`` for non-neural anchors
-        (persistence / drift) with no fired drivers. Record-first consumers
+        (persistence / drift) with no fired drivers. The tau value that was
+        previously embedded in the tier string (e.g. ``neural_scored@0.5``) is now
+        emitted separately as ``neural_confidence_tau``. Record-first consumers
         (the decision-bridge ``predictions={role: record}`` fan-in) should key on
         ``forecast_tier`` to distinguish genuine driver-based forecasts from anchor
         filler -- not ``point_is_persistence``, which is True ONLY under a persistence
@@ -2194,24 +2211,31 @@ class PredictionResource(_Resource):
              "sigma": <recovered out-of-sample sigma>,
              "threshold": <the threshold, default the persistence baseline>,
              "threshold_source": "baseline"|absent,  # present when threshold was defaulted
+             "probability_computable": True|False,
              "reason": "certified: in_domain and calibration in-regime"
-             # OR for anchor/no-driver points:
-             # "certified: anchor forecast (no fired drivers) — threshold defaulted
-             #  to baseline==value; probability trivially 0.5; anchor_mode=<tier>"
+             # OR for anchor/no-driver degenerate points (probability=None):
+             # "not_computable: anchor forecast (no fired drivers)
+             #  — threshold defaulted to baseline==value;
+             #  no directional signal; anchor_mode=<tier>"
             }
 
-        ``probability_certified`` — and the FAIL-CLOSED / OOD contract. The
-        probability is only valid (``probability_certified=True``, ``probability``
-        a number) when BOTH gates pass: (1) the forecast's input row is IN-DOMAIN
-        (its ``why_certification`` proof-checked — so this is only certifiable with
-        ``verified=True``), and (2) the calibration is in its validated regime — the
-        ``interval_basis`` is a REAL measured out-of-sample error basis (one of
-        ``driver_bands`` / ``backtest_rmse`` / ``persistence_rmse`` /
+        ``probability_certified`` / ``probability_computable`` — and the
+        FAIL-CLOSED / OOD contract. The probability is only valid
+        (``probability_certified=True``, ``probability_computable=True``,
+        ``probability`` a number) when ALL gates pass: (1) the forecast's input
+        row is IN-DOMAIN (its ``why_certification`` proof-checked — so this is only
+        certifiable with ``verified=True``), (2) the calibration is in its validated
+        regime — the ``interval_basis`` is a REAL measured out-of-sample error basis
+        (one of ``driver_bands`` / ``backtest_rmse`` / ``persistence_rmse`` /
         ``target_change_sd``, not a degenerate flat-series floor) and the recovered
-        ``sigma`` is finite and positive. If EITHER gate fails — out-of-domain input,
-        an out-of-regime interval basis, or a degenerate/non-positive sigma — the
-        platform FAILS CLOSED: ``probability`` is ``None`` and
-        ``probability_certified`` is ``False``, NEVER a spurious confident number.
+        ``sigma`` is finite and positive, and (3) the resolved threshold differs
+        from the value — when threshold==value (the anchor/no-driver case with no
+        persistence baseline), the probability would be 0.5 by construction with no
+        directional signal, so it is ``None`` with ``probability_computable=False``.
+        If EITHER OOD gate (1-2) fails — out-of-domain input, an out-of-regime
+        interval basis, or a degenerate/non-positive sigma — the platform FAILS
+        CLOSED: ``probability`` is ``None`` and ``probability_certified`` is
+        ``False``, NEVER a spurious confident number.
         ``probability_basis.reason`` says which gate failed (e.g.
         ``"out_of_domain: why_certification not proof_checked"`` or
         ``"calibration_out_of_regime: ..."``). A downstream decision reading an
@@ -2482,8 +2506,8 @@ class ConnectorResource(_Resource):
 
     def search(
         self,
-        *,
         q: str | None = None,
+        *,
         asset_class: str | None = None,
         country: str | None = None,
         region: str | None = None,
@@ -2493,6 +2517,11 @@ class ConnectorResource(_Resource):
         limit: int = 50,
     ) -> dict:
         """Search connectors and series by structured filters and/or free text.
+
+        ``q`` can be passed positionally for quick discovery::
+
+            api.connectors.search("breakeven")          # positional
+            api.connectors.search(q="breakeven")        # keyword — also works
 
         Resolves natural-language data requests (e.g. ``'5y german rate'``,
         ``'asian equities'``, ``'developed-market FX'``) to concrete connector

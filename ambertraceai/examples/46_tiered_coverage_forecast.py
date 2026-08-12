@@ -7,8 +7,8 @@ the per-point GBT neural-tier confidence gate:
   ``forecast_tier`` and ``confidence`` but does NOT distinguish below-tau
   predictions. Backward-compatible: the ``value`` is always the GBT output.
 - **tau>0** (e.g. 0.5) -- below-tau GBT predictions are served with
-  ``forecast_tier='neural_weak@<tau>'`` and the full confidence certificate
-  so consumers can distinguish strong from weak neural predictions. The raw
+  ``forecast_tier='neural_weak'`` and ``neural_confidence_tau=<tau>`` so
+  consumers can distinguish strong from weak neural predictions. The raw
   GBT value is always served -- never replaced (#1485).
 
 The two-axis gate (Axis A: in-training-range OOD gate; Axis B: interval
@@ -44,8 +44,8 @@ def main() -> None:
 
     # Find or create a prediction config with the confidence gate active.
     # neural_confidence_tau=0.5 means: GBT predictions with two-axis
-    # confidence >= 0.5 are admitted as 'neural_scored@0.5'; below 0.5
-    # the point falls to the climatology floor (fit-window level mean).
+    # confidence >= 0.5 are admitted as 'neural_scored'; below 0.5
+    # the raw GBT prediction is served as 'neural_weak' (#1485).
     configs = api.platforms.list_prediction_configs(platform_id)
     config_id = None
     for c in configs:

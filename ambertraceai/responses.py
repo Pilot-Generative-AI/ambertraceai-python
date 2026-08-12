@@ -586,11 +586,13 @@ class PredictionRecord(TypedDict, total=False):
     :class:`SymbolicForecastResult` — a ready-to-persist, LEVEL-space,
     proof-carrying record. The decision layer reads ``value`` / ``interval`` /
     ``probability`` / ``fired_signals``; ``probability`` is ``None`` unless
-    ``probability_certified`` (fail-closed)."""
+    ``probability_certified`` (fail-closed). ``probability_computable`` is
+    ``False`` when the threshold equals the value (no directional signal)."""
 
     value: Required[float]
     probability: Required[float | None]
     probability_certified: Required[bool]
+    probability_computable: Required[bool]
     name: str
     model_id: str
     as_of: str | None
@@ -602,6 +604,8 @@ class PredictionRecord(TypedDict, total=False):
     top_drivers: list[JsonDict]
     proof_ref: JsonDict
     why_certification: JsonDict
+    forecast_tier: str | None
+    neural_confidence_tau: float | None
     sector: str | None
     period: str | None
     entity: str | None
