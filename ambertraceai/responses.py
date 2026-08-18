@@ -323,7 +323,28 @@ class RejectedFact(TypedDict, total=False):
 
 
 class Confidence(TypedDict, total=False):
-    """``explanation.confidence`` — fused neural+symbolic confidence."""
+    """``explanation.confidence`` — fused neural+symbolic confidence.
+
+    ``overall`` measures reasoning completeness (rules fired + KB relevance)
+    and is approximately constant per platform.
+
+    ``decision_margin`` (when present) is the **per-call** boundary-margin
+    confidence: a value in [0, 1] measuring how far this input's facts are
+    from the nearest fired numeric threshold (the label-flip boundary).
+    0 = exactly at boundary, 1 = maximally far.  It varies with every call
+    and is certified (derived from the same facts/firings as the proof).
+    Present only when fired rules contain numeric threshold comparisons
+    (gt/lt/gte/lte).
+
+    **Scope:** ``decision_margin`` is the tightest (minimum) boundary margin
+    across ALL fired numeric-threshold leaves, NOT restricted to the
+    decision-determining/binding rules.  A near-boundary fired-but-overridden
+    rule can lower the reported margin even when it did not determine the
+    final decision.
+
+    ``decision_margin_basis`` lists the per-leaf inputs used to compute the
+    margin (field, operator, actual value, threshold, leaf_margin).
+    """
 
     overall: float
     neural_confidence: float
@@ -331,6 +352,8 @@ class Confidence(TypedDict, total=False):
     neural_weight: float
     symbolic_weight: float
     symbolic_normaliser: int
+    decision_margin: float
+    decision_margin_basis: list[dict[str, object]]
 
 
 class Proof(TypedDict, total=False):

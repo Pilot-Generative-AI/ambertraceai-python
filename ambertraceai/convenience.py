@@ -1361,6 +1361,13 @@ class PlatformResource(_Resource):
         platform-scoped keys receive 403 ``forbidden`` on that endpoint --
         have an org administrator communicate the capability set, or use a
         user-scoped key for discovery).
+
+        **Data redistribution gating.** If the platform's datasets include
+        data sourced from a connector whose licence does not permit
+        redistribution, the endpoint returns HTTP 403 with error code
+        ``forbidden``. This prevents silently re-serving licensed data
+        downstream. Check the connector's ``redistributable`` field via
+        ``list_connectors()`` to determine which sources are permitted.
         """
         body: dict[str, Any] = {"query": query, "explain": explain,
                                 "top_k": top_k, **kwargs}
@@ -2067,6 +2074,22 @@ class PredictionResource(_Resource):
         honest answer, not an error). It is the model's HISTORICAL fit only —
         belief-agnostic, no market priors. Omitted entirely unless you opt in (the
         default response is not bloated).
+
+        With ``include_fitted_series=True`` the response also carries a top-level
+        ``coverage_certificate`` + ``per_tier_skill``. The certificate reports
+        ``{n_points, n_uncovered, coverage_total, tiers, tiers_present}`` — which
+        tier served each holdout point and whether any point went unserved — and
+        its TOTALITY claim (every point served by a named tier with a FINITE
+        value, ``n_uncovered == 0``) is **KERNEL-CERTIFIED**: ``proof_ref``
+        carries the trusted symbolic kernel's verdict, shape
+        ``{proof_checked, claim: "coverage_totality", proof_summary,
+        n_certified_rows, n_rejected_rows, reasons?}``. Each point is certified
+        through the same certification gate + derivation kernel that proves rule
+        firings; a point with a missing tier or a non-finite value fails the
+        proof CLOSED (``proof_checked`` False with the rejection surfaced under
+        ``reasons``). The proof covers totality and tier attribution only —
+        numeric VALUES remain fitted-not-proven (the ``honesty`` field states
+        the boundary).
 
         ``why`` IS the substantive explanation — the full set of materially-
         contributing driver-rules the model induced + accepted on the holdout (NOT

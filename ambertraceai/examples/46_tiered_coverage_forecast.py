@@ -15,6 +15,12 @@ The two-axis gate (Axis A: in-training-range OOD gate; Axis B: interval
 sharpness) mirrors the ``ScoredDetermination`` trust-tier pattern
 (example 41) but for regressors, not classifiers.
 
+The coverage certificate's TOTALITY claim (every holdout point served by a
+named tier with a finite value, ``n_uncovered == 0``) is KERNEL-CERTIFIED:
+``coverage_certificate.proof_ref`` carries the verdict of the trusted
+symbolic kernel -- the same kernel that certifies rule firings -- with
+``claim='coverage_totality'``. An uncovered point fails the proof closed.
+
     python 46_tiered_coverage_forecast.py [platform_id]
 """
 
@@ -122,6 +128,21 @@ def main() -> None:
         for tier_name, tier_info in (cert.get("tiers") or {}).items():
             print(f"    {tier_name:25s}: n={tier_info['n']}, "
                   f"fraction={tier_info['fraction']}")
+
+        # The totality claim itself is KERNEL-CERTIFIED: proof_ref carries
+        # the verdict of the trusted symbolic kernel proving that every
+        # holdout point resolved to a tier with a finite value -- the same
+        # kernel that certifies rule firings. Values remain fitted-not-proven.
+        proof_ref = cert.get("proof_ref")
+        if proof_ref:
+            step("Totality proof (kernel-certified):")
+            print(f"  claim           : {proof_ref.get('claim')}")
+            print(f"  proof_checked   : {proof_ref.get('proof_checked')}")
+            print(f"  certified rows  : {proof_ref.get('n_certified_rows')}")
+            print(f"  rejected rows   : {proof_ref.get('n_rejected_rows')}")
+            print(f"  summary         : {proof_ref.get('proof_summary')}")
+            for reason in proof_ref.get("reasons") or []:
+                print(f"    reason        : {reason}")
 
     pts = sf.get("per_tier_skill")
     if pts:

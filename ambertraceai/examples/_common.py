@@ -456,6 +456,8 @@ def print_amber_report(report: dict[str, Any]) -> None:
         f"  Symbolic: {confidence.get('symbolic_confidence', 0.0):.0%}"
         f" (weight {confidence.get('symbolic_weight', 0.0)})"
     )
+    if confidence.get('decision_margin') is not None:
+        print(f"  Decision margin: {confidence['decision_margin']:.2%}")
     if neural_nodes:
         top = neural_nodes[0]
         print(
