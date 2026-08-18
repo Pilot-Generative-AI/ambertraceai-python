@@ -2887,8 +2887,13 @@ class AgentPolicyResource(_Resource):
         404 from ``author`` means EITHER (a) the agent-policy-gate feature is not
         enabled on your deployment, OR (b) an org gate already exists and your
         credentials lack write authority over it. To replace an existing org
-        gate, author with the gate owner's credentials or an org-admin key; a
-        platform-scoped key bound to a different platform cannot replace it.
+        gate, author with the gate owner's credentials or an org-admin key.
+
+        **Key scope.** Authoring is WRITE-scoped: it requires a **user-scoped**
+        ``at_`` key (or a console session). A platform-scoped key is query-only
+        and receives **403 ``forbidden``** from ``author`` (and from polling
+        authoring jobs) — use it for :meth:`authorize_action` and the redacted
+        :meth:`status`, never for authoring.
 
         **Blocking.** Server-side, authoring is asynchronous: the POST returns a
         ``{"job_id", "status": "processing"}`` ticket and the compile+build runs in
@@ -2953,6 +2958,13 @@ class AgentPolicyResource(_Resource):
         approvals backing a distinct-actor quorum). Send ``{<relation name>: [{<col>:
         value}, ...]}`` using the names/columns listed here. Empty for a policy that
         declares no relation.
+
+        **Key scope.** With a **platform-scoped** key the response is REDACTED:
+        ``platform`` is ``None`` and the policy fields are empty (the key
+        cannot discover the gate's platform id from here — supply it
+        out-of-band, e.g. a ``GATE_PLATFORM_ID`` env var, and call
+        :meth:`authorize_action` directly). A user-scoped key or console
+        session sees the full read-back.
         """
         return self._request("GET", "/api/v1/agent-policy-gate")
 
