@@ -87,7 +87,11 @@ class DatasetOut(TypedDict, total=False):
 class PlatformOut(TypedDict, total=False):
     """A platform record (``platforms.get`` / an item of ``platforms.list``).
     Mirrors the ``PlatformOut`` OpenAPI model. ``build_quality`` is the
-    structural-health summary (see :class:`BuildQuality`)."""
+    structural-health summary (see :class:`BuildQuality`).
+
+    ``error_message`` (str | None) — present when the platform build failed;
+    carries the human-readable failure reason (persisted at build time,
+    #1971). ``None`` on a healthy platform."""
 
     id: Required[int]
     name: Required[str]
@@ -101,6 +105,7 @@ class PlatformOut(TypedDict, total=False):
     build_quality: BuildQuality | None
     config: JsonDict | None
     neural_config: JsonDict | None
+    error_message: str | None
     description: str | None
     owner_user_id: int | None
     team_id: int | None
@@ -610,7 +615,13 @@ class PredictionRecord(TypedDict, total=False):
     proof-carrying record. The decision layer reads ``value`` / ``interval`` /
     ``probability`` / ``fired_signals``; ``probability`` is ``None`` unless
     ``probability_certified`` (fail-closed). ``probability_computable`` is
-    ``False`` when the threshold equals the value (no directional signal)."""
+    ``False`` when the threshold equals the value (no directional signal).
+
+    ``neural_model_name`` (str | None) — the registry key of the neural-tier
+    winner (e.g. ``"gbt"``); echoed from the forecast (#1937).
+
+    ``neural_holdout_skill`` (float | None) — the holdout
+    ``skill_vs_persistence`` of the winning neural model (#1937)."""
 
     value: Required[float]
     probability: Required[float | None]
@@ -629,6 +640,8 @@ class PredictionRecord(TypedDict, total=False):
     why_certification: JsonDict
     forecast_tier: str | None
     neural_confidence_tau: float | None
+    neural_model_name: str | None
+    neural_holdout_skill: float | None
     sector: str | None
     period: str | None
     entity: str | None
@@ -638,7 +651,35 @@ class SymbolicForecastResult(TypedDict, total=False):
     """What ``symbolic_forecast`` returns. ``why`` (== ``accepted_drivers``) is
     the explanation; ``prediction_record`` is the canonical Stage-A output.
     ``why_certification`` (verified) / ``fitted_series`` (opt-in) are open
-    blocks typed as :data:`JsonDict`."""
+    blocks typed as :data:`JsonDict`.
+
+    ``hit_rate_alpha`` (float) — the significance level used for the binomial
+    hit-rate pre-filter that gates driver admission (#1963). Echoes the
+    server's ACTUAL fitted value (default 0.05, overridable via
+    ``AMBERTRACE_PREDICTION_HIT_RATE_ALPHA``).
+
+    ``sign_base_rate`` (float) — the target's own dominant-sign base rate
+    (fraction of fit-window periods moving in its more-common direction).
+    Every accepted driver's hit-rate must beat this at ``hit_rate_alpha``.
+
+    ``neural_model_name`` (str | None) — the registry key of the neural-tier
+    winner selected during fit (e.g. ``"gbt"``, ``"ridge"``, ``"lasso"``,
+    ``"lstm"``, ``"transformer"``); ``None`` when no neural model was fitted
+    (#1937).
+
+    ``neural_holdout_skill`` (float | None) — the holdout
+    ``skill_vs_persistence`` of the winning neural model; ``None`` when no
+    neural model was fitted (#1937).
+
+    ``prediction_react_trajectory`` (dict | None) — the ReAct proposer's
+    trajectory summary when the prediction was built via the agentic
+    proposer loop. Carries ``total_turns``, ``best_turn``, ``best_skill``,
+    ``skill_trajectory`` (list of per-turn skills), ``stop_reason``, and
+    ``screen`` (the holdout screen applied). ``None`` when the proposer was
+    not used.
+
+    ``prediction_screen_enabled`` (bool) — whether the holdout prediction
+    screen was active for this forecast."""
 
     forecast: Required[ForecastBlock]
     why: Required[list[JsonDict]]
@@ -653,6 +694,12 @@ class SymbolicForecastResult(TypedDict, total=False):
     point_is_persistence: bool
     accepted_drivers: list[JsonDict]
     mode: str
+    hit_rate_alpha: float
+    sign_base_rate: float
+    neural_model_name: str | None
+    neural_holdout_skill: float | None
+    prediction_react_trajectory: JsonDict | None
+    prediction_screen_enabled: bool
     why_certification: JsonDict
     fitted_series: JsonDict
     unmatched_overrides: list[str]

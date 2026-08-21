@@ -297,6 +297,14 @@ _BASE_DELAY = 0.5           # seconds
 _MAX_DELAY = 8.0
 _HEALTH_PATH = "/ambertrace/health"
 
+# Polling rate-limit guard — ``wait_for_job`` clamps the caller's
+# ``poll_interval`` to at least this floor, and widens by
+# ``_POLL_BACKOFF_STEP`` per poll without forward progress, capped at
+# ``_MAX_POLL_INTERVAL``. Forward progress resets to the base.
+_MIN_POLL_INTERVAL = 3      # seconds — floor on any caller-supplied interval
+_POLL_BACKOFF_STEP = 0.5    # seconds — added per stale poll
+_MAX_POLL_INTERVAL = 30     # seconds — cap on the widened interval
+
 # The API is served from ``app.ambertrace.ai``. A common mistake is to point
 # ``base_url`` at ``api.ambertrace.ai``, which is not an API endpoint and fails
 # with an opaque Cloudflare 525 TLS error — so we reject it up front with a
@@ -2304,6 +2312,30 @@ class PredictionResource(_Resource):
         (it is a proof-carrying handle re-checked by the decision layer, never a
         second copy of the fact list) regardless of the flag.
 
+        Neural-tier model selection + ReAct trajectory (response-only keys)
+        -------------------------------------------------------------------
+        ``neural_model_name`` (str | None) — the registry key of the neural-tier
+        winner selected during fit (e.g. ``"gbt"``, ``"ridge"``, ``"lasso"``,
+        ``"lstm"``, ``"transformer"``); ``None`` when no neural model was fitted.
+
+        ``neural_holdout_skill`` (float | None) — the holdout
+        ``skill_vs_persistence`` of the winning neural model.
+
+        ``hit_rate_alpha`` (float) — the significance level used by the binomial
+        hit-rate pre-filter that gates driver admission (#1963). Echoes the
+        server's ACTUAL value so the caller records the alpha the forecast was
+        fitted at, never a client-side assumption.
+
+        ``prediction_react_trajectory`` (dict | None) — when the prediction was
+        built via the agentic ReAct proposer loop, this carries the trajectory
+        summary: ``total_turns``, ``best_turn``, ``best_skill``,
+        ``skill_trajectory`` (list of per-turn skills), ``stop_reason``, and
+        ``screen`` (the holdout screen applied). ``None`` when the proposer was
+        not used.
+
+        ``prediction_screen_enabled`` (bool) — whether the holdout prediction
+        screen was active for this forecast.
+
         **Org-capability gating.** Requires the ``predictions`` capability.
         Returns 403 ``capability_disabled`` when disabled for the org (see
         ``GET /api/v1/capabilities``).
@@ -3463,6 +3495,12 @@ class AmbertraceAPI:
                      stall_timeout: float | None = None) -> JobOut:
         """Poll a job until it reaches a terminal status or times out.
 
+        ``poll_interval`` — seconds between polls (default 5). Clamped to a
+        minimum of 3 seconds to avoid tripping the API's per-key rate limit on
+        long builds; a :class:`UserWarning` is emitted when the supplied value
+        is below the floor. The effective interval widens gently with each
+        stale poll (no forward progress) and resets on progress.
+
         On a terminal FAILED status (``error`` / ``failed``) this **raises**
         :class:`AmbertraceError`, surfacing the job's ``error_message`` — so a
         failed build is no longer swallowed (which would otherwise mislead a
@@ -3519,6 +3557,14 @@ class AmbertraceAPI:
         ``can_decide_adversely is False``) means the platform reached no
         deny/block decision; ``decision_coverage_warnings`` explains why.
 
+        **Polling backoff** — to avoid tripping the API's per-key rate limit on
+        long builds, ``poll_interval`` is clamped to a floor of 3 seconds, and
+        the effective interval increases gently with each poll (by 0.5s per poll,
+        capped at 30s). Forward progress (a status or progress change) resets
+        the backoff to the base ``poll_interval``. This is backward-compatible:
+        an explicit ``poll_interval=5`` (the default) polls at 5s initially and
+        widens only on a long, stalled-progress wait.
+
         **Progress + stall detection** (feature-sdk-dx item 6; both optional and
         back-compatible — the existing two-arg signature is unchanged):
 
@@ -3535,9 +3581,19 @@ class AmbertraceAPI:
           delete-and-recreate rather than hand-rolling a ``build_resilient``
           retry wrapper.
         """
+        base_interval = max(poll_interval, _MIN_POLL_INTERVAL)
+        if poll_interval < _MIN_POLL_INTERVAL:
+            warnings.warn(
+                f"wait_for_job: poll_interval={poll_interval}s is below the "
+                f"{_MIN_POLL_INTERVAL}s floor — clamped to {_MIN_POLL_INTERVAL}s "
+                f"to avoid tripping the API rate limit.",
+                UserWarning,
+                stacklevel=2,
+            )
         deadline = time.monotonic() + timeout
         last_progress_marker: Any = _UNSET
         last_progress_at = time.monotonic()
+        polls_since_progress = 0
         while True:
             job = self.jobs.get(job_id)
             status = job.get("status", "")
@@ -3545,12 +3601,13 @@ class AmbertraceAPI:
                 on_progress(job)
 
             # Stall detection: a change in status OR progress counts as forward
-            # progress and resets the stall clock.
+            # progress and resets the stall clock and the backoff counter.
             marker = (status, job.get("progress"))
             now = time.monotonic()
             if marker != last_progress_marker:
                 last_progress_marker = marker
                 last_progress_at = now
+                polls_since_progress = 0
 
             if status in ("ready", "active", "error", "failed", "completed"):
                 if status in ("error", "failed"):
@@ -3572,4 +3629,8 @@ class AmbertraceAPI:
             # status polls, so a long build doesn't let the machine suspend
             # mid-job. Best-effort.
             self._ping_health()
-            time.sleep(poll_interval)
+            # Gentle backoff: widen by 0.5s per poll without progress, capped.
+            effective = min(base_interval + polls_since_progress * _POLL_BACKOFF_STEP,
+                           _MAX_POLL_INTERVAL)
+            polls_since_progress += 1
+            time.sleep(effective)

@@ -147,6 +147,7 @@ from .quality_report_out import QualityReportOut
 from .quality_report_out_completeness import QualityReportOutCompleteness
 from .quality_report_out_consistency import QualityReportOutConsistency
 from .quality_report_out_uniqueness import QualityReportOutUniqueness
+from .quality_report_out_warnings_item import QualityReportOutWarningsItem
 from .query_request import QueryRequest
 from .query_request_facts_type_0 import QueryRequestFactsType0
 from .query_request_predictions_type_0 import QueryRequestPredictionsType0
@@ -349,6 +350,7 @@ __all__ = (
     "QualityReportOutCompleteness",
     "QualityReportOutConsistency",
     "QualityReportOutUniqueness",
+    "QualityReportOutWarningsItem",
     "QueryRequest",
     "QueryRequestFactsType0",
     "QueryRequestPredictionsType0",

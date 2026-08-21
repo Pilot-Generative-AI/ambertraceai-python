@@ -34,6 +34,8 @@ class PlatformOut:
         config (None | PlatformOutConfigType0 | Unset):
         created_at (None | str | Unset):
         description (None | str | Unset):
+        error_message (None | str | Unset): Human-readable build failure cause, populated when status is 'error'. Null
+            on successful or in-progress builds.
         neural_config (None | PlatformOutNeuralConfigType0 | Unset):
         owner_user_id (int | None | Unset):
         require_confidence (bool | None | Unset): Whether every query fact must be a FactWithConfidence carrier (per-
@@ -58,6 +60,7 @@ class PlatformOut:
     config: None | PlatformOutConfigType0 | Unset = UNSET
     created_at: None | str | Unset = UNSET
     description: None | str | Unset = UNSET
+    error_message: None | str | Unset = UNSET
     neural_config: None | PlatformOutNeuralConfigType0 | Unset = UNSET
     owner_user_id: int | None | Unset = UNSET
     require_confidence: bool | None | Unset = UNSET
@@ -111,6 +114,12 @@ class PlatformOut:
             description = UNSET
         else:
             description = self.description
+
+        error_message: None | str | Unset
+        if isinstance(self.error_message, Unset):
+            error_message = UNSET
+        else:
+            error_message = self.error_message
 
         neural_config: dict[str, Any] | None | Unset
         if isinstance(self.neural_config, Unset):
@@ -175,6 +184,8 @@ class PlatformOut:
             field_dict["created_at"] = created_at
         if description is not UNSET:
             field_dict["description"] = description
+        if error_message is not UNSET:
+            field_dict["error_message"] = error_message
         if neural_config is not UNSET:
             field_dict["neural_config"] = neural_config
         if owner_user_id is not UNSET:
@@ -265,6 +276,15 @@ class PlatformOut:
 
         description = _parse_description(d.pop("description", UNSET))
 
+        def _parse_error_message(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        error_message = _parse_error_message(d.pop("error_message", UNSET))
+
         def _parse_neural_config(data: object) -> None | PlatformOutNeuralConfigType0 | Unset:
             if data is None:
                 return data
@@ -343,6 +363,7 @@ class PlatformOut:
             config=config,
             created_at=created_at,
             description=description,
+            error_message=error_message,
             neural_config=neural_config,
             owner_user_id=owner_user_id,
             require_confidence=require_confidence,

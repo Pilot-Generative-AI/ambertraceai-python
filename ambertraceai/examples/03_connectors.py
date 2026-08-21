@@ -1,8 +1,18 @@
-"""03 -- Connectors: discover and filter external data sources.
+"""03 -- Connectors: discover, filter, and browse external data sources.
 
 Lists the available data-source connectors with their config requirements and
 taxonomy metadata (asset classes, countries, currencies). Supports filtering
 by ``asset_class``, ``country``, and ``currency`` query parameters.
+
+**Agent workflow (#1908):** an agent can browse connectors by metadata to
+find the right data source for a task:
+
+  1. List all connectors to see what is available.
+  2. Filter by asset_class/country/currency to narrow to relevant sources.
+  3. Inspect config_schema to learn what config keys each connector needs.
+  4. Use ``api.connectors.search(...)`` (see ``19_data_search.py``) to
+     find specific series within a connector's catalog.
+  5. validate_only=True to dry-run a config before fetching.
 
 Connectors that hit third-party providers (e.g. FRED) need *your own* provider
 API key, supplied in the ``config`` dict. Read-only -- creates nothing.
@@ -53,7 +63,39 @@ def main() -> None:
     gb_rates = api.connectors.list(asset_class="rates", country="GB", currency="GBP")
     step(f"  {len(gb_rates)} GB rates connector(s): {[c['type'] for c in gb_rates]}")
 
-    # --- 6. Test a connector (optional) -------------------------------------
+    # --- 6. Inspect config_schema for agent-driven configuration (#1908) -----
+    # An agent can read config_schema to learn WHAT to configure before calling
+    # test() or fetch(). Each field has: name, type, required, description,
+    # and optionally default/enum/example.
+    step("Inspecting config_schema for programmatic connector setup...")
+    for c in connectors[:3]:
+        ctype = c.get("type") or c.get("name")
+        schema = c.get("config_schema") or []
+        if schema:
+            print(f"  {ctype}: {len(schema)} config field(s)")
+            for field in schema:
+                req = "REQUIRED" if field.get("required") else "optional"
+                print(f"    {field['name']} ({field['type']}, {req}): {field['description']}")
+        else:
+            print(f"  {ctype}: no config schema declared")
+
+    # --- 7. Cross-reference: search series within a connector's catalog ------
+    # Use data/search to find series-level entries for a specific connector,
+    # then build the connector config from the search results.
+    step("Agent workflow: find ECB series via search, then build config...")
+    ecb_series = api.connectors.search(
+        asset_class="rates", country="EA", tenor="5Y",
+    )
+    if ecb_series["data"]:
+        series_names = [
+            item["name"] for item in ecb_series["data"]
+            if item["level"] == "series" and item["connector_type"] == "ecb"
+        ]
+        print(f"  Found {len(series_names)} ECB 5Y series: {series_names[:3]}")
+        if series_names:
+            print(f"  -> connector config: {{'series_keys': {series_names[:2]}}}")
+
+    # --- 8. Test a connector (optional) -------------------------------------
     if connectors:
         sample = connectors[0]
         ctype = sample.get("type") or sample.get("name")
@@ -64,7 +106,7 @@ def main() -> None:
         except AmbertraceError as e:
             step(f"Test rejected ({e.code}): {e}  -- expected without provider config.")
 
-    # --- 7. validate_only: check a config WITHOUT fetching -------------------
+    # --- 9. validate_only: check a config WITHOUT fetching -------------------
     # An ASYNC connector (one that fetches in the background) cannot be tested
     # inline -- a plain test() returns 422.  validate_only=True checks the
     # config only, and works for every connector including the async ones.

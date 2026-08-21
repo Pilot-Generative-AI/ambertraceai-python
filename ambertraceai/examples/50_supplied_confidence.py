@@ -25,7 +25,7 @@ import tempfile
 
 from ambertraceai import AmbertraceError
 
-from _common import banner, get_client, step, wait_for_domain
+from _common import banner, get_client, step
 
 
 def main() -> None:
@@ -46,11 +46,6 @@ def main() -> None:
     domain_id = domain["id"]
     step(f"Domain #{domain_id} created.")
 
-    step("Building ontology...")
-    api.domains.build_ontology(domain_id)
-    domain = wait_for_domain(api, domain_id)
-    step(f"Ontology status: {domain['status']}")
-
     step("Uploading dataset...")
     buf = io.StringIO()
     w = csv.writer(buf)
@@ -62,35 +57,45 @@ def main() -> None:
     with tempfile.NamedTemporaryFile(suffix=".csv", mode="w", delete=False) as f:
         f.write(buf.getvalue())
         f.flush()
-        api.datasets.upload(domain_id, f.name, name="sensor_data")
-    step("Dataset uploaded.")
+        dataset = api.datasets.upload(
+            domain_id=domain_id, file_path=f.name, name="sensor_data.csv",
+        )
+    dataset_id = dataset["id"]
+    step(f"Dataset #{dataset_id} uploaded.")
+
+    step("Building ontology...")
+    onto = api.domains.build_ontology(domain_id)
+    job_id = onto.get("job_id") or (onto.get("job") or {}).get("id")
+    if job_id:
+        api.wait_for_job(job_id, timeout=180)
+    domain = api.domains.get(domain_id)
+    step(f"Ontology status: {domain['status']}")
 
     # -- 2. Build verified platform with require_confidence ------------------
 
     step("Building verified platform (tau=0.6, require_confidence=True)...")
-    platform = api.platforms.create(
+    build = api.platforms.create(
         domain_id=domain_id,
+        dataset_id=dataset_id,
         verified_profile=True,
         verified_min_confidence=0.6,
         require_confidence=True,
     )
-    platform_id = platform["id"]
+    platform_id = build["id"]
+    build_job_id = build.get("job_id") or (build.get("build_job") or {}).get("id")
     step(f"Platform #{platform_id} building...")
 
-    import time
-    for _ in range(60):
-        p = api.platforms.get(platform_id)
-        if p["status"] in ("active", "failed"):
-            break
-        time.sleep(2)
+    if build_job_id:
+        api.wait_for_job(build_job_id, timeout=300)
 
-    assert p["status"] == "active", f"Platform build failed: {p}"
+    platform = api.platforms.get(platform_id)
+    assert platform["status"] == "active", f"Platform build failed: {platform}"
     step(f"Platform #{platform_id} active.")
 
     # -- 3. Add a rule that references the confidence companion ---------------
 
     step("Adding a rule that uses _aria_confidence__sensor_reading...")
-    api.platforms.add_rule(
+    api.platforms.create_rule(
         platform_id,
         name="escalate_low_confidence",
         condition={
@@ -152,9 +157,43 @@ def main() -> None:
     except AmbertraceError as exc:
         step(f"  Correctly refused (HTTP {exc.status_code}).")
 
-    # -- 7. Clean up ---------------------------------------------------------
+    # -- 7. Carrier on a NON-verified platform (should be REFUSED) -----------
+    #
+    # A confidence carrier sent to a platform that has NO verified profile is
+    # rejected with a clear error (fail-loud) rather than silently ignoring the
+    # confidence field.  This protects against accidentally sending structured
+    # facts to the wrong platform.
+
+    step("Building a non-verified platform for the carrier-rejection test...")
+    nv_build = api.platforms.create(
+        domain_id=domain_id,
+        dataset_id=dataset_id,
+        name="Non-Verified (Confidence Rejection Test)",
+    )
+    nv_platform_id = nv_build["id"]
+    nv_job_id = nv_build.get("job_id") or (nv_build.get("build_job") or {}).get("id")
+    if nv_job_id:
+        api.wait_for_job(nv_job_id, timeout=300)
+    nv = api.platforms.get(nv_platform_id)
+    assert nv["status"] == "active", f"Non-verified platform build failed: {nv}"
+    step(f"  Non-verified platform #{nv_platform_id} active.")
+
+    step("Sending confidence carrier to non-verified platform -- expect rejection...")
+    try:
+        api.platforms.query(
+            nv_platform_id,
+            query="Assess this sensor reading.",
+            facts={"sensor_reading": {"value": 75, "confidence": 0.95}},
+        )
+        step("  ERROR: carrier should have been rejected but was not.")
+        sys.exit(1)
+    except AmbertraceError as exc:
+        step(f"  Correctly rejected (HTTP {exc.status_code}): carrier on non-verified platform.")
+
+    # -- 8. Clean up ---------------------------------------------------------
 
     step("Cleaning up...")
+    api.platforms.delete(nv_platform_id)
     api.platforms.delete(platform_id)
     api.domains.delete(domain_id)
     step("Done -- all behaviours verified.")

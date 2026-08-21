@@ -102,11 +102,13 @@ class PredictionConfigCreate:
             mode (str | Unset): Prediction mode. 'timeseries' learns temporal patterns (lags, rolling windows, seasonality)
                 and forecasts future values. 'cross_sectional' treats each row independently and learns a direct feature-to-
                 target mapping. Default: 'timeseries'. Default: 'timeseries'.
-            model_tier (str | Unset): Model complexity tier. Currently only 'tier1' (sklearn regressors) is supported.
-                Default: 'tier1'.
+            model_tier (str | Unset): Model complexity tier. Currently only 'tier1' is supported: the built-in registry
+                (sklearn GBT/ridge/lasso + CPU-trainable PyTorch LSTM/Transformer). Default: 'tier1'.
             model_type (str | Unset): Algorithm to use. Options: 'gbt' (Gradient Boosted Trees — best general-purpose
-                choice), 'ridge' (L2-regularised linear), 'lasso' (L1-regularised linear, good for sparse features). Default:
-                'gbt'.
+                choice), 'ridge' (L2-regularised linear), 'lasso' (L1-regularised linear, good for sparse features), 'lstm'
+                (LSTM recurrent network — slower to train, CPU-viable), 'transformer' (Transformer encoder — slower to train,
+                CPU-viable). LSTM/Transformer train in ~200 epochs on CPU; training is async (202 + poll) so the cost is wall-
+                clock, not request-blocking. Default: 'gbt'.
             neural_confidence_tau (float | Unset): Per-point neural-tier confidence threshold (timeseries mode only). The
                 GBT prediction is admitted as 'neural_scored' when its two-axis confidence (Axis A: in-training-range OOD gate +
                 Axis B: interval sharpness) >= tau. Below tau the raw GBT prediction is still served with tier 'neural_weak' and
