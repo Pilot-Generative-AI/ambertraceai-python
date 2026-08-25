@@ -219,8 +219,11 @@ def _await_job(
     what: str,
     timeout: int,
     poll_interval: int,
+    *,
+    type: str | None = None,
 ) -> dict[str, Any]:
-    job = api.wait_for_job(int(job_id), timeout=timeout, poll_interval=poll_interval)
+    job = api.wait_for_job(int(job_id), timeout=timeout, poll_interval=poll_interval,
+                           type=type)
     status = job.get("status", "")
     if status in _FAILED_STATUSES:
         raise RuntimeError(f"{what} failed (job {job_id}: {job.get('error_message') or status})")
@@ -352,7 +355,8 @@ def build_platform(
     job_id = _first(resp, "job_id") or _nested_id(resp, "build_job", "job")
 
     if job_id is not None:
-        _await_job(api, job_id, f"Platform build for domain {domain_id}", timeout, poll_interval)
+        _await_job(api, job_id, f"Platform build for domain {domain_id}", timeout, poll_interval,
+                   type='build')
     elif platform_id is not None:
         _poll_status(
             lambda: api.platforms.status(int(platform_id)), timeout, poll_interval,

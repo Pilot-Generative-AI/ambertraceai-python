@@ -1173,6 +1173,7 @@ class PlatformResource(_Resource):
               predictions: dict[str, dict[str, str | None]] | None = None,
               relations: dict[str, list[dict]] | None = None,
               top_k: int = 10,
+              projection: list[str] | None = None,
               **kwargs) -> QueryResult:
         """Query a platform; returns ``{answer, decision, explanation, ...}``.
 
@@ -1323,6 +1324,17 @@ class PlatformResource(_Resource):
             # exclusion_breach and ais_corroborated is true") derives the cue from
             # the attached rows — no pre-joined boolean in `facts`.
 
+        ``projection`` (``list[str] | None``, default ``None``) — compact mode
+        (#1656). When supplied, ONLY the listed top-level response field names
+        (e.g. ``["decision", "proof_checked"]``) PLUS the always-present anchors
+        (``platform_id``, ``query``) are included in the response; all other
+        fields are omitted. Use this for high-throughput callers (verifiers,
+        batch scorers) that need only the decision / proof surface and want to
+        avoid transferring the full explanation payload. ``None`` (default)
+        returns the full response — existing callers are unaffected.
+
+        Also available on :meth:`query_batch` (per-item and batch-level).
+
         Dense-reward / audit consumers (e.g. ``ambertrace-rlvr``): when
         ``explain`` is True the ``explanation`` is a DOCUMENTED, VERSIONED trace
         (typed as :class:`~ambertraceai.QueryExplanation`) you can compute a
@@ -1385,7 +1397,56 @@ class PlatformResource(_Resource):
             body["predictions"] = predictions
         if relations is not None:
             body["relations"] = relations
+        if projection is not None:
+            body["projection"] = projection
         return self._request("POST", f"/api/v1/platforms/{platform_id}/query", json=body)
+
+    def query_batch(
+        self,
+        platform_id: int,
+        *,
+        queries: list[dict[str, Any]],
+        projection: list[str] | None = None,
+    ) -> dict:
+        """Execute N queries against a single platform in one call (#1656).
+
+        Each item in *queries* is a dict with the same keys as the single-query
+        method (``query``, ``explain``, ``top_k``, ``facts``, ``predictions``,
+        ``relations``, ``projection``).  A failure in one item produces a
+        per-item error object (``status: "error"``), never a batch-level
+        failure.  Results are returned in the same order as *queries*.
+
+        *projection* is a batch-level default list of top-level response field
+        names to include (e.g. ``["decision", "proof_checked"]``).  Each item
+        may override with its own ``projection``.  ``None`` (default) returns
+        the full response for every item.
+
+        Returns ``{platform_id, results: [{index, status, data?, error?}, ...]}``.
+
+        Maximum 50 queries per batch.
+
+        Example::
+
+            results = api.platforms.query_batch(
+                pid,
+                queries=[
+                    {"query": "Classify A", "facts": {"score": 700}},
+                    {"query": "Classify B", "facts": {"score": 400}},
+                ],
+                projection=["decision", "proof_checked"],
+            )
+            for item in results["results"]:
+                if item["status"] == "ok":
+                    print(item["data"]["decision"])
+                else:
+                    print(f"item {item['index']} failed: {item['error']}")
+        """
+        body: dict[str, Any] = {"queries": queries}
+        if projection is not None:
+            body["projection"] = projection
+        return self._request(
+            "POST", f"/api/v1/platforms/{platform_id}/query-batch", json=body,
+        )
 
     def suggest_rules(self, platform_id: int, *, max_suggestions: int = 5) -> dict:
         return self._request("POST", f"/api/v1/platforms/{platform_id}/suggest-rules", json={"max_suggestions": max_suggestions})
@@ -3188,12 +3249,19 @@ class AgentPolicyResource(_Resource):
 
 
 class JobResource(_Resource):
-    def get(self, job_id: int | str) -> JobOut:
+    def get(self, job_id: int | str, *, type: str | None = None) -> JobOut:
         """Fetch a job by id.
 
         ``job_id`` is typically an ``int``, but some deployments/resources use
         string ids (a session job id polled by ``author``); ``int | str`` is
         accepted and interpolated into the path either way.
+
+        ``type`` — optional job-type hint (``"build"`` or ``"cleaning"``).
+        When multiple job tables share the same auto-increment integer ID,
+        passing ``type`` restricts the lookup to the correct table.  Platform
+        build callers should pass ``type="build"``; dataset cleaning callers
+        should pass ``type="cleaning"``.  When omitted the endpoint searches
+        all tables (generic Job first).
 
         Two job *types* surface through this one endpoint — be sure you are
         polling the right one:
@@ -3210,7 +3278,89 @@ class JobResource(_Resource):
         A consumer polling the *ontology* job id will never see
         ``generation_diagnostics``; poll the **platform build job** id instead.
         """
-        return self._request("GET", f"/api/v1/jobs/{job_id}")
+        params: dict[str, str] = {}
+        if type is not None:
+            params["type"] = type
+        return self._request("GET", f"/api/v1/jobs/{job_id}", params=params)
+
+
+class AuditResource(_Resource):
+    """Read-only access to the org-scoped audit trail and access-review snapshot.
+
+    Two surfaces:
+
+    - :meth:`list_events` — the append-only sharing/team/role event log
+      (SIEM export, #865).
+    - :meth:`access_review` — a point-in-time member + role snapshot for
+      periodic access reviews (SOC 2 CC6.2/CC6.3, #1067).
+
+    Both require org-admin privileges (403 otherwise). Org-scoped: only the
+    caller's own organisation's data is ever returned.
+
+    Known event types (list_events): ``team_member_added``,
+    ``team_member_removed``, ``domain_shared``, ``platform_shared``,
+    ``share_revoked``, ``role_created``, ``role_updated``, ``role_deleted``,
+    ``role_assigned``, ``role_revoked``, ``org_admin_granted``,
+    ``org_admin_revoked``.
+
+    Note: SSO/login authentication events are not currently written to
+    this trail. Coverage is limited to team/sharing/role events.
+    """
+
+    def list_events(
+        self,
+        *,
+        event_type: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> dict:
+        """List audit events for the caller's organisation (org-admin only).
+
+        Filterable by ``event_type`` (e.g. ``domain_shared``,
+        ``team_member_added``, ``role_assigned``) and date range
+        (``start_date`` / ``end_date``, ISO-8601). A date-only ``end_date``
+        is inclusive of the whole day. Paginated via ``limit`` / ``offset``
+        (defaults 50 / 0, max 200 per page). Returns newest events first.
+
+        Requires a user-scoped API key or browser session
+        (platform-scoped keys receive 403).
+
+        Designed for SIEM consumption: poll periodically with an advancing
+        ``start_date`` to ingest new events incrementally.
+        """
+        params: dict[str, Any] = {"limit": limit, "offset": offset}
+        if event_type is not None:
+            params["event_type"] = event_type
+        if start_date is not None:
+            params["start_date"] = start_date
+        if end_date is not None:
+            params["end_date"] = end_date
+        return self._request("GET", "/api/v1/audit", params=params)
+
+    def access_review(
+        self,
+        *,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> dict:
+        """Point-in-time member + role snapshot for periodic access reviews.
+
+        Returns every member in the caller's organisation with their current
+        RBAC role assignments, org-admin status, and assignment provenance
+        (``manual`` / ``sso`` / ``scim``). Designed for SOC 2 CC6.2/CC6.3
+        evidence: export the snapshot, diff against the previous period, and
+        flag stale entitlements.
+
+        Paginated via ``limit`` / ``offset`` (defaults 50 / 0, max 200 per
+        page). The response carries a ``generated_at`` ISO timestamp.
+
+        Requires a user-scoped API key or browser session with org-admin
+        privileges (platform-scoped keys receive 403).
+        """
+        params: dict[str, Any] = {"limit": limit, "offset": offset}
+        return self._request("GET", "/api/v1/access-review", params=params)
 
 
 class UsageResource(_Resource):
@@ -3477,6 +3627,12 @@ class AmbertraceAPI:
         return AgentPolicyResource(self._http)
 
     @property
+    def audit(self) -> AuditResource:
+        """Read-only access to the org-scoped audit trail for SIEM export
+        (see :class:`AuditResource`)."""
+        return AuditResource(self._http)
+
+    @property
     def usage(self) -> UsageResource:
         return UsageResource(self._http)
 
@@ -3492,7 +3648,8 @@ class AmbertraceAPI:
 
     def wait_for_job(self, job_id: int | str, *, timeout: int = 600, poll_interval: int = 5,
                      on_progress: Callable[[JobOut], None] | None = None,
-                     stall_timeout: float | None = None) -> JobOut:
+                     stall_timeout: float | None = None,
+                     type: str | None = None) -> JobOut:
         """Poll a job until it reaches a terminal status or times out.
 
         ``poll_interval`` — seconds between polls (default 5). Clamped to a
@@ -3595,7 +3752,7 @@ class AmbertraceAPI:
         last_progress_at = time.monotonic()
         polls_since_progress = 0
         while True:
-            job = self.jobs.get(job_id)
+            job = self.jobs.get(job_id, type=type)
             status = job.get("status", "")
             if on_progress is not None:
                 on_progress(job)

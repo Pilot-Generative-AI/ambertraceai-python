@@ -1,23 +1,19 @@
 from http import HTTPStatus
-from typing import Any
-from urllib.parse import quote
+from typing import Any, cast
 
 import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.graph_nodes_response import GraphNodesResponse
+from ...models.access_review_snapshot_out import AccessReviewSnapshotOut
 from ...models.validation_error_model import ValidationErrorModel
 from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
-    id: int,
     *,
     limit: int | Unset = 50,
     offset: int | Unset = 0,
-    node_type: None | str | Unset = UNSET,
-    relation_type: None | str | Unset = UNSET,
 ) -> dict[str, Any]:
 
     params: dict[str, Any] = {}
@@ -26,27 +22,11 @@ def _get_kwargs(
 
     params["offset"] = offset
 
-    json_node_type: None | str | Unset
-    if isinstance(node_type, Unset):
-        json_node_type = UNSET
-    else:
-        json_node_type = node_type
-    params["node_type"] = json_node_type
-
-    json_relation_type: None | str | Unset
-    if isinstance(relation_type, Unset):
-        json_relation_type = UNSET
-    else:
-        json_relation_type = relation_type
-    params["relation_type"] = json_relation_type
-
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/api/v1/platforms/{id}/graph".format(
-            id=quote(str(id), safe=""),
-        ),
+        "url": "/api/v1/access-review",
         "params": params,
     }
 
@@ -55,11 +35,15 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> GraphNodesResponse | list[ValidationErrorModel] | None:
+) -> AccessReviewSnapshotOut | Any | list[ValidationErrorModel] | None:
     if response.status_code == 200:
-        response_200 = GraphNodesResponse.from_dict(response.json())
+        response_200 = AccessReviewSnapshotOut.from_dict(response.json())
 
         return response_200
+
+    if response.status_code == 403:
+        response_403 = cast(Any, None)
+        return response_403
 
     if response.status_code == 422:
         response_422 = []
@@ -79,7 +63,7 @@ def _parse_response(
 
 def _build_response(
     *, client: AuthenticatedClient | Client, response: httpx.Response
-) -> Response[GraphNodesResponse | list[ValidationErrorModel]]:
+) -> Response[AccessReviewSnapshotOut | Any | list[ValidationErrorModel]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -89,40 +73,37 @@ def _build_response(
 
 
 def sync_detailed(
-    id: int,
     *,
     client: AuthenticatedClient | Client,
     limit: int | Unset = 50,
     offset: int | Unset = 0,
-    node_type: None | str | Unset = UNSET,
-    relation_type: None | str | Unset = UNSET,
-) -> Response[GraphNodesResponse | list[ValidationErrorModel]]:
-    """Get knowledge graph
+) -> Response[AccessReviewSnapshotOut | Any | list[ValidationErrorModel]]:
+    """Access-review snapshot (SOC 2 CC6.2/CC6.3)
 
-     Returns nodes and edges from the platform's knowledge graph. Supports pagination and filtering by
-    node_type and relation_type. Edges are limited to 500 per request.
+     Returns a point-in-time snapshot of every member in the caller's organisation with their current
+    RBAC role assignments. Designed for periodic access-review evidence (SOC 2 CC6.2/CC6.3): export the
+    snapshot, diff against the previous period, and flag stale entitlements.
+
+    Org-admin only (403 otherwise). Org-scoped: only the caller's own organisation's members are ever
+    returned. Each member entry includes ``is_org_admin`` (boolean) and a ``roles`` list with role name,
+    assignment source (``manual`` / ``sso`` / ``scim``), and assignment date. Members with no role
+    assignments appear with an empty ``roles`` list. Paginated via ``limit`` / ``offset``.
 
     Args:
-        id (int): Resource ID
         limit (int | Unset):  Default: 50.
         offset (int | Unset):  Default: 0.
-        node_type (None | str | Unset):
-        relation_type (None | str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[GraphNodesResponse | list[ValidationErrorModel]]
+        Response[AccessReviewSnapshotOut | Any | list[ValidationErrorModel]]
     """
 
     kwargs = _get_kwargs(
-        id=id,
         limit=limit,
         offset=offset,
-        node_type=node_type,
-        relation_type=relation_type,
     )
 
     response = client.get_httpx_client().request(
@@ -133,79 +114,73 @@ def sync_detailed(
 
 
 def sync(
-    id: int,
     *,
     client: AuthenticatedClient | Client,
     limit: int | Unset = 50,
     offset: int | Unset = 0,
-    node_type: None | str | Unset = UNSET,
-    relation_type: None | str | Unset = UNSET,
-) -> GraphNodesResponse | list[ValidationErrorModel] | None:
-    """Get knowledge graph
+) -> AccessReviewSnapshotOut | Any | list[ValidationErrorModel] | None:
+    """Access-review snapshot (SOC 2 CC6.2/CC6.3)
 
-     Returns nodes and edges from the platform's knowledge graph. Supports pagination and filtering by
-    node_type and relation_type. Edges are limited to 500 per request.
+     Returns a point-in-time snapshot of every member in the caller's organisation with their current
+    RBAC role assignments. Designed for periodic access-review evidence (SOC 2 CC6.2/CC6.3): export the
+    snapshot, diff against the previous period, and flag stale entitlements.
+
+    Org-admin only (403 otherwise). Org-scoped: only the caller's own organisation's members are ever
+    returned. Each member entry includes ``is_org_admin`` (boolean) and a ``roles`` list with role name,
+    assignment source (``manual`` / ``sso`` / ``scim``), and assignment date. Members with no role
+    assignments appear with an empty ``roles`` list. Paginated via ``limit`` / ``offset``.
 
     Args:
-        id (int): Resource ID
         limit (int | Unset):  Default: 50.
         offset (int | Unset):  Default: 0.
-        node_type (None | str | Unset):
-        relation_type (None | str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GraphNodesResponse | list[ValidationErrorModel]
+        AccessReviewSnapshotOut | Any | list[ValidationErrorModel]
     """
 
     return sync_detailed(
-        id=id,
         client=client,
         limit=limit,
         offset=offset,
-        node_type=node_type,
-        relation_type=relation_type,
     ).parsed
 
 
 async def asyncio_detailed(
-    id: int,
     *,
     client: AuthenticatedClient | Client,
     limit: int | Unset = 50,
     offset: int | Unset = 0,
-    node_type: None | str | Unset = UNSET,
-    relation_type: None | str | Unset = UNSET,
-) -> Response[GraphNodesResponse | list[ValidationErrorModel]]:
-    """Get knowledge graph
+) -> Response[AccessReviewSnapshotOut | Any | list[ValidationErrorModel]]:
+    """Access-review snapshot (SOC 2 CC6.2/CC6.3)
 
-     Returns nodes and edges from the platform's knowledge graph. Supports pagination and filtering by
-    node_type and relation_type. Edges are limited to 500 per request.
+     Returns a point-in-time snapshot of every member in the caller's organisation with their current
+    RBAC role assignments. Designed for periodic access-review evidence (SOC 2 CC6.2/CC6.3): export the
+    snapshot, diff against the previous period, and flag stale entitlements.
+
+    Org-admin only (403 otherwise). Org-scoped: only the caller's own organisation's members are ever
+    returned. Each member entry includes ``is_org_admin`` (boolean) and a ``roles`` list with role name,
+    assignment source (``manual`` / ``sso`` / ``scim``), and assignment date. Members with no role
+    assignments appear with an empty ``roles`` list. Paginated via ``limit`` / ``offset``.
 
     Args:
-        id (int): Resource ID
         limit (int | Unset):  Default: 50.
         offset (int | Unset):  Default: 0.
-        node_type (None | str | Unset):
-        relation_type (None | str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[GraphNodesResponse | list[ValidationErrorModel]]
+        Response[AccessReviewSnapshotOut | Any | list[ValidationErrorModel]]
     """
 
     kwargs = _get_kwargs(
-        id=id,
         limit=limit,
         offset=offset,
-        node_type=node_type,
-        relation_type=relation_type,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -214,41 +189,38 @@ async def asyncio_detailed(
 
 
 async def asyncio(
-    id: int,
     *,
     client: AuthenticatedClient | Client,
     limit: int | Unset = 50,
     offset: int | Unset = 0,
-    node_type: None | str | Unset = UNSET,
-    relation_type: None | str | Unset = UNSET,
-) -> GraphNodesResponse | list[ValidationErrorModel] | None:
-    """Get knowledge graph
+) -> AccessReviewSnapshotOut | Any | list[ValidationErrorModel] | None:
+    """Access-review snapshot (SOC 2 CC6.2/CC6.3)
 
-     Returns nodes and edges from the platform's knowledge graph. Supports pagination and filtering by
-    node_type and relation_type. Edges are limited to 500 per request.
+     Returns a point-in-time snapshot of every member in the caller's organisation with their current
+    RBAC role assignments. Designed for periodic access-review evidence (SOC 2 CC6.2/CC6.3): export the
+    snapshot, diff against the previous period, and flag stale entitlements.
+
+    Org-admin only (403 otherwise). Org-scoped: only the caller's own organisation's members are ever
+    returned. Each member entry includes ``is_org_admin`` (boolean) and a ``roles`` list with role name,
+    assignment source (``manual`` / ``sso`` / ``scim``), and assignment date. Members with no role
+    assignments appear with an empty ``roles`` list. Paginated via ``limit`` / ``offset``.
 
     Args:
-        id (int): Resource ID
         limit (int | Unset):  Default: 50.
         offset (int | Unset):  Default: 0.
-        node_type (None | str | Unset):
-        relation_type (None | str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        GraphNodesResponse | list[ValidationErrorModel]
+        AccessReviewSnapshotOut | Any | list[ValidationErrorModel]
     """
 
     return (
         await asyncio_detailed(
-            id=id,
             client=client,
             limit=limit,
             offset=offset,
-            node_type=node_type,
-            relation_type=relation_type,
         )
     ).parsed

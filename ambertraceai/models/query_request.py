@@ -55,6 +55,12 @@ class QueryRequest:
             absence of an uncertified reference (the permit-guard drops any permit resting on a negation-as-failure over an
             uncertified key; surfaced in explanation.rejected_facts + explanation.graceful_escalate). Verified platforms
             only. Example: {"ust_10y": {"model_id": "ust_10y", "as_of": "2026-06-30"}}.
+        projection (list[str] | None | Unset): Optional list of top-level response field names to INCLUDE in the
+            response (e.g. ``["decision", "proof_checked"]``). When ``None`` (default) the full response is returned — byte-
+            identical to the pre-projection contract. When supplied, only the listed fields plus ``platform_id`` and
+            ``query`` (always present) are included; non-requested fields are omitted. Use this for high-throughput callers
+            (verifiers, batch scorers) that need only the decision / proof surface and want to avoid transferring the full
+            explanation payload.
         relations (None | QueryRequestRelationsType0 | Unset): Optional ATTACHED RELATED FACTS as a {relation_name:
             [row, ...]} map, where each row is a {column: scalar} dict. These ride alongside the focal `facts` (the scalar
             row, including any join-key column) and let a rule bring a relational join INSIDE the verified decision: an
@@ -69,6 +75,7 @@ class QueryRequest:
     explain: bool | Unset = True
     facts: None | QueryRequestFactsType0 | Unset = UNSET
     predictions: None | QueryRequestPredictionsType0 | Unset = UNSET
+    projection: list[str] | None | Unset = UNSET
     relations: None | QueryRequestRelationsType0 | Unset = UNSET
     top_k: int | Unset = 10
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -98,6 +105,15 @@ class QueryRequest:
         else:
             predictions = self.predictions
 
+        projection: list[str] | None | Unset
+        if isinstance(self.projection, Unset):
+            projection = UNSET
+        elif isinstance(self.projection, list):
+            projection = self.projection
+
+        else:
+            projection = self.projection
+
         relations: dict[str, Any] | None | Unset
         if isinstance(self.relations, Unset):
             relations = UNSET
@@ -121,6 +137,8 @@ class QueryRequest:
             field_dict["facts"] = facts
         if predictions is not UNSET:
             field_dict["predictions"] = predictions
+        if projection is not UNSET:
+            field_dict["projection"] = projection
         if relations is not UNSET:
             field_dict["relations"] = relations
         if top_k is not UNSET:
@@ -173,6 +191,23 @@ class QueryRequest:
 
         predictions = _parse_predictions(d.pop("predictions", UNSET))
 
+        def _parse_projection(data: object) -> list[str] | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, list):
+                    raise TypeError()
+                projection_type_0 = cast(list[str], data)
+
+                return projection_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(list[str] | None | Unset, data)
+
+        projection = _parse_projection(d.pop("projection", UNSET))
+
         def _parse_relations(data: object) -> None | QueryRequestRelationsType0 | Unset:
             if data is None:
                 return data
@@ -197,6 +232,7 @@ class QueryRequest:
             explain=explain,
             facts=facts,
             predictions=predictions,
+            projection=projection,
             relations=relations,
             top_k=top_k,
         )

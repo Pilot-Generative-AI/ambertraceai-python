@@ -86,7 +86,7 @@ def main() -> None:
     step(f"Platform #{platform_id} building...")
 
     if build_job_id:
-        api.wait_for_job(build_job_id, timeout=300)
+        api.wait_for_job(build_job_id, timeout=300, type='build')
 
     platform = api.platforms.get(platform_id)
     assert platform["status"] == "active", f"Platform build failed: {platform}"
@@ -173,7 +173,7 @@ def main() -> None:
     nv_platform_id = nv_build["id"]
     nv_job_id = nv_build.get("job_id") or (nv_build.get("build_job") or {}).get("id")
     if nv_job_id:
-        api.wait_for_job(nv_job_id, timeout=300)
+        api.wait_for_job(nv_job_id, timeout=300, type='build')
     nv = api.platforms.get(nv_platform_id)
     assert nv["status"] == "active", f"Non-verified platform build failed: {nv}"
     step(f"  Non-verified platform #{nv_platform_id} active.")

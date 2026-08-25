@@ -177,7 +177,7 @@ def run_records_gate(api, args: argparse.Namespace) -> None:
              "scored_determinations": SCORED_DETERMINATIONS} if verified else {}
     resp = api.platforms.create(domain_id=domain["id"], dataset_id=dataset["id"], **extra)
     pid = resp["id"]
-    api.wait_for_job(resp.job_id)
+    api.wait_for_job(resp.job_id, type='build')
     # scored_determinations is also settable post-hoc via platforms.update:
     #   api.platforms.update(pid, scored_determinations=SCORED_DETERMINATIONS)
     platform = api.platforms.get(pid)

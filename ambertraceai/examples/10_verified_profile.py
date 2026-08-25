@@ -77,7 +77,7 @@ def main() -> None:
     )
     job_id = build.get("job_id") or (build.get("job") or {}).get("id")
     if job_id:
-        api.wait_for_job(job_id, timeout=300)
+        api.wait_for_job(job_id, timeout=300, type='build')
     platform = api.platforms.get(build["id"])
     platform_id = platform["id"]
     verified = platform.get("verified_profile", False)

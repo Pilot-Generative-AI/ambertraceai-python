@@ -6,20 +6,37 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
+from ...models.get_job_type_type_0 import GetJobTypeType0
 from ...models.job_out import JobOut
 from ...models.validation_error_model import ValidationErrorModel
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     id: int,
+    *,
+    type_: GetJobTypeType0 | None | Unset = UNSET,
 ) -> dict[str, Any]:
+
+    params: dict[str, Any] = {}
+
+    json_type_: None | str | Unset
+    if isinstance(type_, Unset):
+        json_type_ = UNSET
+    elif isinstance(type_, GetJobTypeType0):
+        json_type_ = type_.value
+    else:
+        json_type_ = type_
+    params["type"] = json_type_
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/api/v1/jobs/{id}".format(
             id=quote(str(id), safe=""),
         ),
+        "params": params,
     }
 
     return _kwargs
@@ -64,6 +81,7 @@ def sync_detailed(
     id: int,
     *,
     client: AuthenticatedClient | Client,
+    type_: GetJobTypeType0 | None | Unset = UNSET,
 ) -> Response[JobOut | list[ValidationErrorModel]]:
     """Get job status
 
@@ -80,6 +98,9 @@ def sync_detailed(
 
     Args:
         id (int): Resource ID
+        type_ (GetJobTypeType0 | None | Unset): Job type hint. Pass "build" when polling a
+            platform build job, "cleaning" when polling a dataset cleaning job. When omitted the
+            endpoint searches all tables (generic Job first).
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -91,6 +112,7 @@ def sync_detailed(
 
     kwargs = _get_kwargs(
         id=id,
+        type_=type_,
     )
 
     response = client.get_httpx_client().request(
@@ -104,6 +126,7 @@ def sync(
     id: int,
     *,
     client: AuthenticatedClient | Client,
+    type_: GetJobTypeType0 | None | Unset = UNSET,
 ) -> JobOut | list[ValidationErrorModel] | None:
     """Get job status
 
@@ -120,6 +143,9 @@ def sync(
 
     Args:
         id (int): Resource ID
+        type_ (GetJobTypeType0 | None | Unset): Job type hint. Pass "build" when polling a
+            platform build job, "cleaning" when polling a dataset cleaning job. When omitted the
+            endpoint searches all tables (generic Job first).
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -132,6 +158,7 @@ def sync(
     return sync_detailed(
         id=id,
         client=client,
+        type_=type_,
     ).parsed
 
 
@@ -139,6 +166,7 @@ async def asyncio_detailed(
     id: int,
     *,
     client: AuthenticatedClient | Client,
+    type_: GetJobTypeType0 | None | Unset = UNSET,
 ) -> Response[JobOut | list[ValidationErrorModel]]:
     """Get job status
 
@@ -155,6 +183,9 @@ async def asyncio_detailed(
 
     Args:
         id (int): Resource ID
+        type_ (GetJobTypeType0 | None | Unset): Job type hint. Pass "build" when polling a
+            platform build job, "cleaning" when polling a dataset cleaning job. When omitted the
+            endpoint searches all tables (generic Job first).
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -166,6 +197,7 @@ async def asyncio_detailed(
 
     kwargs = _get_kwargs(
         id=id,
+        type_=type_,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -177,6 +209,7 @@ async def asyncio(
     id: int,
     *,
     client: AuthenticatedClient | Client,
+    type_: GetJobTypeType0 | None | Unset = UNSET,
 ) -> JobOut | list[ValidationErrorModel] | None:
     """Get job status
 
@@ -193,6 +226,9 @@ async def asyncio(
 
     Args:
         id (int): Resource ID
+        type_ (GetJobTypeType0 | None | Unset): Job type hint. Pass "build" when polling a
+            platform build job, "cleaning" when polling a dataset cleaning job. When omitted the
+            endpoint searches all tables (generic Job first).
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -206,5 +242,6 @@ async def asyncio(
         await asyncio_detailed(
             id=id,
             client=client,
+            type_=type_,
         )
     ).parsed

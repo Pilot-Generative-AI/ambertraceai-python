@@ -71,7 +71,7 @@ def main() -> None:
         build_job_id = result["build_job"]["id"]
         step(f"Building platform #{platform_id} (job #{build_job_id})…")
 
-        job = api.wait_for_job(build_job_id, timeout=600)
+        job = api.wait_for_job(build_job_id, timeout=600, type='build')
         step(f"Build finished: status={job.get('status')}")
         if job.get("status") in ("error", "failed"):
             step(f"Build error: {job.get('error_message')}")

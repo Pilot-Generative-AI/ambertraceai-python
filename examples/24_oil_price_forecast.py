@@ -91,7 +91,7 @@ def main() -> None:
 
         result = api.platforms.create(domain_id=domain_id, dataset_id=dataset["id"])
         platform_id = result["platform"]["id"]
-        api.wait_for_job(result["build_job"]["id"], timeout=600)
+        api.wait_for_job(result["build_job"]["id"], timeout=600, type='build')
         step(f"Platform #{platform_id} built")
 
         config = api.predictions.create_config(

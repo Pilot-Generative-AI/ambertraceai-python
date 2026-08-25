@@ -8,18 +8,27 @@ from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.feedback_log_entry import FeedbackLogEntry
 from ...models.validation_error_model import ValidationErrorModel
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     id: int,
+    *,
+    limit: int | Unset = 50,
 ) -> dict[str, Any]:
+
+    params: dict[str, Any] = {}
+
+    params["limit"] = limit
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/api/v1/platforms/{id}/feedback-log".format(
             id=quote(str(id), safe=""),
         ),
+        "params": params,
     }
 
     return _kwargs
@@ -64,6 +73,7 @@ def sync_detailed(
     id: int,
     *,
     client: AuthenticatedClient | Client,
+    limit: int | Unset = 50,
 ) -> Response[FeedbackLogEntry | list[ValidationErrorModel]]:
     """Get feedback log
 
@@ -72,6 +82,7 @@ def sync_detailed(
 
     Args:
         id (int): Resource ID
+        limit (int | Unset): Maximum number of entries to return. Default: 50.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -83,6 +94,7 @@ def sync_detailed(
 
     kwargs = _get_kwargs(
         id=id,
+        limit=limit,
     )
 
     response = client.get_httpx_client().request(
@@ -96,6 +108,7 @@ def sync(
     id: int,
     *,
     client: AuthenticatedClient | Client,
+    limit: int | Unset = 50,
 ) -> FeedbackLogEntry | list[ValidationErrorModel] | None:
     """Get feedback log
 
@@ -104,6 +117,7 @@ def sync(
 
     Args:
         id (int): Resource ID
+        limit (int | Unset): Maximum number of entries to return. Default: 50.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -116,6 +130,7 @@ def sync(
     return sync_detailed(
         id=id,
         client=client,
+        limit=limit,
     ).parsed
 
 
@@ -123,6 +138,7 @@ async def asyncio_detailed(
     id: int,
     *,
     client: AuthenticatedClient | Client,
+    limit: int | Unset = 50,
 ) -> Response[FeedbackLogEntry | list[ValidationErrorModel]]:
     """Get feedback log
 
@@ -131,6 +147,7 @@ async def asyncio_detailed(
 
     Args:
         id (int): Resource ID
+        limit (int | Unset): Maximum number of entries to return. Default: 50.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -142,6 +159,7 @@ async def asyncio_detailed(
 
     kwargs = _get_kwargs(
         id=id,
+        limit=limit,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -153,6 +171,7 @@ async def asyncio(
     id: int,
     *,
     client: AuthenticatedClient | Client,
+    limit: int | Unset = 50,
 ) -> FeedbackLogEntry | list[ValidationErrorModel] | None:
     """Get feedback log
 
@@ -161,6 +180,7 @@ async def asyncio(
 
     Args:
         id (int): Resource ID
+        limit (int | Unset): Maximum number of entries to return. Default: 50.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -174,5 +194,6 @@ async def asyncio(
         await asyncio_detailed(
             id=id,
             client=client,
+            limit=limit,
         )
     ).parsed
