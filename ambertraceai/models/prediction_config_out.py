@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.prediction_config_out_objective import PredictionConfigOutObjective
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -57,6 +58,9 @@ class PredictionConfigOut:
         neural_confidence_tau (float | Unset): Per-point neural-tier confidence threshold: GBT prediction admitted as
             neural_scored when confidence >= tau, else neural_weak (raw GBT still served, #1485). 0.0 = gate labels only.
             Default: 0.0.
+        objective (PredictionConfigOutObjective | Unset): Optimisation objective selection. The metric is computed and
+            reported; gate/OBSERVE wiring lands in #2034 increments 3-4. Default:
+            PredictionConfigOutObjective.SKILL_VS_PERSISTENCE.
         output_space (None | str | Unset): Item 6 — the space predict() 'value' will be in given the resolved transform:
             'level' (transform 'none' — value is a level) or 'change' (a differencing transform — predict() reconstructs to
             a level when history is available; see the predict response's 'value_space'). 'unknown (auto — resolved at train
@@ -69,6 +73,8 @@ class PredictionConfigOut:
             auto_reduce run: 'dropped_columns' (per-column {column, action:'dropped_auxiliary', null_count}),
             'usable_rows_before'/'usable_rows_after', 'target_rows', 'target_years', 'usable_span_years_after'. Null when
             auto_reduce has never run or the panel already met the declared bar.
+        regime_platform_id (int | None | Unset): ID of the Decisions platform used for regime conditioning (#2098). Null
+            when no regime platform is configured.
         resolved_target_transform (None | str | Unset): Item 6 — the EFFECTIVE target transform, echoed on the config so
             the output space is known without predicting. When a concrete transform was requested ('none' or 'difference')
             this echoes it immediately at create_config time. When 'auto' was requested it resolves at TRAIN time, so before
@@ -108,9 +114,11 @@ class PredictionConfigOut:
     min_rows: int | None | Unset = UNSET
     mode: str | Unset = "timeseries"
     neural_confidence_tau: float | Unset = 0.0
+    objective: PredictionConfigOutObjective | Unset = PredictionConfigOutObjective.SKILL_VS_PERSISTENCE
     output_space: None | str | Unset = UNSET
     panel_sufficiency: None | PredictionConfigOutPanelSufficiencyType0 | Unset = UNSET
     reduction_manifest: None | PredictionConfigOutReductionManifestType0 | Unset = UNSET
+    regime_platform_id: int | None | Unset = UNSET
     resolved_target_transform: None | str | Unset = UNSET
     target_transform_reason: None | str | Unset = UNSET
     time_index_field: None | str | Unset = UNSET
@@ -234,6 +242,10 @@ class PredictionConfigOut:
 
         neural_confidence_tau = self.neural_confidence_tau
 
+        objective: str | Unset = UNSET
+        if not isinstance(self.objective, Unset):
+            objective = self.objective.value
+
         output_space: None | str | Unset
         if isinstance(self.output_space, Unset):
             output_space = UNSET
@@ -255,6 +267,12 @@ class PredictionConfigOut:
             reduction_manifest = self.reduction_manifest.to_dict()
         else:
             reduction_manifest = self.reduction_manifest
+
+        regime_platform_id: int | None | Unset
+        if isinstance(self.regime_platform_id, Unset):
+            regime_platform_id = UNSET
+        else:
+            regime_platform_id = self.regime_platform_id
 
         resolved_target_transform: None | str | Unset
         if isinstance(self.resolved_target_transform, Unset):
@@ -328,12 +346,16 @@ class PredictionConfigOut:
             field_dict["mode"] = mode
         if neural_confidence_tau is not UNSET:
             field_dict["neural_confidence_tau"] = neural_confidence_tau
+        if objective is not UNSET:
+            field_dict["objective"] = objective
         if output_space is not UNSET:
             field_dict["output_space"] = output_space
         if panel_sufficiency is not UNSET:
             field_dict["panel_sufficiency"] = panel_sufficiency
         if reduction_manifest is not UNSET:
             field_dict["reduction_manifest"] = reduction_manifest
+        if regime_platform_id is not UNSET:
+            field_dict["regime_platform_id"] = regime_platform_id
         if resolved_target_transform is not UNSET:
             field_dict["resolved_target_transform"] = resolved_target_transform
         if target_transform_reason is not UNSET:
@@ -528,6 +550,13 @@ class PredictionConfigOut:
 
         neural_confidence_tau = d.pop("neural_confidence_tau", UNSET)
 
+        _objective = d.pop("objective", UNSET)
+        objective: PredictionConfigOutObjective | Unset
+        if isinstance(_objective, Unset):
+            objective = UNSET
+        else:
+            objective = PredictionConfigOutObjective(_objective)
+
         def _parse_output_space(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -570,6 +599,15 @@ class PredictionConfigOut:
             return cast(None | PredictionConfigOutReductionManifestType0 | Unset, data)
 
         reduction_manifest = _parse_reduction_manifest(d.pop("reduction_manifest", UNSET))
+
+        def _parse_regime_platform_id(data: object) -> int | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(int | None | Unset, data)
+
+        regime_platform_id = _parse_regime_platform_id(d.pop("regime_platform_id", UNSET))
 
         def _parse_resolved_target_transform(data: object) -> None | str | Unset:
             if data is None:
@@ -633,9 +671,11 @@ class PredictionConfigOut:
             min_rows=min_rows,
             mode=mode,
             neural_confidence_tau=neural_confidence_tau,
+            objective=objective,
             output_space=output_space,
             panel_sufficiency=panel_sufficiency,
             reduction_manifest=reduction_manifest,
+            regime_platform_id=regime_platform_id,
             resolved_target_transform=resolved_target_transform,
             target_transform_reason=target_transform_reason,
             time_index_field=time_index_field,

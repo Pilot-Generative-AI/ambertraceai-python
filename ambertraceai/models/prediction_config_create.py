@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.prediction_config_create_objective import PredictionConfigCreateObjective
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -114,6 +115,19 @@ class PredictionConfigCreate:
                 Axis B: interval sharpness) >= tau. Below tau the raw GBT prediction is still served with tier 'neural_weak' and
                 the full confidence certificate (#1485). Default 0.0 (gate labels every prediction with its tier and confidence;
                 set > 0 to distinguish strong vs weak neural predictions). Default: 0.0.
+            objective (PredictionConfigCreateObjective | Unset): Optimisation objective selection (#2034). The chosen
+                objective is stored on the config and the corresponding trading metric is computed and reported in backtest
+                results. NOTE: gate/OBSERVE wiring lands in #2034 increments 3-4 — until then skill_vs_persistence remains the
+                acceptance criterion regardless of this setting. Options: 'skill_vs_persistence' (default — forecast skill
+                relative to a naive persist-last-value baseline), 'directional_pnl' (cumulative directional PnL on the holdout),
+                'sharpe_ratio' (annualised Sharpe of the directional PnL stream), 'hit_rate' (directional hit rate excluding
+                zero-actual-move periods). Trading objectives (pnl/sharpe/hit_rate) require a frequency on the config for
+                annualisation. Default: PredictionConfigCreateObjective.SKILL_VS_PERSISTENCE.
+            regime_platform_id (int | None | Unset): ID of a Decisions platform (same org) that classifies macro regimes
+                (#2098). At build time the panel is batch-classified via this platform and regime labels are injected as one-hot
+                dummy features (regime_<label>). The symbolic forecaster can then learn regime-conditional rules. At forecast
+                time a live single-classify of the current observation is performed and the regime provenance (label + proof
+                certificate) is returned on the payload. Null (default) = no regime conditioning.
             target_transform (None | str | Unset): Top-level shorthand for feature_config['target_transform'] (timeseries
                 mode only). One of 'auto' (the default when omitted) | 'none' | 'difference'; an unknown value is rejected with
                 422 naming the valid set. Equivalent to nesting the same value under feature_config — when BOTH are supplied the
@@ -143,6 +157,8 @@ class PredictionConfigCreate:
     model_tier: str | Unset = "tier1"
     model_type: str | Unset = "gbt"
     neural_confidence_tau: float | Unset = 0.0
+    objective: PredictionConfigCreateObjective | Unset = PredictionConfigCreateObjective.SKILL_VS_PERSISTENCE
+    regime_platform_id: int | None | Unset = UNSET
     target_transform: None | str | Unset = UNSET
     time_index_field: None | str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -244,6 +260,16 @@ class PredictionConfigCreate:
 
         neural_confidence_tau = self.neural_confidence_tau
 
+        objective: str | Unset = UNSET
+        if not isinstance(self.objective, Unset):
+            objective = self.objective.value
+
+        regime_platform_id: int | None | Unset
+        if isinstance(self.regime_platform_id, Unset):
+            regime_platform_id = UNSET
+        else:
+            regime_platform_id = self.regime_platform_id
+
         target_transform: None | str | Unset
         if isinstance(self.target_transform, Unset):
             target_transform = UNSET
@@ -299,6 +325,10 @@ class PredictionConfigCreate:
             field_dict["model_type"] = model_type
         if neural_confidence_tau is not UNSET:
             field_dict["neural_confidence_tau"] = neural_confidence_tau
+        if objective is not UNSET:
+            field_dict["objective"] = objective
+        if regime_platform_id is not UNSET:
+            field_dict["regime_platform_id"] = regime_platform_id
         if target_transform is not UNSET:
             field_dict["target_transform"] = target_transform
         if time_index_field is not UNSET:
@@ -463,6 +493,22 @@ class PredictionConfigCreate:
 
         neural_confidence_tau = d.pop("neural_confidence_tau", UNSET)
 
+        _objective = d.pop("objective", UNSET)
+        objective: PredictionConfigCreateObjective | Unset
+        if isinstance(_objective, Unset):
+            objective = UNSET
+        else:
+            objective = PredictionConfigCreateObjective(_objective)
+
+        def _parse_regime_platform_id(data: object) -> int | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(int | None | Unset, data)
+
+        regime_platform_id = _parse_regime_platform_id(d.pop("regime_platform_id", UNSET))
+
         def _parse_target_transform(data: object) -> None | str | Unset:
             if data is None:
                 return data
@@ -501,6 +547,8 @@ class PredictionConfigCreate:
             model_tier=model_tier,
             model_type=model_type,
             neural_confidence_tau=neural_confidence_tau,
+            objective=objective,
+            regime_platform_id=regime_platform_id,
             target_transform=target_transform,
             time_index_field=time_index_field,
         )

@@ -1828,6 +1828,37 @@ class PredictionResource(_Resource):
         concrete resolved transform once the config is trained. Omitting
         ``target_transform`` altogether now echoes the ``"auto"`` default too
         (it used to read ``"none"`` while the trainer applied ``"auto"``).
+
+        Objective selection (Part of #2034):
+
+        * ``objective`` — optimisation objective for the prediction loop, one of:
+
+          - ``"skill_vs_persistence"`` (DEFAULT) — forecast skill relative to a
+            naive persist-last-value baseline; higher is better.
+          - ``"directional_pnl"`` — cumulative directional PnL on the holdout;
+            higher is better.
+          - ``"sharpe_ratio"`` — annualised Sharpe ratio of the directional PnL
+            stream; higher is better.
+          - ``"hit_rate"`` — directional hit rate, excluding zero-actual-move
+            periods; higher is better.
+
+          The chosen objective is stored on the config and the corresponding
+          trading metric is computed and reported in backtest / predict results.
+          Trading objectives (``directional_pnl``, ``sharpe_ratio``,
+          ``hit_rate``) require ``frequency`` on the config for annualisation.
+          Readable on the returned ``PredictionConfigOut.objective``.
+
+          Example::
+
+              client.predictions.create_config(
+                  platform_id, target_field="SP500", time_index_field="date",
+                  horizon=3, frequency="monthly",
+                  objective="sharpe_ratio",
+              )
+
+          Worked example: ``examples/63_sharpe_objective_forecast.py``.
+
+          .. versionadded:: 2.2.0
         """
         # Map the top-level target_transform shorthand into feature_config so
         # the documented surface is real on any server (the server accepts the
@@ -3657,6 +3688,15 @@ class AmbertraceAPI:
         long builds; a :class:`UserWarning` is emitted when the supplied value
         is below the floor. The effective interval widens gently with each
         stale poll (no forward progress) and resets on progress.
+
+        **Stuck-job detection (#2106).** A job that stays ``pending`` with
+        ``started_at`` null for longer than the server's watchdog threshold
+        (default 30 minutes) is automatically failed by a server-side watchdog
+        with ``error_message`` containing "watchdog". This means
+        ``wait_for_job`` will eventually raise :class:`AmbertraceError` for a
+        stuck job rather than polling indefinitely. Client-side, you can also
+        detect a stuck job early using ``stall_timeout`` (no forward progress
+        for N seconds).
 
         On a terminal FAILED status (``error`` / ``failed``) this **raises**
         :class:`AmbertraceError`, surfacing the job's ``error_message`` — so a
