@@ -63,7 +63,30 @@ def main() -> None:
                 prediction_config_id=config_id,
                 feature_overrides={"risk_score": 0.5},
             )
-            step(f"Prediction: {result.get('prediction') or result}")
+            pred = result.get("prediction") or result
+            step(f"Prediction: {pred}")
+
+            # Report: rule_layer_marginal is the headline metric of merit --
+            # composed_skill minus the best-of-registry neural baseline.
+            # marginal_baseline says which baseline: 'neural_registry' or
+            # 'anchor_only' (fallback when neural tier didn't train).
+            # skill_vs_persistence is retained as an external reference.
+            if isinstance(pred, dict):
+                rlm = pred.get("rule_layer_marginal")
+                mb = pred.get("marginal_baseline", "")
+                svp = pred.get("skill_vs_persistence")
+                dpnl = pred.get("directional_pnl")
+                hr = pred.get("hit_rate")
+                sr = pred.get("sharpe_ratio")
+                step(
+                    f"Rule-layer marginal: {rlm} ({mb})  |  "
+                    f"Skill vs persistence (ref): {svp}"
+                )
+                if any(v is not None for v in (dpnl, hr, sr)):
+                    step(
+                        f"Trading metrics -- dir_pnl: {dpnl}  "
+                        f"hit_rate: {hr}  sharpe: {sr}"
+                    )
         else:
             step("Model not trained (the platform's data may not suit this target).")
 
