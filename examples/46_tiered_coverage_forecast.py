@@ -156,6 +156,21 @@ def main() -> None:
             print(f"    mae                   : {metrics.get('mae')}")
             print(f"    rmse                  : {metrics.get('rmse')}")
 
+    # #2164: per-point rule-firing annotations. Each series point carries
+    # fired_rules (list of driver names whose condition held on that row)
+    # and rule_layer_predicted (anchor + sum of fired effects — the
+    # symbolic rule-layer-only prediction for that point).
+    fs = sf.get("fitted_series")
+    if fs:
+        step("Per-point rule-firing annotations (first 5 holdout points):")
+        for pt in (fs.get("series") or [])[:5]:
+            fired = pt.get("fired_rules", [])
+            rlp = pt.get("rule_layer_predicted")
+            print(f"  index={pt['index']}  tier={pt.get('forecast_tier')}"
+                  f"  fired_rules={fired}"
+                  f"  rule_layer_predicted={rlp}"
+                  f"  predicted={pt.get('predicted')}")
+
     step("Done.")
 
 
