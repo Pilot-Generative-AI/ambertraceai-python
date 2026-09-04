@@ -679,7 +679,48 @@ class SymbolicForecastResult(TypedDict, total=False):
     not used.
 
     ``prediction_screen_enabled`` (bool) — whether the holdout prediction
-    screen was active for this forecast."""
+    screen was active for this forecast.
+
+    **fitted_series per-point rule-firing annotations (#2164):**
+
+    When ``include_fitted_series=True``, each point in
+    ``fitted_series.series[i]`` carries:
+
+    ``fired_rules`` (list[str]) — the names of admitted driver-rules whose
+    condition held on that holdout row. Empty on ``baseline_anchor`` points
+    (no driver fired).
+
+    ``rule_layer_predicted`` (float) — the symbolic rule-layer-only
+    prediction: anchor + sum of fired effects, where anchor is the
+    forecaster's per-point composition base (persistence under
+    ``baseline_mode='persistence'``; GBT prediction under ``'neural'``;
+    drift-projected level under ``'drift'``). Equals the anchor on
+    zero-fire points.
+
+    **per_tier_skill per-tier trading metrics (#2162):**
+
+    When ``include_fitted_series=True`` and the config has a ``frequency``
+    set, ``per_tier_skill`` carries per-tier trading metrics alongside the
+    existing skill metrics.  Each tier entry (keyed by ``forecast_tier``
+    label) and the ``all_points`` entry additionally contain:
+
+    ``directional_pnl`` (float | None), ``sharpe_ratio`` (float | None),
+    ``hit_rate`` (float | None), ``max_drawdown`` (float).
+
+    Two component-layer entries are added:
+
+    ``composed`` — trading metrics computed over ALL holdout points using
+    the composed prediction (``predicted``). These values are identical to
+    the headline ``directional_pnl`` / ``sharpe_ratio`` / ``hit_rate`` /
+    ``max_drawdown`` in the top-level response.
+
+    ``rule_layer`` — trading metrics computed over ALL holdout points using
+    the symbolic rule-layer-only prediction (``rule_layer_predicted``).
+
+    This lets a consumer reconcile the headline trading metrics with the
+    per-point fitted series: ``per_tier_skill['composed']`` equals the
+    headline, and ``per_tier_skill['rule_layer']`` shows the symbolic
+    rules' standalone trading performance."""
 
     forecast: Required[ForecastBlock]
     why: Required[list[JsonDict]]

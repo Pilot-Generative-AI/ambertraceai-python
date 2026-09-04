@@ -2160,10 +2160,23 @@ class PredictionResource(_Resource):
               "series": [
                 {"index": <date-or-position>, "actual": <observed>,
                  "predicted": <baseline + Σ fired drivers>,
-                 "persistence": <predict-last-level baseline>},
+                 "persistence": <predict-last-level baseline>,
+                 "forecast_tier": "symbolic" | "baseline_anchor",
+                 "fired_rules": ["driver_name", ...],
+                 "rule_layer_predicted": <anchor + Σ fired effects>},
                 ...
               ]
             }
+
+        Each series point carries per-point rule-firing annotations (#2164):
+
+        * ``fired_rules`` — list of admitted driver-rule names whose condition
+          held on that holdout row (empty on ``baseline_anchor`` points).
+        * ``rule_layer_predicted`` — the symbolic rule-layer-only prediction:
+          anchor + sum of fired effects, where anchor is the forecaster's
+          per-point composition base (persistence, GBT, or drift-projected
+          level depending on ``baseline_mode``). Equals the anchor on zero-fire
+          points.
 
         This is the SAME walk ``skill_vs_persistence`` is computed from — no extra
         fit. HONEST LABEL: ``basis`` is ``walk_forward_out_of_sample_one_step`` —
@@ -2190,6 +2203,23 @@ class PredictionResource(_Resource):
         ``reasons``). The proof covers totality and tier attribution only —
         numeric VALUES remain fitted-not-proven (the ``honesty`` field states
         the boundary).
+
+        **per_tier_skill per-tier trading metrics (#2162):**
+
+        When the config has a ``frequency`` set (e.g. ``'monthly'``),
+        ``per_tier_skill`` carries per-tier trading metrics:
+        ``directional_pnl``, ``sharpe_ratio``, ``hit_rate``, ``max_drawdown``.
+        These appear on each tier partition entry, on ``all_points``, and on
+        two component-layer entries:
+
+        * ``per_tier_skill['composed']`` — trading metrics computed over ALL
+          holdout points using the composed prediction (``predicted``). These
+          values are IDENTICAL to the headline ``directional_pnl`` /
+          ``sharpe_ratio`` / ``hit_rate`` / ``max_drawdown`` in the top-level
+          response — use them to reconcile the fitted series with the headline.
+        * ``per_tier_skill['rule_layer']`` — trading metrics computed over ALL
+          holdout points using ``rule_layer_predicted`` (the symbolic rules'
+          standalone prediction).
 
         ``why`` IS the substantive explanation — the full set of materially-
         contributing driver-rules the model induced + accepted on the holdout (NOT
@@ -2350,7 +2380,8 @@ class PredictionResource(_Resource):
         certifiable with ``verified=True``), (2) the calibration is in its validated
         regime — the ``interval_basis`` is a REAL measured out-of-sample error basis
         (one of ``driver_bands`` / ``backtest_rmse`` / ``persistence_rmse`` /
-        ``target_change_sd``, not a degenerate flat-series floor) and the recovered
+        ``target_change_sd`` / ``neural_gbt`` / ``neural_conformal``, not a
+        degenerate flat-series floor) and the recovered
         ``sigma`` is finite and positive, and (3) the resolved threshold differs
         from the value — when threshold==value (the anchor/no-driver case with no
         persistence baseline), the probability would be 0.5 by construction with no

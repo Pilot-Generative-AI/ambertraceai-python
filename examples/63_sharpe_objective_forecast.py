@@ -9,6 +9,12 @@ The per-objective trading metrics (directional_pnl, hit_rate, sharpe_ratio,
 max_drawdown) are surfaced in the symbolic-forecast response metadata when the
 config declares a ``frequency``.
 
+When ``include_fitted_series=True``, the ``per_tier_skill`` block carries
+per-tier trading metrics (#2162): ``per_tier_skill['composed']`` contains
+trading metrics on the composed prediction (identical to the headline metrics),
+and ``per_tier_skill['rule_layer']`` shows the symbolic rules' standalone
+trading performance.
+
     python 63_sharpe_objective_forecast.py
 
 .. note::
@@ -77,6 +83,34 @@ def main():
         val = forecast.get(key)
         if val is not None:
             print(f"  {key}: {val}")
+
+    # --- Per-tier trading metrics (#2162) ---
+    # Request the fitted series to get per_tier_skill with trading metrics.
+    fs_resp = api.symbolic_forecast(
+        id=platform_id,
+        data={
+            "config_id": config["id"],
+            "include_fitted_series": True,
+        },
+    )
+    fs_data = fs_resp.data
+    per_tier_skill = fs_data.get("per_tier_skill") or {}
+
+    # The composed entry carries the SAME trading metrics as the headline.
+    composed = per_tier_skill.get("composed")
+    if composed:
+        print("\nPer-tier trading metrics (composed = headline):")
+        for key in ("directional_pnl", "sharpe_ratio", "hit_rate",
+                     "max_drawdown"):
+            print(f"  composed.{key}: {composed.get(key)}")
+
+    # The rule_layer entry shows the symbolic rules' standalone trading perf.
+    rule_layer = per_tier_skill.get("rule_layer")
+    if rule_layer:
+        print("\nPer-tier trading metrics (rule_layer):")
+        for key in ("directional_pnl", "sharpe_ratio", "hit_rate",
+                     "max_drawdown"):
+            print(f"  rule_layer.{key}: {rule_layer.get(key)}")
 
     print("Done.")
 
