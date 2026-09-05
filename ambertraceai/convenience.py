@@ -2062,11 +2062,16 @@ class PredictionResource(_Resource):
         alone, once with the discovered correction rules layered on top — and
         reports the head-to-head accuracy. Returns ``{"platform_id",
         "prediction_config_id", "target", "neural": {"r2", "rmse", "mae", "n"},
-        "neurosymbolic": {"r2", "rmse", "mae", "n"}, "delta": {"r2", "rmse"},
-        "n_adjustment_rules", "n_constraint_rules", "n_pending_rules", "fire_rate",
-        "mode"}`` when ``wait`` is True (the default). ``delta`` is neurosymbolic −
-        neural (a positive ``delta.r2`` / negative ``delta.rmse`` means the symbolic
-        layer helped).
+        "neurosymbolic": {"r2", "rmse", "mae", "n"}, "delta": {"r2", "rmse",
+        <objective>?}, "n_adjustment_rules", "n_constraint_rules",
+        "n_pending_rules", "fire_rate", "mode"}`` when ``wait`` is True (the
+        default). ``delta`` is neurosymbolic − neural (a positive ``delta.r2`` /
+        negative ``delta.rmse`` means the symbolic layer helped). When the
+        prediction config carries a trading-metric ``objective`` (e.g.
+        ``sharpe_ratio``), ``delta`` also includes ``objective`` (naming the
+        metric) and the metric's own key with the neurosymbolic-minus-neural
+        difference, so you can evaluate the correction-rule delta on the
+        config's chosen objective (#2167).
 
         Pass ``include_pending=True`` to ALSO apply the accepted-but-pending
         discovered rules read-only — a "what-if" preview of the discovered set
@@ -2148,7 +2153,14 @@ class PredictionResource(_Resource):
         """Run the symbolic forecaster and return the forecast WITH its WHY.
 
         Returns ``{"forecast": {"value", "lower", "upper"}, "baseline",
-        "skill_vs_persistence", "why": [...], "accepted_drivers": [...]}``.
+        "skill_vs_persistence", "why": [...], "accepted_drivers": [...],
+        "forecast_tier": ..., "anchor_used": ...}``.
+
+        When ``baseline_mode='neural'`` and driver-rules fire, the response carries
+        ``forecast_tier='combined'`` and ``anchor_used='neural'`` — the forecast
+        composes onto the neural (GBT) prediction instead of persistence (#2167).
+        ``baseline`` is the neural anchor value (the GBT prediction), and
+        ``forecast.value`` is neural anchor + sum of fired rule effects.
 
         Pass ``include_fitted_series=True`` to ALSO get the backtest's per-period
         fitted-vs-actual TIMESERIES under ``fitted_series`` so you can chart actual
@@ -2161,9 +2173,11 @@ class PredictionResource(_Resource):
                 {"index": <date-or-position>, "actual": <observed>,
                  "predicted": <baseline + Σ fired drivers>,
                  "persistence": <predict-last-level baseline>,
-                 "forecast_tier": "symbolic" | "baseline_anchor",
+                 "forecast_tier": "symbolic" | "combined" | "baseline_anchor",
                  "fired_rules": ["driver_name", ...],
-                 "rule_layer_predicted": <anchor + Σ fired effects>},
+                 "rule_layer_predicted": <anchor + Σ fired effects>,
+                 "neural": <GBT anchor prediction (combined tier)>,
+                 "combined": <neural + Σ fired effects (combined tier)>},
                 ...
               ]
             }
@@ -2307,8 +2321,8 @@ class PredictionResource(_Resource):
               "proof_ref": {"proof_checked": bool, "proof_summary": "...",
                             "model_id": ..., "as_of": ...},
               "why_certification": { ... the embedded certificate (verified=True) ... },
-              "forecast_tier": "verified_symbolic"|"neural_scored"|
-                               "neural_weak"|"no_forecast"|
+              "forecast_tier": "verified_symbolic"|"combined"|
+                               "neural_scored"|"neural_weak"|"no_forecast"|
                                "baseline_anchor"|null,
               "neural_confidence_tau": <float or null — tau extracted from tier>,
               "point_is_persistence": <bool or null>,
@@ -2325,15 +2339,20 @@ class PredictionResource(_Resource):
         Per-point provenance (``forecast_tier`` / ``point_is_persistence``)
         ------------------------------------------------------------------
         ``forecast_tier`` is the honest per-point tier label: ``"verified_symbolic"``
-        when driver-rules fired AND were proof-checked; ``"neural_scored"`` when
-        the neural confidence gate served the GBT prediction (``baseline_mode='neural'``
-        with no fired drivers, above the tau threshold); ``"neural_weak"`` when
-        below tau (the raw GBT prediction is always served with the full confidence
-        metric -- never replaced, #1485); ``"no_forecast"`` when genuinely no model
-        exists (value is null); ``"baseline_anchor"`` for non-neural anchors
-        (persistence / drift) with no fired drivers. The tau value that was
-        previously embedded in the tier string (e.g. ``neural_scored@0.5``) is now
-        emitted separately as ``neural_confidence_tau``. Record-first consumers
+        when driver-rules fired AND were proof-checked; ``"combined"`` when
+        ``baseline_mode='neural'`` and driver-rules fire — the forecast composes
+        onto the neural (GBT) anchor instead of persistence (#2167); the response
+        carries ``anchor_used='neural'``, and each fitted-series point gains
+        ``neural`` (the GBT anchor) and ``combined`` (neural + fired effects)
+        columns; ``"neural_scored"`` when the neural confidence gate served the GBT
+        prediction (``baseline_mode='neural'`` with no fired drivers, above the tau
+        threshold); ``"neural_weak"`` when below tau (the raw GBT prediction is
+        always served with the full confidence metric -- never replaced, #1485);
+        ``"no_forecast"`` when genuinely no model exists (value is null);
+        ``"baseline_anchor"`` for non-neural anchors (persistence / drift) with no
+        fired drivers. The tau value that was previously embedded in the tier string
+        (e.g. ``neural_scored@0.5``) is now emitted separately as
+        ``neural_confidence_tau``. Record-first consumers
         (the decision-bridge ``predictions={role: record}`` fan-in) should key on
         ``forecast_tier`` to distinguish genuine driver-based forecasts from anchor
         filler -- not ``point_is_persistence``, which is True ONLY under a persistence

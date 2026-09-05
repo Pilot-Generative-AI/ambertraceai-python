@@ -140,6 +140,10 @@ SHOWCASE_TRACKS = [
      "monitor", _track(
          position_source="mlat", iff_mode="mode3_valid", flight_plan_correlated=False,
          ground_speed_kts=650, baro_altitude_ft=1500, track_confidence=0.58)),
+    ("vertical rate 9000 fpm at FL340 — VR-only kinematically implausible, monitor",
+     "monitor", _track(
+         position_source="ads_b", vertical_rate_fpm=9000, ground_speed_kts=200,
+         baro_altitude_ft=34000, track_confidence=0.72)),
 ]
 
 def _show(api, platform_id: int, label: str, facts: dict, expected: str | None) -> None:
